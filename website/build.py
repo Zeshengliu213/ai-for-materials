@@ -86,6 +86,11 @@ def build(clean: bool = False, base_url: str = "") -> None:
     modules = collect.collect_modules(dist_dir)
     pages.write_site(modules, dist_dir)
 
+    # GitHub Pages 在「从分支部署」模式下会跑 Jekyll，而 Jekyll 默认跳过
+    # 以下划线开头的路径 —— 那正是数据集去重目录 files/_shared/ 的名字。
+    # 一个空的 .nojekyll 即可关掉这套处理，对 Actions 部署无副作用。
+    (dist_dir / ".nojekyll").write_text("", encoding="utf-8")
+
     total_nbs = sum(len(m.notebooks) for m in modules)
     total_sols = sum(len(m.solutions) for m in modules)
     total_slides = sum(len(m.slides) for m in modules)
