@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="练习参考答案与解析。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="参考答案：第三部分 · 练习参考答案 | AI for Materials Science" />
+  <meta property="og:description" content="练习参考答案与解析。" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/solutions/10-graph-neural-networks-and-mlips/10_gnn_solutions.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/solutions/10-graph-neural-networks-and-mlips/10_gnn_solutions.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>参考答案：第三部分 · 练习参考答案 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+class="active">
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/10-graph-neural-networks-and-mlips/10a_graph_neural_networks.html"
+           data-progress-mark="notebooks/10-graph-neural-networks-and-mlips/10a_graph_neural_networks.html"
+>📓 10a_graph_neural_networks.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/10-graph-neural-networks-and-mlips/10b_chemprop.html"
+           data-progress-mark="notebooks/10-graph-neural-networks-and-mlips/10b_chemprop.html"
+>📓 10b_chemprop.ipynb</a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/10-graph-neural-networks-and-mlips.html">模块 10：图神经网络（GNN）与机器学习势函数</a> /
+  <span>参考答案</span>
+</div>
+<h1><span class="kind-badge kind-lecture">课件答案</span>
+  第三部分 · 练习参考答案</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">答案文件：<code>10_gnn_solutions.ipynb</code>（35.7 KB）</div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/10%20-%20Graph%20Neural%20Networks%20and%20MLIPs/solutions/10_gnn_solutions.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/8d9e3225dae1-10_gnn_solutions.ipynb" download="10_gnn_solutions.ipynb">⬇ 下载答案 .ipynb</a>
+    <a class="btn btn-secondary" href="../../modules/10-graph-neural-networks-and-mlips.html">返回模块 10</a>
+  </div>
+</div>
+<div id="solution-gate" class="academic-box solution-gate-inner">
+  <strong>先自己做一遍，再看答案。</strong>
+  <p>直接阅读答案的学习效果远低于独立实现。建议至少尝试 20 分钟，卡住时先看习题里的
+    💡 提示，再展开本页。</p>
+  <p class="hint-inline">展开状态只在当前浏览器标签页有效，关闭标签页后会重新折叠。</p>
+  <button type="button" id="solution-reveal" class="btn btn-primary">我已尝试，展开参考答案</button>
+</div>
+<div id="solution-body" hidden>
+  <div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/10%20-%20Graph%20Neural%20Networks%20and%20MLIPs/solutions/10_gnn_solutions.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>第三部分 · 练习参考答案</h1>
+<p>⚠️ <strong>先自己做，再看答案。</strong> 写法不唯一，能得到同样结果的都对。</p>
+<p>神经网络的结果和随机种子、软件版本有关，你的数字和这里差在小数点后第二位是正常的。</p>
+<p>下面先把 07a 和 10a 共用的准备工作做一遍（和 notebook 里的代码完全相同）。整个 notebook 运行大约 10 分钟，其中 chemprop 的两个练习占一半。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;10 - Graph Neural Networks and MLIPs/solutions&quot;</span><span class="p">))</span>
+    <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">run_line_magic</span><span class="p">(</span><span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install -q rdkit chemprop&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">rdkit</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">rdkit</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">rdkit</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
+
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PyTorch 版本:&quot;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">set_seed</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">use_deterministic_algorithms</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>   <span class="c1"># 有些运算默认每次结果略有不同，这一行让它们也固定下来</span>
+
+<span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="c1"># 本地运行：数据在 data/ 文件夹里</span>
+<span class="c1"># Colab 运行：如果找不到文件，会弹出上传按钮，选择 solubility.csv 即可</span>
+<span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;../data/solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">google.colab</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;请上传 solubility.csv&quot;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;找不到 solubility.csv，请把它放在 data/ 文件夹或和 notebook 同一个文件夹里&quot;</span><span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;读取成功！一共&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="s2">&quot;个分子&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;SMILES&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">feature_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;MolMR&quot;</span><span class="p">,</span> <span class="s2">&quot;HeavyAtomCount&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHAcceptors&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHDonors&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;NumHeteroatoms&quot;</span><span class="p">,</span> <span class="s2">&quot;NumRotatableBonds&quot;</span><span class="p">,</span> <span class="s2">&quot;NumValenceElectrons&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;NumSaturatedRings&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAliphaticRings&quot;</span><span class="p">,</span> <span class="s2">&quot;RingCount&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">,</span> <span class="s2">&quot;LabuteASA&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;BalabanJ&quot;</span><span class="p">,</span> <span class="s2">&quot;BertzCT&quot;</span><span class="p">]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;分子数:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="s2">&quot; 特征数:&quot;</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">X_trval</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_trval</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_valid</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_valid</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X_trval</span><span class="p">,</span> <span class="n">y_trval</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;训练:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">),</span> <span class="s2">&quot; 验证:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_valid</span><span class="p">),</span> <span class="s2">&quot; 测试:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">))</span>
+
+<span class="n">scaler</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>     <span class="c1"># 和 kNN 一样，神经网络也需要缩放；只在训练集上 fit</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">to_tensor</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+<span class="n">Xtr</span><span class="p">,</span> <span class="n">Xva</span><span class="p">,</span> <span class="n">Xte</span> <span class="o">=</span> <span class="p">(</span><span class="n">to_tensor</span><span class="p">(</span><span class="n">scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">a</span><span class="p">))</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_valid</span><span class="p">,</span> <span class="n">X_test</span><span class="p">))</span>
+<span class="n">ytr</span><span class="p">,</span> <span class="n">yva</span><span class="p">,</span> <span class="n">yte</span> <span class="o">=</span> <span class="p">(</span><span class="n">to_tensor</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">y_valid</span><span class="p">,</span> <span class="n">y_test</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">TensorDataset</span>
+
+<span class="n">train_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">TensorDataset</span><span class="p">(</span><span class="n">Xtr</span><span class="p">,</span> <span class="n">ytr</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">xb</span><span class="p">,</span> <span class="n">yb</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">train_loader</span><span class="p">))</span>   <span class="c1"># 取出第一个小批看看</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;一个小批的 X:&quot;</span><span class="p">,</span> <span class="n">xb</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s2">&quot; y:&quot;</span><span class="p">,</span> <span class="n">yb</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;每个 epoch 有&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_loader</span><span class="p">),</span> <span class="s2">&quot;个小批，也就是更新&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_loader</span><span class="p">),</span> <span class="s2">&quot;次参数&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SolubilityMLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_features</span><span class="p">,</span> <span class="n">hidden_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>                   <span class="c1"># 先让 nn.Module 做好它的准备工作</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">n_features</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>              <span class="c1"># 第 6 节再讲；dropout=0 时什么也不做</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>         <span class="c1"># 形状 (batch, 1) -&gt; (batch,)</span>
+
+<span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">SolubilityMLP</span><span class="p">(</span><span class="n">n_features</span><span class="o">=</span><span class="mi">17</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">loss_fn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">train_one_epoch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>                            <span class="c1"># 训练模式（Dropout 生效）</span>
+    <span class="k">for</span> <span class="n">xb</span><span class="p">,</span> <span class="n">yb</span> <span class="ow">in</span> <span class="n">loader</span><span class="p">:</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">xb</span><span class="p">),</span> <span class="n">yb</span><span class="p">)</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">rmse</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>                             <span class="c1"># 评估模式（Dropout 关闭）</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>                    <span class="c1"># 评估时不需要求导，更快也更省内存</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">loss_fn</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">y</span><span class="p">))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;训练 n_epochs 轮。返回每一轮的训练/验证 RMSE，以及验证集上最好的那一轮的参数。&quot;&quot;&quot;</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="n">weight_decay</span><span class="p">)</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;train&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;valid&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="n">best_valid</span><span class="p">,</span> <span class="n">best_state</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">):</span>
+        <span class="n">train_one_epoch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
+        <span class="n">history</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rmse</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Xtr</span><span class="p">,</span> <span class="n">ytr</span><span class="p">))</span>
+        <span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rmse</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Xva</span><span class="p">,</span> <span class="n">yva</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">best_valid</span><span class="p">:</span>      <span class="c1"># 记下验证集上最好的参数（第 6 节用）</span>
+            <span class="n">best_valid</span> <span class="o">=</span> <span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">best_state</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">history</span><span class="p">,</span> <span class="n">best_state</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_history</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">5.5</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;train&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;validation&quot;</span><span class="p">)</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">]))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">best</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;best epoch (</span><span class="si">{</span><span class="n">best</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;epoch&quot;</span><span class="p">);</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;RMSE (logS)&quot;</span><span class="p">);</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">);</span> <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="07a">07a</h2>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="07a-1">07a-1</h3>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Descriptors</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Molecule</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">smiles</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smiles</span> <span class="o">=</span> <span class="n">smiles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_heavy_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol</span><span class="o">.</span><span class="n">GetNumHeavyAtoms</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_aromatic_rings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">NumAromaticRings</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mol</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">smiles</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_heavy_atoms</span><span class="p">()</span><span class="si">}</span><span class="s2"> heavy atoms&quot;</span>
+
+<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Molecule</span><span class="p">(</span><span class="s2">&quot;thiophene&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccsc1&quot;</span><span class="p">),</span> <span class="n">Molecule</span><span class="p">(</span><span class="s2">&quot;pentacene&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</span><span class="p">)]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;芳香环数:&quot;</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">n_aromatic_rings</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>💡 实际写代码时，更好的做法是<strong>修改原来的类</strong>，而不是重新写一遍。这里重写只是为了让答案能单独运行。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="07a-2">07a-2</h3>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">FlexibleMLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;和 SolubilityMLP 一样，只是激活函数可以换&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_features</span><span class="p">,</span> <span class="n">hidden_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">n_features</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">),</span> <span class="n">activation</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">),</span> <span class="n">activation</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">activation</span> <span class="ow">in</span> <span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Tanh</span><span class="p">]:</span>
+    <span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">FlexibleMLP</span><span class="p">(</span><span class="mi">17</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">activation</span><span class="p">)</span>
+    <span class="n">history</span><span class="p">,</span> <span class="n">best_state</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">activation</span><span class="o">.</span><span class="vm">__name__</span><span class="si">:</span><span class="s2">5s</span><span class="si">}</span><span class="s2">: 最后一轮测试 RMSE = </span><span class="si">{</span><span class="n">rmse</span><span class="p">(</span><span class="n">model</span><span class="p">,</span><span class="w"> </span><span class="n">Xte</span><span class="p">,</span><span class="w"> </span><span class="n">yte</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">best_state</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;, 早停后测试 RMSE = </span><span class="si">{</span><span class="n">rmse</span><span class="p">(</span><span class="n">model</span><span class="p">,</span><span class="w"> </span><span class="n">Xte</span><span class="p">,</span><span class="w"> </span><span class="n">yte</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>📘 Tanh 和 ReLU 的结果差不多（1.17–1.23 之间）。这么浅的网络，激活函数的选择影响不大。</p>
+<p>🤔 注意 ReLU 那一行：早停后的测试 RMSE（≈1.23）反而比最后一轮（≈1.19）<strong>更差</strong>。早停不是保证变好吗？</p>
+<p>📘 早停选的是<strong>验证集</strong>上最好的一轮。验证集只有 759 个分子，噪声很大（07a 第 6.2 节），&quot;验证集最好&quot;的那一轮在测试集上不一定最好。这类 0.0x 的差别不要过度解读。网络很深时，ReLU 的优势才明显：tanh 和 sigmoid 在两端很&quot;平&quot;，导数接近 0，梯度一层层乘下去会越来越小（<strong>梯度消失</strong>），前面的层几乎学不动。</p>
+<p>注意 <code>activation=nn.ReLU</code> 传的是<strong>类</strong>，在 <code>__init__</code> 里用 <code>activation()</code> 才造出实例。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="07a-3">07a-3</h3>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">roc_auc_score</span>
+
+<span class="n">y_cls_train</span><span class="p">,</span> <span class="n">y_cls_valid</span><span class="p">,</span> <span class="n">y_cls_test</span> <span class="o">=</span> <span class="p">(</span><span class="n">to_tensor</span><span class="p">((</span><span class="n">a</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">y_valid</span><span class="p">,</span> <span class="n">y_test</span><span class="p">))</span>
+<span class="n">cls_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">TensorDataset</span><span class="p">(</span><span class="n">Xtr</span><span class="p">,</span> <span class="n">y_cls_train</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">bce</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BCEWithLogitsLoss</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">predict_proba</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">))</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+<span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">SolubilityMLP</span><span class="p">(</span><span class="n">n_features</span><span class="o">=</span><span class="mi">17</span><span class="p">)</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">clf</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="n">best_auc</span><span class="p">,</span> <span class="n">best_state</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">):</span>
+    <span class="n">clf</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">xb</span><span class="p">,</span> <span class="n">yb</span> <span class="ow">in</span> <span class="n">cls_loader</span><span class="p">:</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">bce</span><span class="p">(</span><span class="n">clf</span><span class="p">(</span><span class="n">xb</span><span class="p">),</span> <span class="n">yb</span><span class="p">)</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">();</span> <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">();</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+    <span class="n">valid_auc</span> <span class="o">=</span> <span class="n">roc_auc_score</span><span class="p">(</span><span class="n">y_cls_valid</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">predict_proba</span><span class="p">(</span><span class="n">clf</span><span class="p">,</span> <span class="n">Xva</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">valid_auc</span> <span class="o">&gt;</span> <span class="n">best_auc</span><span class="p">:</span>                       <span class="c1"># 早停：用验证集 AUC 选最好的一轮</span>
+        <span class="n">best_auc</span><span class="p">,</span> <span class="n">best_state</span> <span class="o">=</span> <span class="n">valid_auc</span><span class="p">,</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">clf</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+
+<span class="n">clf</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">best_state</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;验证集最好 AUC = </span><span class="si">{</span><span class="n">best_auc</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MLP 测试 ROC-AUC = </span><span class="si">{</span><span class="n">roc_auc_score</span><span class="p">(</span><span class="n">y_cls_test</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span><span class="w"> </span><span class="n">predict_proba</span><span class="p">(</span><span class="n">clf</span><span class="p">,</span><span class="w"> </span><span class="n">Xte</span><span class="p">))</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">   （02c 随机森林: 0.953）&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>📘 MLP 的测试 ROC-AUC ≈ 0.94，比随机森林（0.953）略低。和回归一样：<strong>同样的 17 个特征，换成神经网络并不会更好。</strong></p>
+<p>⚠️ 这里的测试集和 02c 不完全一样：02c 用了 <code>stratify=y</code> 分层划分，这里沿用 07a 的回归划分。两者大致可比，但不是严格的同一批分子。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="10a">10a</h2>
+<p>先把 10a 的分子图、模型和训练函数准备好：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">thiophene</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="s2">&quot;c1ccsc1&quot;</span><span class="p">)</span>
+<span class="n">bithiophene</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="s2">&quot;s1cccc1-c1cccs1&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">ELEMENTS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">,</span> <span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="s2">&quot;Cl&quot;</span><span class="p">,</span> <span class="s2">&quot;Br&quot;</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="s2">&quot;P&quot;</span><span class="p">]</span>
+<span class="n">HYBRIDIZATIONS</span> <span class="o">=</span> <span class="p">[</span><span class="n">Chem</span><span class="o">.</span><span class="n">HybridizationType</span><span class="o">.</span><span class="n">SP</span><span class="p">,</span> <span class="n">Chem</span><span class="o">.</span><span class="n">HybridizationType</span><span class="o">.</span><span class="n">SP2</span><span class="p">,</span> <span class="n">Chem</span><span class="o">.</span><span class="n">HybridizationType</span><span class="o">.</span><span class="n">SP3</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">one_hot</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">choices</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;value 在 choices 里的位置记 1；不在列表里就把最后一位&quot;其他&quot;记 1&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span> <span class="o">==</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">choices</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">choices</span><span class="p">)]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">atom_features</span><span class="p">(</span><span class="n">atom</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">one_hot</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">GetSymbol</span><span class="p">(),</span> <span class="n">ELEMENTS</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">one_hot</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">GetDegree</span><span class="p">(),</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+            <span class="o">+</span> <span class="n">one_hot</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">GetTotalNumHs</span><span class="p">(),</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+            <span class="o">+</span> <span class="n">one_hot</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">GetFormalCharge</span><span class="p">(),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="o">+</span> <span class="n">one_hot</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">GetHybridization</span><span class="p">(),</span> <span class="n">HYBRIDIZATIONS</span><span class="p">)</span>
+            <span class="o">+</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">GetIsAromatic</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">IsInRing</span><span class="p">())])</span>
+
+<span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">thiophene</span><span class="o">.</span><span class="n">GetAtoms</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">GetIdx</span><span class="p">(),</span> <span class="n">atom</span><span class="o">.</span><span class="n">GetSymbol</span><span class="p">(),</span> <span class="n">atom_features</span><span class="p">(</span><span class="n">atom</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;每个原子的特征数:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">atom_features</span><span class="p">(</span><span class="n">thiophene</span><span class="o">.</span><span class="n">GetAtomWithIdx</span><span class="p">(</span><span class="mi">0</span><span class="p">))))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [16] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">BOND_TYPES</span> <span class="o">=</span> <span class="p">[</span><span class="n">Chem</span><span class="o">.</span><span class="n">BondType</span><span class="o">.</span><span class="n">SINGLE</span><span class="p">,</span> <span class="n">Chem</span><span class="o">.</span><span class="n">BondType</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">,</span> <span class="n">Chem</span><span class="o">.</span><span class="n">BondType</span><span class="o">.</span><span class="n">TRIPLE</span><span class="p">,</span> <span class="n">Chem</span><span class="o">.</span><span class="n">BondType</span><span class="o">.</span><span class="n">AROMATIC</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">bond_features</span><span class="p">(</span><span class="n">bond</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">bond</span><span class="o">.</span><span class="n">GetBondType</span><span class="p">()</span> <span class="o">==</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">BOND_TYPES</span><span class="p">]</span>
+            <span class="o">+</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">bond</span><span class="o">.</span><span class="n">GetIsConjugated</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">bond</span><span class="o">.</span><span class="n">IsInRing</span><span class="p">())])</span>
+
+<span class="k">for</span> <span class="n">bond</span> <span class="ow">in</span> <span class="n">thiophene</span><span class="o">.</span><span class="n">GetBonds</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;键 </span><span class="si">{</span><span class="n">bond</span><span class="o">.</span><span class="n">GetIdx</span><span class="p">()</span><span class="si">}</span><span class="s2">: 原子 </span><span class="si">{</span><span class="n">bond</span><span class="o">.</span><span class="n">GetBeginAtomIdx</span><span class="p">()</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">bond</span><span class="o">.</span><span class="n">GetEndAtomIdx</span><span class="p">()</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">bond</span><span class="o">.</span><span class="n">GetBondType</span><span class="p">()</span><span class="si">}</span><span class="s2">, 特征 </span><span class="si">{</span><span class="n">bond_features</span><span class="p">(</span><span class="n">bond</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [17] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">N_ATOM_FEATURES</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">atom_features</span><span class="p">(</span><span class="n">thiophene</span><span class="o">.</span><span class="n">GetAtomWithIdx</span><span class="p">(</span><span class="mi">0</span><span class="p">)))</span>
+<span class="n">N_BOND_FEATURES</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bond_features</span><span class="p">(</span><span class="n">thiophene</span><span class="o">.</span><span class="n">GetBondWithIdx</span><span class="p">(</span><span class="mi">0</span><span class="p">)))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">mol_to_graph</span><span class="p">(</span><span class="n">mol</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">atom_features</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">mol</span><span class="o">.</span><span class="n">GetAtoms</span><span class="p">()],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">edge_attr</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">bond</span> <span class="ow">in</span> <span class="n">mol</span><span class="o">.</span><span class="n">GetBonds</span><span class="p">():</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">bond</span><span class="o">.</span><span class="n">GetBeginAtomIdx</span><span class="p">(),</span> <span class="n">bond</span><span class="o">.</span><span class="n">GetEndAtomIdx</span><span class="p">()</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">bond_features</span><span class="p">(</span><span class="n">bond</span><span class="p">)</span>
+        <span class="n">src</span> <span class="o">+=</span> <span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">];</span> <span class="n">dst</span> <span class="o">+=</span> <span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">];</span> <span class="n">edge_attr</span> <span class="o">+=</span> <span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">f</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>                                                                  <span class="c1"># (原子数, 31)</span>
+        <span class="s2">&quot;edge_index&quot;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>  <span class="c1"># (2, 2×键数)</span>
+        <span class="s2">&quot;edge_attr&quot;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">edge_attr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">N_BOND_FEATURES</span><span class="p">),</span>  <span class="c1"># (2×键数, 6)</span>
+    <span class="p">}</span>
+
+<span class="n">g</span> <span class="o">=</span> <span class="n">mol_to_graph</span><span class="p">(</span><span class="n">thiophene</span><span class="p">)</span>
+<span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [18] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MessagePassingLayer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">n_bond_features</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span> <span class="o">+</span> <span class="n">n_bond_features</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">)</span>   <span class="c1"># M：邻居状态 + 键特征 -&gt; 消息</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">)</span>                   <span class="c1"># U：自己的状态 + 收到的消息 -&gt; 新状态</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">):</span>
+        <span class="n">src</span><span class="p">,</span> <span class="n">dst</span> <span class="o">=</span> <span class="n">edge_index</span>
+        <span class="c1"># 1. 发送消息：每条边 src -&gt; dst 生成一条消息</span>
+        <span class="n">messages</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">h</span><span class="p">[</span><span class="n">src</span><span class="p">],</span> <span class="n">edge_attr</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)))</span>
+        <span class="c1"># 2. 聚合：把消息加到终点原子上</span>
+        <span class="n">aggregated</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">index_add_</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">messages</span><span class="p">)</span>
+        <span class="c1"># 3. 更新</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">aggregated</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [19] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">collate</span><span class="p">(</span><span class="n">graphs</span><span class="p">):</span>
+    <span class="n">xs</span><span class="p">,</span> <span class="n">edge_indices</span><span class="p">,</span> <span class="n">edge_attrs</span><span class="p">,</span> <span class="n">batch</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">graphs</span><span class="p">):</span>
+        <span class="n">n_atoms</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">xs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])</span>
+        <span class="n">edge_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">&quot;edge_index&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">offset</span><span class="p">)</span>       <span class="c1"># 原子编号整体平移</span>
+        <span class="n">edge_attrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">&quot;edge_attr&quot;</span><span class="p">])</span>
+        <span class="n">batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">n_atoms</span><span class="p">,),</span> <span class="n">k</span><span class="p">))</span>              <span class="c1"># 这些原子属于第 k 个分子</span>
+        <span class="n">offset</span> <span class="o">+=</span> <span class="n">n_atoms</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">xs</span><span class="p">),</span> <span class="s2">&quot;edge_index&quot;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">edge_indices</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="s2">&quot;edge_attr&quot;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">edge_attrs</span><span class="p">),</span> <span class="s2">&quot;batch&quot;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">batch</span><span class="p">),</span> <span class="s2">&quot;num_graphs&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">graphs</span><span class="p">)}</span>
+
+<span class="n">demo</span> <span class="o">=</span> <span class="n">collate</span><span class="p">([</span><span class="n">mol_to_graph</span><span class="p">(</span><span class="n">thiophene</span><span class="p">),</span> <span class="n">mol_to_graph</span><span class="p">(</span><span class="n">bithiophene</span><span class="p">)])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;原子总数:&quot;</span><span class="p">,</span> <span class="n">demo</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;（5 + 10）&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;batch 向量:&quot;</span><span class="p">,</span> <span class="n">demo</span><span class="p">[</span><span class="s2">&quot;batch&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [20] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SolubilityGNN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">n_layers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">readout</span><span class="o">=</span><span class="s2">&quot;sum&quot;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">readout</span> <span class="o">=</span> <span class="n">readout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embed</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">N_ATOM_FEATURES</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span><span class="n">MessagePassingLayer</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">N_BOND_FEATURES</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_layers</span><span class="p">)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">head</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]))</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">:</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">g</span><span class="p">[</span><span class="s2">&quot;edge_index&quot;</span><span class="p">],</span> <span class="n">g</span><span class="p">[</span><span class="s2">&quot;edge_attr&quot;</span><span class="p">])</span>
+        <span class="c1"># 读出：按 batch 向量把原子加回各自的分子</span>
+        <span class="n">h_graph</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">&quot;num_graphs&quot;</span><span class="p">],</span> <span class="n">h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">index_add_</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">g</span><span class="p">[</span><span class="s2">&quot;batch&quot;</span><span class="p">],</span> <span class="n">h</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">readout</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+            <span class="n">n_atoms</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">&quot;batch&quot;</span><span class="p">],</span> <span class="n">minlength</span><span class="o">=</span><span class="n">g</span><span class="p">[</span><span class="s2">&quot;num_graphs&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">h_graph</span> <span class="o">=</span> <span class="n">h_graph</span> <span class="o">/</span> <span class="n">n_atoms</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">h_graph</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">gnn</span> <span class="o">=</span> <span class="n">SolubilityGNN</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;参数总数:&quot;</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">gnn</span><span class="o">.</span><span class="n">parameters</span><span class="p">()))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [21] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">graphs</span> <span class="o">=</span> <span class="p">[</span><span class="n">mol_to_graph</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]]</span>
+<span class="n">y_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+<span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
+<span class="n">idx_trval</span><span class="p">,</span> <span class="n">idx_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">idx_train</span><span class="p">,</span> <span class="n">idx_valid</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">idx_trval</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;训练:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx_train</span><span class="p">),</span> <span class="s2">&quot; 验证:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx_valid</span><span class="p">),</span> <span class="s2">&quot; 测试:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx_test</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;平均每个分子的重原子数:&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">g</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">graphs</span><span class="p">]),</span> <span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [22] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">iterate_batches</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">start</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span>
+        <span class="k">yield</span> <span class="n">collate</span><span class="p">([</span><span class="n">graphs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]),</span> <span class="n">y_t</span><span class="p">[</span><span class="n">ids</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">indices</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">model</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">iterate_batches</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span><span class="p">)])</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">rmse</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">indices</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">loss_fn</span><span class="p">(</span><span class="n">predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">indices</span><span class="p">),</span> <span class="n">y_t</span><span class="p">[</span><span class="n">indices</span><span class="p">]))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;train&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;valid&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="n">best_valid</span><span class="p">,</span> <span class="n">best_state</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">):</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">total</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">yb</span> <span class="ow">in</span> <span class="n">iterate_batches</span><span class="p">(</span><span class="n">idx_train</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">g</span><span class="p">),</span> <span class="n">yb</span><span class="p">)</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">();</span> <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">();</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">yb</span><span class="p">);</span> <span class="n">n</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">yb</span><span class="p">)</span>
+        <span class="n">history</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">total</span> <span class="o">/</span> <span class="n">n</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span>    <span class="c1"># 训练误差：这一轮各小批的平均，省得再算一遍</span>
+        <span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rmse</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">idx_valid</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">best_valid</span><span class="p">:</span>
+            <span class="n">best_valid</span><span class="p">,</span> <span class="n">best_state</span> <span class="o">=</span> <span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">epoch</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">9</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">:</span><span class="s2">3d</span><span class="si">}</span><span class="s2">: 训练 RMSE </span><span class="si">{</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, 验证 RMSE </span><span class="si">{</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;valid&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">best_state</span><span class="p">)</span>                  <span class="c1"># 早停：装回验证集上最好的参数</span>
+    <span class="k">return</span> <span class="n">history</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="10a-1">10a-1</h3>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [23] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">btbt</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="s2">&quot;c1ccc2c(c1)sc1c3ccccc3sc21&quot;</span><span class="p">)</span>
+<span class="n">g</span> <span class="o">=</span> <span class="n">mol_to_graph</span><span class="p">(</span><span class="n">btbt</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;重原子数:&quot;</span><span class="p">,</span> <span class="n">btbt</span><span class="o">.</span><span class="n">GetNumAtoms</span><span class="p">(),</span> <span class="s2">&quot; 键数:&quot;</span><span class="p">,</span> <span class="n">btbt</span><span class="o">.</span><span class="n">GetNumBonds</span><span class="p">())</span>
+
+<span class="n">is_carbon</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">][:,</span> <span class="n">ELEMENTS</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">)]</span> <span class="o">==</span> <span class="mi">1</span>
+<span class="n">is_aromatic</span><span class="p">,</span> <span class="n">in_ring</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">][:,</span> <span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">g</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">][:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;在环上的芳香碳:&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="n">is_carbon</span> <span class="o">&amp;</span> <span class="n">is_aromatic</span> <span class="o">&amp;</span> <span class="n">in_ring</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>📘 BTBT 是 C₁₄H₈S₂：14 个碳 + 2 个硫 = <strong>16 个重原子</strong>。四个稠合的环：两个苯环各 6 根键、两个噻吩环各 5 根键，共 22 根，但三处稠合各有一根键被两个环共用，所以<strong>键数 = 22 - 3 = 19</strong>。<code>edge_index</code> 每根键正反各一列，共 <strong>38 列</strong>。</p>
+<p>16 个原子全都在环上、全都是芳香的，其中 14 个是碳。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="10a-2">10a-2</h3>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [24] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">layer_results</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">n_layers</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">]:</span>
+    <span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">SolubilityGNN</span><span class="p">(</span><span class="n">n_layers</span><span class="o">=</span><span class="n">n_layers</span><span class="p">)</span>
+    <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+    <span class="n">layer_results</span><span class="p">[</span><span class="n">n_layers</span><span class="p">]</span> <span class="o">=</span> <span class="n">rmse</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">idx_test</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n_layers = </span><span class="si">{</span><span class="n">n_layers</span><span class="si">}</span><span class="s2">: 测试 RMSE = </span><span class="si">{</span><span class="n">layer_results</span><span class="p">[</span><span class="n">n_layers</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;（对照：n_layers = 3，60 轮，测试 RMSE ≈ 1.04）&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>📘 结果（40 轮）：1 层 ≈ 1.12，5 层 ≈ 1.03。正文 3 层训练 60 轮是 ≈ 1.04。</p>
+<ul>
+<li>1 层的 GNN 每个原子只看得到直接相连的邻居，相当于半径为 1 的&quot;可学习指纹&quot;。即便如此，它已经和 02a 的&quot;描述符 + 计数指纹&quot;随机森林（1.11）差不多了。</li>
+<li>5 层看得更远，只训练 40 轮就和 3 层训练 60 轮的结果相当，略好一点。对这个数据集，层数从 3 加到 5 还没出现过平滑。</li>
+</ul>
+<p>1 层到 3 层的提升（约 0.08）比 3 层到 5 层（约 0.01）大得多：对溶解度来说，大部分有用的信息就在每个原子周围两三根键的范围内。</p>
+<p>比较时注意：这里只训练了 40 轮，而 10a 正文的 3 层模型训练了 60 轮。严格比较应该用相同的轮数，最好再换几个随机种子取平均（02b 第 1 节）。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="10a-3">10a-3</h3>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [25] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">gnn_sum</span> <span class="o">=</span> <span class="n">SolubilityGNN</span><span class="p">(</span><span class="n">readout</span><span class="o">=</span><span class="s2">&quot;sum&quot;</span><span class="p">)</span>
+<span class="n">fit</span><span class="p">(</span><span class="n">gnn_sum</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+<span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">gnn_mean</span> <span class="o">=</span> <span class="n">SolubilityGNN</span><span class="p">(</span><span class="n">readout</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">)</span>
+<span class="n">fit</span><span class="p">(</span><span class="n">gnn_mean</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;求和读出: 测试 RMSE = </span><span class="si">{</span><span class="n">rmse</span><span class="p">(</span><span class="n">gnn_sum</span><span class="p">,</span><span class="w"> </span><span class="n">idx_test</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;平均读出: 测试 RMSE = </span><span class="si">{</span><span class="n">rmse</span><span class="p">(</span><span class="n">gnn_mean</span><span class="p">,</span><span class="w"> </span><span class="n">idx_test</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">acenes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;c1ccccc1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccc2ccccc2c1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccc2cc3ccccc3cc2c1&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;c1ccc2cc3cc4ccccc4cc3cc2c1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">gnn_predict_smiles</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">smiles_list</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">model</span><span class="p">(</span><span class="n">collate</span><span class="p">([</span><span class="n">mol_to_graph</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">))</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">smiles_list</span><span class="p">]))</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;molecule&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;naphthalene&quot;</span><span class="p">,</span> <span class="s2">&quot;anthracene&quot;</span><span class="p">,</span> <span class="s2">&quot;tetracene&quot;</span><span class="p">,</span> <span class="s2">&quot;pentacene&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;measured&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.64</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.31</span><span class="p">,</span> <span class="o">-</span><span class="mf">6.44</span><span class="p">,</span> <span class="o">-</span><span class="mf">8.60</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">],</span>
+    <span class="s2">&quot;GNN, sum readout&quot;</span><span class="p">:</span> <span class="n">gnn_predict_smiles</span><span class="p">(</span><span class="n">gnn_sum</span><span class="p">,</span> <span class="n">acenes</span><span class="p">),</span>
+    <span class="s2">&quot;GNN, mean readout&quot;</span><span class="p">:</span> <span class="n">gnn_predict_smiles</span><span class="p">(</span><span class="n">gnn_mean</span><span class="p">,</span> <span class="n">acenes</span><span class="p">),</span>
+<span class="p">})</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>📘 结果：</p>
+<ol>
+<li>平均读出的测试 RMSE ≈ 1.26，比求和读出（≈1.04）<strong>差了很多</strong>，甚至不如 17 个描述符的随机森林（1.17）。</li>
+<li>出乎意料的是，并苯系列的趋势<strong>还在</strong>，并五苯也比并四苯预测得更难溶（约 -7.2 vs -6.4）。但整个系列都比求和读出预测得更&quot;好溶&quot;（高出 0.5–0.8），离实验值更远。</li>
+</ol>
+<p>🤔 平均读出把&quot;分子有多大&quot;的信息除掉了，为什么还能分出并四苯和并五苯？</p>
+<p>📘 因为经过消息传递，每个原子的向量已经编码了它的<strong>局部环境</strong>，而不同大小的并苯里，各种环境的<strong>比例</strong>不一样。比如稠合位置的碳（连 3 个碳、没有氢）：苯 0/6，萘 2/10，蒽 4/14，并四苯 6/18，并五苯 8/22。比例在变，平均值就在变，模型可以从比例间接&quot;猜&quot;出大小。</p>
+<p>但这种线索很脆弱：比例的变化越来越慢（0.33 → 0.36），而且很多分子根本没有这样的规律。比如烷基链，C8 和 C12 的链里几乎全是 CH₂，平均下来几乎一样，可溶解度差了好几个数量级。这就是平均读出整体变差的原因。</p>
+<p><strong>读出方式也是一种归纳偏置</strong>：广延性质（随分子变大而累加，比如 logP、分子量、溶解度的对数）适合求和；强度性质（不随大小累加，比如某些电子性质）可能更适合平均。</p>
+<p>💡 <code>set_seed</code> 里的 <code>torch.use_deterministic_algorithms(True)</code> 很重要：没有它，<code>index_add_</code> 在多线程 CPU 上做浮点加法的顺序不固定，同样的代码和种子每次结果略有不同，训练 60 轮后会被放大。我们试过，不加这一行时平均读出的测试 RMSE 两次分别是 1.15 和 1.24。<strong>同一个模型、同一份数据，仅仅因为加法顺序不同，结果就能差 0.09</strong>，这比 02b 里调参带来的提升还大。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="10b">10b</h2>
+<p>下面两个练习各要训练一次 chemprop（每次约 2–3 分钟）。先把 10b 的数据文件和划分文件准备好：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [26] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">chemprop</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">chemprop</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">chemprop</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">json</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PYTHONIOENCODING&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;utf-8&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s2">&quot;chemprop_data&quot;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">SPLITS_JSON</span> <span class="o">=</span> <span class="s2">&quot;chemprop_data/splits.json&quot;</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">SPLITS_JSON</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">([{</span><span class="s2">&quot;train&quot;</span><span class="p">:</span> <span class="n">idx_train</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="s2">&quot;val&quot;</span><span class="p">:</span> <span class="n">idx_valid</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="s2">&quot;test&quot;</span><span class="p">:</span> <span class="n">idx_test</span><span class="o">.</span><span class="n">tolist</span><span class="p">()}],</span> <span class="n">f</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">show_log</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">keyword</span><span class="o">=</span><span class="s2">&quot;test/&quot;</span><span class="p">):</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+    <span class="n">hits</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span> <span class="k">if</span> <span class="n">keyword</span> <span class="ow">in</span> <span class="n">line</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">hits</span><span class="p">)</span> <span class="k">if</span> <span class="n">hits</span> <span class="k">else</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">:]))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="10b-1">10b-1</h3>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [27] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">CLS_CSV</span> <span class="o">=</span> <span class="s2">&quot;chemprop_data/insoluble.csv&quot;</span>
+<span class="n">df</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">insoluble</span><span class="o">=</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))[[</span><span class="s2">&quot;SMILES&quot;</span><span class="p">,</span> <span class="s2">&quot;insoluble&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">CLS_CSV</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="err">!</span><span class="n">chemprop</span> <span class="n">train</span> <span class="o">-</span><span class="n">i</span> <span class="p">{</span><span class="n">CLS_CSV</span><span class="p">}</span> <span class="o">-</span><span class="n">s</span> <span class="n">SMILES</span> <span class="o">--</span><span class="n">target</span><span class="o">-</span><span class="n">columns</span> <span class="n">insoluble</span> <span class="o">--</span><span class="n">task</span><span class="o">-</span><span class="nb">type</span> <span class="n">classification</span> <span class="o">--</span><span class="n">splits</span><span class="o">-</span><span class="n">file</span> <span class="p">{</span><span class="n">SPLITS_JSON</span><span class="p">}</span> <span class="o">--</span><span class="n">epochs</span> <span class="mi">30</span> <span class="o">--</span><span class="n">pytorch</span><span class="o">-</span><span class="n">seed</span> <span class="mi">0</span> <span class="o">--</span><span class="n">metrics</span> <span class="n">roc</span> <span class="n">prc</span> <span class="n">accuracy</span> <span class="o">-</span><span class="n">o</span> <span class="n">chemprop_runs</span><span class="o">/</span><span class="n">insoluble</span> <span class="o">&gt;</span> <span class="n">chemprop_data</span><span class="o">/</span><span class="n">train_cls</span><span class="o">.</span><span class="n">log</span> <span class="mi">2</span><span class="o">&gt;&amp;</span><span class="mi">1</span>
+<span class="n">show_log</span><span class="p">(</span><span class="s2">&quot;chemprop_data/train_cls.log&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>📘 chemprop 的测试 ROC-AUC ≈ 0.944，准确率 ≈ 0.90，和 02c 的随机森林（ROC-AUC 0.953，准确率 0.891）基本持平，AUC 还略低一点。</p>
+<p>回归任务上 GNN 明显更好，分类任务上却没有优势。一个原因是：分类只需要分清 logS 在 -4 的哪一边，远离 -4 的分子用简单的特征（logP、大小）就能判断对，难的只有边界附近那一小部分，留给&quot;更好的特征&quot;发挥的空间不多。另外 chemprop 只训练了 30 轮，也没有调参。</p>
+<p>（和 07a-3 一样，这里的测试集用的是回归的划分，不是 02c 的分层划分。）</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="10b-2">10b-2</h3>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [28] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">SOL_CSV</span> <span class="o">=</span> <span class="s2">&quot;chemprop_data/solubility_clean.csv&quot;</span>
+<span class="n">df</span><span class="p">[[</span><span class="s2">&quot;SMILES&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">SOL_CSV</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="err">!</span><span class="n">chemprop</span> <span class="n">train</span> <span class="o">-</span><span class="n">i</span> <span class="p">{</span><span class="n">SOL_CSV</span><span class="p">}</span> <span class="o">-</span><span class="n">s</span> <span class="n">SMILES</span> <span class="o">--</span><span class="n">target</span><span class="o">-</span><span class="n">columns</span> <span class="n">Solubility</span> <span class="o">--</span><span class="n">task</span><span class="o">-</span><span class="nb">type</span> <span class="n">regression</span> <span class="o">--</span><span class="n">split</span><span class="o">-</span><span class="nb">type</span> <span class="n">SCAFFOLD_BALANCED</span> <span class="o">--</span><span class="n">split</span><span class="o">-</span><span class="n">sizes</span> <span class="mf">0.8</span> <span class="mf">0.1</span> <span class="mf">0.1</span> <span class="o">--</span><span class="n">epochs</span> <span class="mi">30</span> <span class="o">--</span><span class="n">pytorch</span><span class="o">-</span><span class="n">seed</span> <span class="mi">0</span> <span class="o">--</span><span class="n">metrics</span> <span class="n">rmse</span> <span class="n">mae</span> <span class="n">r2</span> <span class="o">-</span><span class="n">o</span> <span class="n">chemprop_runs</span><span class="o">/</span><span class="n">scaffold</span> <span class="o">&gt;</span> <span class="n">chemprop_data</span><span class="o">/</span><span class="n">train_scaffold</span><span class="o">.</span><span class="n">log</span> <span class="mi">2</span><span class="o">&gt;&amp;</span><span class="mi">1</span>
+<span class="n">show_log</span><span class="p">(</span><span class="s2">&quot;chemprop_data/train_scaffold.log&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>📘 scaffold split 的测试 RMSE ≈ 1.05，和随机划分（≈1.05）<strong>几乎一样</strong>；R² 从 0.81 降到约 0.76，那是因为两个测试集里 logS 的分布不同（R² 依赖测试集本身的方差），不是模型变差了。02b 里随机森林也只差了 0.03（1.17 → 1.20）。</p>
+<p>原因和 02b 第 6 节说的相同：AqSolDB 里约 30% 的分子没有环（scaffold 是空的，全挤在一组），18% 只是一个苯环，&quot;新骨架&quot;的分子并不比随机抽的更&quot;陌生&quot;。</p>
+<p>另外两次划分的测试集不是同一批分子，测试集大小也不同（这里是 10%，随机划分是 20%），0.0x 的差别不必过度解读。</p>
+</div></div>
+</div>
+  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#07a">07a</a></li>      <li class="toc-l3"><a href="#07a-1">07a-1</a></li>      <li class="toc-l3"><a href="#07a-2">07a-2</a></li>      <li class="toc-l3"><a href="#07a-3">07a-3</a></li>      <li class="toc-l2"><a href="#10a">10a</a></li>      <li class="toc-l3"><a href="#10a-1">10a-1</a></li>      <li class="toc-l3"><a href="#10a-2">10a-2</a></li>      <li class="toc-l3"><a href="#10a-3">10a-3</a></li>      <li class="toc-l2"><a href="#10b">10b</a></li>      <li class="toc-l3"><a href="#10b-1">10b-1</a></li>      <li class="toc-l3"><a href="#10b-2">10b-2</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

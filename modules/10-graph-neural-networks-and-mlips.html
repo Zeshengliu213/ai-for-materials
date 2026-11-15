@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="手写分子 GNN、Chemprop D-MPNN 全课程模型大比拼、晶体 CGCNN 与 MACE 势函数。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="模块 10：图神经网络（GNN）与机器学习势函数 | AI for Materials Science" />
+  <meta property="og:description" content="手写分子 GNN、Chemprop D-MPNN 全课程模型大比拼、晶体 CGCNN 与 MACE 势函数。" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/modules/10-graph-neural-networks-and-mlips.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/modules/10-graph-neural-networks-and-mlips.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../assets/pygments.css" />
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../assets/search-index.js"></script>
+  <script defer src="../assets/app.js"></script>  <title>模块 10：图神经网络（GNN）与机器学习势函数 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../index.html">课程主页</a>
+      <a href="../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../exercises.html">习题与答案</a>
+      <a href="../index.html#legend">学习指南</a>
+      <a href="../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../modules/10-graph-neural-networks-and-mlips.html"
+class="active">
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/10-graph-neural-networks-and-mlips/10a_graph_neural_networks.html"
+           data-progress-mark="notebooks/10-graph-neural-networks-and-mlips/10a_graph_neural_networks.html"
+>📓 10a_graph_neural_networks.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/10-graph-neural-networks-and-mlips/10b_chemprop.html"
+           data-progress-mark="notebooks/10-graph-neural-networks-and-mlips/10b_chemprop.html"
+>📓 10b_chemprop.ipynb</a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb"><a href="../index.html">课程主页</a> / <span>模块 10</span></div>
+<div class="module-head">
+  <span class="module-num">Module 10</span>
+  <span class="status-badge status-partial">10a/10b 就绪</span>
+  <span class="module-head-en">Graph Neural Networks &amp; MLIPs</span>
+</div>
+<h1>图神经网络（GNN）与机器学习势函数</h1><div class="progress-panel" data-progress-keys="notebooks/10-graph-neural-networks-and-mlips/10a_graph_neural_networks.html,notebooks/10-graph-neural-networks-and-mlips/10b_chemprop.html">
+  <div class="progress-head">
+    <strong>本模块学习进度</strong>
+    <span class="progress-count" data-progress-count>0 / 2</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+  <p class="hint-inline">进度只保存在你当前浏览器（localStorage），不会上传到任何服务器。</p>
+</div><h2 id="lectures">互动实战课件（Notebooks）</h2>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>课件名称</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/10-graph-neural-networks-and-mlips/10a_graph_neural_networks.html"
+                 aria-label="把 10a_graph_neural_networks.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/10-graph-neural-networks-and-mlips/10a_graph_neural_networks.html"><strong>10a · 图神经网络：让模型直接&#34;看&#34;分子</strong></a><br/>
+          <code>10a_graph_neural_networks.ipynb</code></td>
+        <td>270.5 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/10-graph-neural-networks-and-mlips/10a_graph_neural_networks.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/3e95a226d7a7-10a_graph_neural_networks.ipynb" download="10a_graph_neural_networks.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/10%20-%20Graph%20Neural%20Networks%20and%20MLIPs/10a_graph_neural_networks.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/10-graph-neural-networks-and-mlips/10b_chemprop.html"
+                 aria-label="把 10b_chemprop.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/10-graph-neural-networks-and-mlips/10b_chemprop.html"><strong>10b · chemprop：一行命令训练图神经网络</strong></a><br/>
+          <code>10b_chemprop.ipynb</code></td>
+        <td>28.3 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/10-graph-neural-networks-and-mlips/10b_chemprop.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/506a334ddf93-10b_chemprop.ipynb" download="10b_chemprop.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/10%20-%20Graph%20Neural%20Networks%20and%20MLIPs/10b_chemprop.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="exercises">课后习题（Exercises）</h2>
+<div class="academic-box">
+  <p class="hint-inline">本模块的习题 Notebook 还在编写中。可以先完成课件内标有
+    <strong>🏋️ 练习</strong> 的段落，或到<a href="../exercises.html">全部习题汇总页</a>
+    看看已经上线的模块习题。</p>
+</div><h2 id="solutions">参考答案（Solutions）</h2>
+<p class="hint-inline">答案页默认折叠，请先独立完成练习再展开。</p>
+<ul class="solution-list">  <li><span class="kind-badge kind-lecture">课件答案</span>
+    <a href="../solutions/10-graph-neural-networks-and-mlips/10_gnn_solutions.html">✅ 第三部分 · 练习参考答案</a>
+    (<code>10_gnn_solutions.ipynb</code> · 35.7 KB) —
+    <a href="../files/_shared/8d9e3225dae1-10_gnn_solutions.ipynb" download="10_gnn_solutions.ipynb">下载 .ipynb</a></li></ul><h2>配套数据集（Datasets）</h2>
+<ul>  <li><code>solubility.csv</code> (2.1 MB) —
+    <a href="../files/_shared/f274636a3ed2-solubility.csv" download="solubility.csv">下载数据集</a></li></ul><h2>后续补充计划</h2>
+<div class="academic-box">
+  <ul class="outline-list">    <li><code>10c</code>（编写中）晶体图网络 CGCNN 与 MACE 机器学习势函数。</li>  </ul>
+  <p class="hint-inline">内容正在编写中，欢迎先浏览已上线的其他模块。</p>
+</div>
+<h2>模块导读与教学设计</h2><div class="markdown-body"><h1>第十部分：图神经网络与机器学习势函数</h1>
+<p>结构仿照 EPFL CH-457 <em>AI for Chemistry</em>（<a href="https://github.com/schwallergroup/ai4chem_course">schwallergroup/ai4chem_course</a>）的 <code>03 - Intro to Deep Learning</code>，三个 notebook 一一对应。数据继续用第一、二部分的 AqSolDB，测试集和第二部分<strong>完全相同</strong>，所以所有模型的结果可以直接放在一起比较。</p>
+<table>
+<thead>
+<tr>
+<th>Notebook</th>
+<th>内容</th>
+<th>对应 ai4chem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>03a_neural_networks.ipynb</code></td>
+<td>神经元和激活函数；张量和自动求导；手写梯度下降拟合 logS–logP；Python 的类和 <code>nn.Module</code>；训练 / 验证 / 测试三个集合；<code>DataLoader</code> 小批量；训练循环；过拟合、早停、Dropout、权重衰减；学习率</td>
+<td><code>01_intro_to_dl.ipynb</code></td>
+</tr>
+<tr>
+<td><code>03b_graph_neural_networks.ipynb</code></td>
+<td>归纳偏置；分子图（原子特征、键特征、<code>edge_index</code>）；在联噻吩上手算消息传递和感受野；读出和置换不变性；用纯 PyTorch 写 GNN（约 50 行）；批处理；训练并比较；并苯系列外推</td>
+<td><code>02_graph_nns.ipynb</code></td>
+</tr>
+<tr>
+<td><code>03c_chemprop.ipynb</code></td>
+<td>D-MPNN 和 10a 的区别；<code>chemprop train</code> / <code>chemprop predict</code>；用 <code>--splits-file</code> 保证同一个测试集；第二、三部分所有模型的总比较；预测有机半导体分子</td>
+<td><code>03_gnn_simple_example.ipynb</code></td>
+</tr>
+<tr>
+<td><code>solutions/10_gnn_solutions.ipynb</code></td>
+<td>全部 8 道 🏋️ 练习的参考答案</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>data/solubility.csv</code></td>
+<td>和第一、二部分同一份 AqSolDB 数据</td>
+<td>替代 ESOL</td>
+</tr>
+</tbody>
+</table>
+<p>建议顺序是 07a → 10a → 10b。07a、10a 各约 2 小时，10b 约 1 小时。</p>
+<h2>和 ai4chem 的区别</h2>
+<ul>
+<li><strong>不用 PyTorch Lightning、wandb、PyG、OGB、DeepChem</strong>。07a、10a 只用纯 PyTorch，训练循环和消息传递都一行一行写出来；10b 只需要 <code>pip install chemprop</code>。Colab 上不用注册任何账号。</li>
+<li><strong>GNN 自己写</strong>。原课程直接调用 PyG 的 <code>NNConv</code>；这里用 <code>index_add_</code> 实现消息聚合和读出，学生能看到 GNN 里没有任何魔法。结尾再介绍 PyG、DGL、chemprop。</li>
+<li><strong>补了原课程没讲的东西</strong>：手写梯度下降、验证集的作用、Dropout 和权重衰减、学习率的影响、批处理怎么把多个分子拼成一张图、置换不变性的实测、感受野、D-MPNN 为什么用有向边。</li>
+<li><strong>chemprop 和自己的模型用同一个测试集</strong>。原课程让 chemprop 自己随机划分，结果没法和前面比较。</li>
+<li>讲解用中文，图上的文字用英文。标记和前两部分一致：📘 🤔 ▶️ ✏️ 🏋️ 💡。</li>
+</ul>
+<h2>和前两部分的呼应</h2>
+<table>
+<thead>
+<tr>
+<th>前面埋下的伏笔</th>
+<th>第三部分在哪里兑现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>01d：Morgan 指纹看的是每个原子周围几根键的环境</td>
+<td>10a 第 3 节：GNN 就是&quot;可学习的 Morgan 指纹&quot;，层数 = 半径</td>
+</tr>
+<tr>
+<td>01d：同一个分子有多种 SMILES</td>
+<td>10a 第 1 节：随机 SMILES；第 5.4 节：打乱原子编号，GNN 输出不变</td>
+</tr>
+<tr>
+<td>02a：随机森林把并五苯预测得和并四苯一样</td>
+<td>10a 第 7 节：求和读出的 GNN 延续了趋势；练习 10a-3：换成平均读出</td>
+</tr>
+<tr>
+<td>02b：调参的效果小于随机种子的波动；scaffold split</td>
+<td>07a 第 6 节：网络大 50 倍，测试 RMSE 几乎不变；练习 10b-2：chemprop 的 scaffold split</td>
+</tr>
+<tr>
+<td>02c：Yalkowsky 方程，熔点信息不在描述符里</td>
+<td>07a 第 3 节：梯度下降拟合 logS–logP 的斜率；07a 第 6 节：&quot;瓶颈在特征，不在模型&quot;</td>
+</tr>
+<tr>
+<td>02c：C8-BTBT 在水里仍然难溶</td>
+<td>10b 第 5 节：chemprop 预测侧链让水溶解度变差</td>
+</tr>
+</tbody>
+</table>
+<h2>主要结果（同一个测试集，1896 个分子）</h2>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>输入</th>
+<th>测试 RMSE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>永远预测平均值</td>
+<td>—</td>
+<td>2.42</td>
+</tr>
+<tr>
+<td>随机森林（02a）</td>
+<td>17 个描述符</td>
+<td>1.17</td>
+</tr>
+<tr>
+<td>MLP 64×64（07a）</td>
+<td>17 个描述符</td>
+<td>1.19</td>
+</tr>
+<tr>
+<td>MLP 512×512，最后一轮 / 早停 / Dropout + 权重衰减 + 早停（07a）</td>
+<td>17 个描述符</td>
+<td>1.18 / 1.17 / 1.17</td>
+</tr>
+<tr>
+<td>随机森林（02a）</td>
+<td>描述符 + 计数指纹</td>
+<td>1.11</td>
+</tr>
+<tr>
+<td>自己写的 GNN，3 层，60 轮（10a）</td>
+<td>只有原子和键</td>
+<td>1.04</td>
+</tr>
+<tr>
+<td>chemprop D-MPNN，30 轮（10b）</td>
+<td>只有原子和键</td>
+<td>1.05（R² 0.81）</td>
+</tr>
+</tbody>
+</table>
+<p>其他值得在课上讨论的数字：</p>
+<ul>
+<li>07a：梯度下降拟合 logS = w·logP + b，得到 w ≈ -0.41，和 <code>np.polyfit</code> 一致，但比 Yalkowsky 的 -1 平缓得多。</li>
+<li>07a：512×512 的 MLP 训练 RMSE 0.58、最后一轮验证 RMSE 1.44，但测试 RMSE 只有 1.18。小验证集（759 个）对少数离谱的预测非常敏感。</li>
+<li>10a：并苯系列 GNN 预测 -1.38、-3.73、-5.85、-7.22、-7.78（并五苯不在数据集里）；随机森林在并四苯、并五苯处几乎走平（-8.27、-8.38）。</li>
+<li>练习 10a-2 / 10a-3：GNN 1 层 1.12、5 层 1.03（各 40 轮）；平均读出 1.26，比求和读出差很多，但并苯趋势仍在。</li>
+<li>练习 07a-3 / 10b-1：分类 ROC-AUC，MLP 0.941、chemprop 0.944，都没有超过 02c 的随机森林（0.953）。练习 10b-2：chemprop 的 scaffold split 测试 RMSE 1.05，和随机划分一样。</li>
+<li>不加 <code>torch.use_deterministic_algorithms(True)</code> 时，同样代码和种子跑两次，平均读出 GNN 的测试 RMSE 分别是 1.15 和 1.24（<code>index_add_</code> 的多线程加法顺序不固定）。所以 07a、10a 的 <code>set_seed</code> 里都加了这一行。</li>
+<li>10b：chemprop 预测噻吩 -1.43（实验 -1.45）、3-己基噻吩 -4.93、BTBT -6.35、C8-BTBT -7.49。</li>
+</ul>
+<h2>运行环境</h2>
+<ul>
+<li>本地：Python ≥ 3.10，需要 <code>numpy pandas matplotlib scikit-learn rdkit torch</code>；10b 还需要 <code>chemprop</code>（2.x 版本）</li>
+<li>Colab：PyTorch 已预装；每个 notebook 第一格会在需要时自动安装 RDKit 或 chemprop</li>
+<li>全部在 CPU 上运行，不需要 GPU</li>
+<li>数据：本地读 <code>data/solubility.csv</code>；在 Colab 上如果找不到文件，会弹出上传按钮</li>
+<li>运行时间（16 核 CPU）：07a 约 2 分钟，10a 约 2.5 分钟，10b 约 4 分钟，参考答案约 10 分钟</li>
+<li>10b 会在 notebook 所在的文件夹里生成 <code>chemprop_data/</code> 和 <code>chemprop_runs/</code> 两个文件夹（数据副本、日志、模型），可以随时删除</li>
+</ul>
+<h2>验证情况</h2>
+<p>4 个 notebook 都在 Python 3.12、PyTorch 2.8（CPU）、scikit-learn 1.8、pandas 3.0、RDKit 2025.09.6、chemprop 2.2.3 下从头到尾运行通过，没有报错。正文里引用的数字都已经和这次运行的结果核对过。所有训练都固定了随机种子并开启了确定性算法（chemprop 用 <code>--pytorch-seed 0</code>），同一台电脑上重复运行结果完全一样（已实测）；换了 PyTorch 版本或 CPU，结果可能在小数点后第二位有差别，正文里用&quot;约&quot;表示。</p>
+<p>第二部分用过的 conda 环境 <code>zesheng</code> 这次<strong>没有</strong>验证：里面的 PyTorch 2.2.2 是用 NumPy 1.x 编译的，和环境里的 NumPy 2.2.6 不兼容，<code>import torch</code> 就会报错。要在这个环境里运行第三部分，需要先把 NumPy 降到 2.0 以下，或者把 PyTorch 升级到 2.3 以上。</p>
+</div><nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../notebooks/09-generative-models/09d_exercises.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">09d · 基础习题集：SELFIES、变分自编码器、代理模型防坑与扩散模型</span>
+  </a>  <a class="pager-link pager-next" href="../notebooks/10-graph-neural-networks-and-mlips/10a_graph_neural_networks.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">10a · 图神经网络：让模型直接&#34;看&#34;分子</span>
+  </a></nav>  </main></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 07a · 神经网络基础：从单个神经元到多层感知机与不确定性估计 在前四讲中，我们围绕手工设计的化学描述符（RDKit 物理化学性质、Morgan 指纹）构建了线性回归、kNN、随机森林以及高斯过程回归模型。在约九千个分子的 AqSolDB 水溶解度数据集上，随机森林将测试集 RMSE 推" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="07a · 神经网络基础：从单个神经元到多层感知机与不确定性估计 | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 07a · 神经网络基础：从单个神经元到多层感知机与不确定性估计 在前四讲中，我们围绕手工设计的化学描述符（RDKit 物理化学性质、Morgan 指纹）构建了线性回归、kNN、随机森林以及高斯过程回归模型。在约九千个分子的 AqSolDB 水溶解度数据集上，随机森林将测试集 RMSE 推" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/07-neural-networks-and-cnns/07a_neural_networks.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/07-neural-networks-and-cnns/07a_neural_networks.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>07a · 神经网络基础：从单个神经元到多层感知机与不确定性估计 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/07-neural-networks-and-cnns/07a_neural_networks.html"
+           data-progress-mark="notebooks/07-neural-networks-and-cnns/07a_neural_networks.html"
+class="active">📓 07a_neural_networks.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html"
+           data-progress-mark="notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html"
+>📓 07b_cnn_microstructure.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/07-neural-networks-and-cnns/07c_exercises.html"
+           data-progress-mark="notebooks/07-neural-networks-and-cnns/07c_exercises.html"
+>🏋️ 07c_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/07-neural-networks-and-cnns.html">模块 07：神经网络与材料显微视觉 CNN</a> /  <span>07a_neural_networks.ipynb</span>
+</div>
+<h1>07a · 神经网络基础：从单个神经元到多层感知机与不确定性估计</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>07a_neural_networks.ipynb</code>（42.2 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/07%20-%20Neural%20Networks%20and%20CNNs/07a_neural_networks.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/7d4f4254aeb9-07a_neural_networks.ipynb" download="07a_neural_networks.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/07-neural-networks-and-cnns/07_nn_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/07-neural-networks-and-cnns/07a_neural_networks.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/course/07%20-%20Neural%20Networks%20and%20CNNs/07a_neural_networks.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>07a · 神经网络基础：从单个神经元到多层感知机与不确定性估计</h1>
+<p>在前四讲中，我们围绕手工设计的化学描述符（RDKit 物理化学性质、Morgan 指纹）构建了线性回归、kNN、随机森林以及高斯过程回归模型。在约九千个分子的 AqSolDB 水溶解度数据集上，随机森林将测试集 RMSE 推进到了约 1.17 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 单位。</p>
+<p>从本讲开始，课程进入深度学习部分。读者可能会问：既然随机森林在表格特征上已经表现稳健，为什么材料与化学信息学还需要人工神经网络（Artificial Neural Networks）？原因主要体现在三个层面：</p>
+<ol>
+<li><strong>表征学习（Representation Learning）</strong>：传统机器学习依赖人工预先定义特征，而深度神经网络能够直接从原始数据结构——例如显微图像像素阵列（<code>07b</code>）、SMILES 序列（<code>08</code>）或分子图与三维原子坐标（<code>10</code>）——中端到端地自动提取任务相关的特征表示。</li>
+<li><strong>模块化架构与可扩展性</strong>：神经网络像搭积木一样，通过组合线性层、卷积层、注意力层或消息传递层即可适配完全不同的物理约束（如平移不变性、置换不变性），并借助小批量梯度下降轻松扩展到百万级样本。</li>
+<li><strong>生成与逆向设计能力</strong>：基于神经网络的变分自编码器（VAE）和扩散模型能够学习连续的潜在化学空间，实现从“给定结构预测性质”到“给定目标性质逆向生成分子或微结构”的跨越。</li>
+</ol>
+<p>不过，深度学习并非在所有场景下都优于经典方法：<strong>在中小规模、固定维度的手工表格特征上，多层感知机（MLP）往往与随机森林难分伯仲，甚至更容易过拟合。</strong> 本讲我们将使用纯 PyTorch 从零写出完整的神经网络训练流程，并在与第 02 讲完全一致的 AqSolDB 划分上亲自验证这一结论。</p>
+<h3 id="本节大纲">本节大纲</h3>
+<ol>
+<li>线性模型的局限、人工神经元与非线性激活函数</li>
+<li>PyTorch 核心基石：张量（Tensor）与自动微分（Autograd）</li>
+<li>手写梯度下降：从头拟合 Yalkowsky 溶解度线性项</li>
+<li>Python 面向对象基础（<code>class</code>）与 <code>nn.Module</code> 封装规范</li>
+<li>搭建与训练多层感知机（训练/验证/测试划分、标准化、<code>DataLoader</code> 与 Adam 循环）</li>
+<li>过拟合诊断、三类正则化对策与 MC Dropout 不确定性估计</li>
+<li>学习率动力学与二分类交叉熵扩展</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># Colab 环境初始化（本地运行时自动跳过）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;course&quot;</span><span class="p">,</span> <span class="s2">&quot;07 - Neural Networks and CNNs&quot;</span><span class="p">))</span>
+    <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">run_line_magic</span><span class="p">(</span><span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install -q rdkit&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
+
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PyTorch version:&quot;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>神经网络训练包含多处随机源：各层权重的随机初始化、小批量采样时的顺序打乱，以及部分底层算子的并行归约顺序。为了保证实验结果完全可复现，我们在开始前统一固定随机种子并启用确定性算法。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">set_seed</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">use_deterministic_algorithms</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;data/solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;solubility.csv&quot;</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;SMILES&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">feature_cols</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;MolMR&quot;</span><span class="p">,</span> <span class="s2">&quot;HeavyAtomCount&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHAcceptors&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHDonors&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumHeteroatoms&quot;</span><span class="p">,</span> <span class="s2">&quot;NumRotatableBonds&quot;</span><span class="p">,</span> <span class="s2">&quot;NumValenceElectrons&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumSaturatedRings&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAliphaticRings&quot;</span><span class="p">,</span> <span class="s2">&quot;RingCount&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">,</span> <span class="s2">&quot;LabuteASA&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BalabanJ&quot;</span><span class="p">,</span> <span class="s2">&quot;BertzCT&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;有效分子数: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> | 特征维度: </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-人工神经元与非线性激活函数">1. 人工神经元与非线性激活函数</h2>
+<h3 id="1-1-从线性回归到多层感知机">1.1 从线性回归到多层感知机</h3>
+<p>单个**人工神经元（Neuron）**的数学运算分为两步：</p>
+<ol>
+<li><strong>仿射变换（加权求和加偏置）</strong>：
+<div class="math-block" data-tex="z = \sum_{i=1}^{d} w_i x_i + b = \mathbf{w}^\top \mathbf{x} + b">\[z = \sum_{i=1}^{d} w_i x_i + b = \mathbf{w}^\top \mathbf{x} + b\]</div>
+这与第 02 讲中的多元线性回归完全一致。</li>
+<li><strong>非线性激活（Activation）</strong>：将标量 <span class="math-inline" data-tex="z">\(z\)</span> 送入非线性函数 <span class="math-inline" data-tex="\sigma(\cdot)">\(\sigma(\cdot)\)</span>，得到神经元输出 <span class="math-inline" data-tex="a = \sigma(z)">\(a = \sigma(z)\)</span>。</li>
+</ol>
+<p>当我们将多个神经元并排排列成一层（隐藏层，Hidden Layer），并把多层首尾相接堆叠起来时，就构成了<strong>多层感知机（Multilayer Perceptron, MLP）</strong>：</p>
+<pre><code><div class="highlight"><pre><span></span>输入层               隐藏层 1             隐藏层 2             输出层
+(17 个分子描述符)    (64 个神经元)        (64 个神经元)        (预测 logS)
+  x1  ──┐
+  x2  ──┼──►        ○ ○ ○ … ○    ──►    ○ ○ ○ … ○    ──►      ○
+  …     │           h1 = σ(W1 x + b1)   h2 = σ(W2 h1 + b2)    y = W3 h2 + b3
+  x17 ──┘
+</pre></div>
+</code></pre>
+<h3 id="1-2-为什么必须引入非线性激活函数">1.2 为什么必须引入非线性激活函数？</h3>
+<p>如果不加非线性激活函数 <span class="math-inline" data-tex="\sigma">\(\sigma\)</span>，直接将两层甚至十层线性变换串联起来会发生什么？根据矩阵乘法结合律：</p>
+<div class="math-block" data-tex="\mathbf{W}_2 (\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) + \mathbf{b}_2 = (\mathbf{W}_2 \mathbf{W}_1) \mathbf{x} + (\mathbf{W}_2 \mathbf{b}_1 + \mathbf{b}_2) = \tilde{\mathbf{W}} \mathbf{x} + \tilde{\mathbf{b}}">\[\mathbf{W}_2 (\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) + \mathbf{b}_2 = (\mathbf{W}_2 \mathbf{W}_1) \mathbf{x} + (\mathbf{W}_2 \mathbf{b}_1 + \mathbf{b}_2) = \tilde{\mathbf{W}} \mathbf{x} + \tilde{\mathbf{b}}\]</div>
+<p>无论堆叠多少层，复合后的映射仍然严格等价于<strong>单层线性回归</strong>，无法拟合任何弯曲的物理化学响应面。正是每一层之后的非线性激活函数打破了线性叠加，赋予了神经网络逼近任意连续函数的能力（万能逼近定理）。</p>
+<p>下面绘制三种最常见的激活函数：<strong>ReLU</strong>（Rectified Linear Unit，<span class="math-inline" data-tex="\max(0, z)">\(\max(0, z)\)</span>）、<strong>Sigmoid</strong>（<span class="math-inline" data-tex="1 / (1 + e^{-z})">\(1 / (1 + e^{-z})\)</span>）与 <strong>Tanh</strong>（<span class="math-inline" data-tex="\tanh(z)">\(\tanh(z)\)</span>）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.5</span><span class="p">,</span> <span class="mf">3.8</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;ReLU: max(0, z)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Sigmoid: 1 / (1 + exp(-z))&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Tanh: tanh(z)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Pre-activation z&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Activation sigma(z)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Common Nonlinear Activation Functions&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>在现代深度网络中，<strong>ReLU</strong> 是隐藏层的默认首选：它在正半轴导数恒为 1，计算开销极低，且有效缓解了 Sigmoid/Tanh 在两端饱和区导数趋近于 0 所引起的**梯度消失（Vanishing Gradient）**问题。</p>
+<hr />
+<h2 id="2-pytorch-核心基石-张量与自动微分">2. PyTorch 核心基石：张量与自动微分</h2>
+<h3 id="2-1-张量-tensor">2.1 张量（Tensor）</h3>
+<p>PyTorch 的基础数据结构是 <code>torch.Tensor</code>。你可以将它理解为支持 GPU 硬件加速与自动求导的 NumPy 多维数组，其索引、广播与矩阵乘法语法与 NumPy 高度一致。由于深度神经网络对显存带宽敏感，模型权重与特征张量通常采用 32 位浮点数（<code>torch.float32</code>）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">],</span>
+                  <span class="p">[</span><span class="mf">4.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">]])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Tensor a:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Shape:&quot;</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s2">&quot;| Dtype:&quot;</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Column sum (dim=0):&quot;</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Matrix product a @ a.T:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">a</span> <span class="o">@</span> <span class="n">a</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+<span class="c1"># NumPy 数组与 PyTorch 张量的转换</span>
+<span class="n">x_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">])</span>
+<span class="n">x_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x_np</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;NumPy -&gt; Tensor -&gt; NumPy:&quot;</span><span class="p">,</span> <span class="n">x_t</span><span class="p">,</span> <span class="s2">&quot;-&gt;&quot;</span><span class="p">,</span> <span class="n">x_t</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="2-2-自动微分-autograd">2.2 自动微分（Autograd）</h3>
+<p>训练神经网络的本质是通过微积分的链式法则计算损失函数 <span class="math-inline" data-tex="L">\(L\)</span> 对每一个模型参数的偏导数 <span class="math-inline" data-tex="\partial L / \partial w">\(\partial L / \partial w\)</span>。当参数量达到数万乃至数亿时，手工推导解析导数是不现实的。</p>
+<p>在 PyTorch 中，只需为参数张量指定 <code>requires_grad=True</code>，框架就会在前向计算过程中自动构建动态计算图（Computational Graph）。调用标量输出的 <code>.backward()</code> 方法后，反向传播算法会自动沿着计算图回溯，并将偏导数存入各叶节点张量的 <code>.grad</code> 属性中。</p>
+<p>例如，对于二次函数 <span class="math-inline" data-tex="f(x) = x^2 + 3x">\(f(x) = x^2 + 3x\)</span>，解析导数为 <span class="math-inline" data-tex="f&#x27;(x) = 2x + 3">\(f&#x27;(x) = 2x + 3\)</span>，在 <span class="math-inline" data-tex="x = 2">\(x = 2\)</span> 处应有 <span class="math-inline" data-tex="f(2) = 10">\(f(2) = 10\)</span>、<span class="math-inline" data-tex="f&#x27;(2) = 7">\(f&#x27;(2) = 7\)</span>：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">x</span>
+<span class="n">f</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;f(2) =&quot;</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;df/dx at x=2 (autograd):&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-手写梯度下降-拟合-yalkowsky-溶解度线性项">3. 手写梯度下降：拟合 Yalkowsky 溶解度线性项</h2>
+<p>有了自动求导，我们就能用五步循环实现<strong>梯度下降（Gradient Descent）</strong>：</p>
+<ol>
+<li><strong>初始化参数</strong>：给定初始猜测值（例如 <span class="math-inline" data-tex="w = 0, b = 0">\(w = 0, b = 0\)</span>）；</li>
+<li><strong>前向传播与损失计算</strong>：根据当前参数计算预测值 <span class="math-inline" data-tex="\hat{y}">\(\hat{y}\)</span>，并评估均方误差损失 <span class="math-inline" data-tex="L = \frac{1}{N}\sum (\hat{y}_i - y_i)^2">\(L = \frac{1}{N}\sum (\hat{y}_i - y_i)^2\)</span>；</li>
+<li><strong>反向传播求梯度</strong>：调用 <code>loss.backward()</code> 计算 <span class="math-inline" data-tex="\partial L / \partial w">\(\partial L / \partial w\)</span> 与 <span class="math-inline" data-tex="\partial L / \partial b">\(\partial L / \partial b\)</span>；</li>
+<li><strong>沿负梯度方向更新参数</strong>：
+<div class="math-block" data-tex="w \leftarrow w - \eta \frac{\partial L}{\partial w}, \qquad b \leftarrow b - \eta \frac{\partial L}{\partial b}">\[w \leftarrow w - \eta \frac{\partial L}{\partial w}, \qquad b \leftarrow b - \eta \frac{\partial L}{\partial b}\]</div>
+其中步长因子 <span class="math-inline" data-tex="\eta &gt; 0">\(\eta &gt; 0\)</span> 称为<strong>学习率（Learning Rate）</strong>；</li>
+<li><strong>梯度清零</strong>：PyTorch 默认会累加 <code>.grad</code> 中的梯度，因此在进入下一轮迭代前必须调用 <code>.grad.zero_()</code>。</li>
+</ol>
+<p>我们用这五步循环来拟合最简单的单变量模型：<span class="math-inline" data-tex="\log S = w \cdot \log P + b">\(\log S = w \cdot \log P + b\)</span>，并将迭代收敛结果与最小二乘解析解 <code>np.polyfit</code> 对比。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">logp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">logs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+<span class="n">w</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.01</span>
+
+<span class="n">losses</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">300</span><span class="p">):</span>
+    <span class="n">pred</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">logp</span> <span class="o">+</span> <span class="n">b</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="p">((</span><span class="n">pred</span> <span class="o">-</span> <span class="n">logs</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">w</span> <span class="o">-=</span> <span class="n">learning_rate</span> <span class="o">*</span> <span class="n">w</span><span class="o">.</span><span class="n">grad</span>
+        <span class="n">b</span> <span class="o">-=</span> <span class="n">learning_rate</span> <span class="o">*</span> <span class="n">b</span><span class="o">.</span><span class="n">grad</span>
+    <span class="n">w</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
+    <span class="n">b</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
+    <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;梯度下降 (300 步): w = </span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, b = </span><span class="si">{</span><span class="n">b</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">w_ols</span><span class="p">,</span> <span class="n">b_ols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">],</span> <span class="n">y</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;最小二乘解析解:    w = </span><span class="si">{</span><span class="n">w_ols</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, b = </span><span class="si">{</span><span class="n">b_ols</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">5.5</span><span class="p">,</span> <span class="mf">3.2</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">losses</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Iteration Step&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;MSE Loss&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Gradient Descent Convergence on logS vs. MolLogP&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>可以看到，梯度下降从 <span class="math-inline" data-tex="(w, b) = (0, 0)">\((w, b) = (0, 0)\)</span> 出发，仅靠一步步顺着负梯度微调，最终收敛到了与最小二乘解析解几乎一致的参数（<span class="math-inline" data-tex="w \approx -0.41, b \approx -2.06">\(w \approx -0.41, b \approx -2.06\)</span>）。</p>
+<p>顺便值得注意的是，第 02c 讲介绍的理想 Yalkowsky 方程 <span class="math-inline" data-tex="\log S \approx 0.5 - \log P - 0.01(\text{MP} - 25)">\(\log S \approx 0.5 - \log P - 0.01(\text{MP} - 25)\)</span> 中 <span class="math-inline" data-tex="\log P">\(\log P\)</span> 的理论斜率为 <span class="math-inline" data-tex="-1">\(-1\)</span>，而 AqSolDB 实测拟合斜率平缓到了 <span class="math-inline" data-tex="-0.41">\(-0.41\)</span>。这主要源于两方面物理原因：一是数据集中包含大量不遵循中性有机分子分配规律的盐类与离子型化合物；二是输入特征 <code>MolLogP</code> 本身是 RDKit 基团贡献法的估算值，自变量含有的随机误差会产生统计上的“衰减偏误（Attenuation Bias）”，把回归斜率向 0 拉平。</p>
+<p>如果将上面代码中的 <code>learning_rate</code> 改为 <code>0.1</code>，你会发现损失不仅不下降，反而迅速越过谷底并在两侧剧烈震荡直至溢出为 <code>nan</code>（梯度爆炸/发散）；反之若设为 <code>1e-4</code>，则 300 步后仍远未收敛。整个深度学习的训练循环与这段 15 行代码本质相同，只是待优化参数从 2 个扩展到了数千乃至数百万个。</p>
+<hr />
+<h2 id="4-python-的类-class-与-nn-module-封装规范">4. Python 的类（<code>class</code>）与 <code>nn.Module</code> 封装规范</h2>
+<p>在 PyTorch 中，所有神经网络模型都通过面向对象编程中的<strong>类（<code>class</code>）<strong>来组织。类定义了一类对象的</strong>属性（数据状态）<strong>与</strong>方法（行为函数）</strong>：</p>
+<ul>
+<li><code>__init__(self, ...)</code> 是构造函数，在创建实例时自动执行，用于绑定对象的初始属性；</li>
+<li>类中的普通函数以 <code>self</code> 作为第一个参数，代表当前实例自身。</li>
+</ul>
+<p>下面我们先用一个表示化学分子的 <code>Molecule</code> 类来直观展示类的定义与实例化：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Molecule</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">smiles</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smiles</span> <span class="o">=</span> <span class="n">smiles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_heavy_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol</span><span class="o">.</span><span class="n">GetNumHeavyAtoms</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">smiles</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_heavy_atoms</span><span class="p">()</span><span class="si">}</span><span class="s2"> heavy atoms&quot;</span>
+
+<span class="n">thiophene</span> <span class="o">=</span> <span class="n">Molecule</span><span class="p">(</span><span class="s2">&quot;thiophene&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccsc1&quot;</span><span class="p">)</span>
+<span class="n">pentacene</span> <span class="o">=</span> <span class="n">Molecule</span><span class="p">(</span><span class="s2">&quot;pentacene&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">thiophene</span><span class="o">.</span><span class="n">describe</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pentacene</span><span class="o">.</span><span class="n">describe</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>面向对象中的另一个关键机制是<strong>继承（Inheritance）</strong>：<code>class Child(Parent)</code> 表示子类自动继承父类的全部属性与方法，只需编写自己新增或重载的逻辑。</p>
+<p>PyTorch 的所有网络模型均继承自基类 <code>nn.Module</code>。<code>nn.Module</code> 在底层自动完成了可训练参数的递归收集、梯度追踪、训练/评估模式切换以及权重序列化保存，我们只需在子类中实现两个方法：</p>
+<ul>
+<li><code>__init__</code>：首先调用 <code>super().__init__()</code>，随后声明网络包含哪些子层（如 <code>nn.Linear</code>、<code>nn.ReLU</code>）；</li>
+<li><code>forward(self, x)</code>：定义输入张量 <code>x</code> 如何依次流经各层得到预测输出。</li>
+</ul>
+<h3 id="练习-07a-1-扩展自定义类的方法">练习 07a-1：扩展自定义类的方法</h3>
+<p>请为上面的 <code>Molecule</code> 类新增一个方法 <code>n_aromatic_rings(self)</code>，返回分子中的芳香环数目（提示：导入 <code>from rdkit.Chem import Descriptors</code>，调用 <code>Descriptors.NumAromaticRings(self.mol)</code>），并对噻吩（<code>thiophene</code>）与并五苯（<code>pentacene</code>）分别打印输出。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 07a-1：在此编写代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-搭建并训练第一个多层感知机-mlp">5. 搭建并训练第一个多层感知机（MLP）</h2>
+<h3 id="5-1-训练集-验证集与测试集的严格划分">5.1 训练集、验证集与测试集的严格划分</h3>
+<p>为了与第 02 讲的线性回归、kNN 和随机森林直接横向对比，我们首先使用完全相同的随机种子（<code>test_size=0.2, random_state=42</code>）切分出 20% 的独立<strong>测试集</strong>。</p>
+<p>在神经网络训练过程中，我们需要持续监控模型何时开始过拟合（决定早停轮次），并比较不同网络宽度、Dropout 比例与学习率。正如第 02b 讲所强调的，任何超参数选择或早停决策都绝不能偷看测试集。因此，我们从剩余 80% 的开发集中再划分出 10% 作为<strong>验证集（Validation Set）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>数据子集</th>
+<th>核心职责</th>
+<th>样本占比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>训练集（Train）</strong></td>
+<td>计算梯度并更新网络权重</td>
+<td>72% (6825)</td>
+</tr>
+<tr>
+<td><strong>验证集（Validation）</strong></td>
+<td>监控过拟合、选择最佳训练轮次（Early Stopping）与超参数</td>
+<td>8% (759)</td>
+</tr>
+<tr>
+<td><strong>测试集（Test）</strong></td>
+<td>所有训练与调参结束后<strong>仅评估一次</strong>，报告最终泛化指标</td>
+<td>20% (1896)</td>
+</tr>
+</tbody>
+</table>
+<p>同时，不同描述符的量纲跨度极大（例如分子复杂度描述符 <code>BertzCT</code> 常达上千，而氢键供体数 <code>NumHDonors</code> 仅为 <span class="math-inline" data-tex="0\sim 5">\(0\sim 5\)</span>）。若直接送入神经网络，大数值特征对应的梯度分量将主导整个参数更新方向，导致优化轨迹剧烈震荡甚至无法收敛。因此，我们必须先在<strong>训练集</strong>上拟合 <code>StandardScaler</code>，再对三个集合做标准化变换并转为 <code>float32</code> 张量。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">X_trval</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_trval</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_valid</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_valid</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X_trval</span><span class="p">,</span> <span class="n">y_trval</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;样本划分 -&gt; 训练集: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span><span class="si">}</span><span class="s2"> | 验证集: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_valid</span><span class="p">)</span><span class="si">}</span><span class="s2"> | 测试集: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># 仅在训练集上拟合标准化器，防止验证/测试集统计量泄漏</span>
+<span class="n">scaler</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">to_tensor</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+<span class="n">Xtr</span><span class="p">,</span> <span class="n">Xva</span><span class="p">,</span> <span class="n">Xte</span> <span class="o">=</span> <span class="p">(</span><span class="n">to_tensor</span><span class="p">(</span><span class="n">scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">a</span><span class="p">))</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_valid</span><span class="p">,</span> <span class="n">X_test</span><span class="p">))</span>
+<span class="n">ytr</span><span class="p">,</span> <span class="n">yva</span><span class="p">,</span> <span class="n">yte</span> <span class="o">=</span> <span class="p">(</span><span class="n">to_tensor</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">y_valid</span><span class="p">,</span> <span class="n">y_test</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="5-2-小批量迭代-mini-batch-与-dataloader">5.2 小批量迭代（Mini-batch）与 <code>DataLoader</code></h3>
+<p>第 3 节手写梯度下降时，每更新一次参数都遍历了全部样本（批量梯度下降，Batch Gradient Descent）。在大数据集与非凸损失曲面上，更标准的做法是<strong>小批量随机梯度下降（Mini-batch SGD）</strong>：每次从打乱后的训练集中抽取一小批样本（例如 <code>batch_size=64</code>）计算梯度并更新一次参数。不仅单步计算极快，而且小批量引入的梯度估计噪声有助于模型跳出尖锐的局部极小值。</p>
+<p>把整个训练集的所有小批量完整遍历一遍，称为一个 <strong>Epoch（训练轮次）</strong>。PyTorch 的 <code>TensorDataset</code> 与 <code>DataLoader</code> 帮我们自动完成了分批与每轮随机洗牌（<code>shuffle=True</code>）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">TensorDataset</span>
+
+<span class="n">train_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">TensorDataset</span><span class="p">(</span><span class="n">Xtr</span><span class="p">,</span> <span class="n">ytr</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">xb</span><span class="p">,</span> <span class="n">yb</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">train_loader</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;单个 Mini-batch 的 X 形状:&quot;</span><span class="p">,</span> <span class="n">xb</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s2">&quot;| y 形状:&quot;</span><span class="p">,</span> <span class="n">yb</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;每个 Epoch 包含 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">train_loader</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个 Mini-batch（即每轮更新 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">train_loader</span><span class="p">)</span><span class="si">}</span><span class="s2"> 次参数）&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="5-3-定义多层感知机架构-solubilitymlp">5.3 定义多层感知机架构 <code>SolubilityMLP</code></h3>
+<p>我们定义一个包含两个隐藏层的 MLP：输入层（17 维描述符）<span class="math-inline" data-tex="\to">\(\to\)</span> 64 维线性层 + ReLU <span class="math-inline" data-tex="\to">\(\to\)</span> 64 维线性层 + ReLU <span class="math-inline" data-tex="\to">\(\to\)</span> 1 维输出层（预测 <span class="math-inline" data-tex="\log S">\(\log S\)</span>）。同时在每个隐藏层后预留 <code>nn.Dropout(dropout)</code> 接口（默认 <code>dropout=0.0</code> 时不改变任何激活值，供第 6 节正则化实验使用）。</p>
+<p>在运行下方代码前，不妨先心算一下该网络的参数总数：线性层 <code>nn.Linear(d_in, d_out)</code> 包含 <span class="math-inline" data-tex="d_{\text{in}} \times d_{\text{out}}">\(d_{\text{in}} \times d_{\text{out}}\)</span> 个权重和 <span class="math-inline" data-tex="d_{\text{out}}">\(d_{\text{out}}\)</span> 个偏置，因此三层共有 <span class="math-inline" data-tex="(17\times 64 + 64) + (64\times 64 + 64) + (64\times 1 + 1) = 5377">\((17\times 64 + 64) + (64\times 64 + 64) + (64\times 1 + 1) = 5377\)</span> 个可训练参数。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SolubilityMLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_features</span><span class="p">,</span> <span class="n">hidden_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">n_features</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># 将形状 (batch, 1) 压缩为 (batch,)</span>
+
+<span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">SolubilityMLP</span><span class="p">(</span><span class="n">n_features</span><span class="o">=</span><span class="mi">17</span><span class="p">)</span>
+<span class="n">n_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;可训练参数总数:&quot;</span><span class="p">,</span> <span class="n">n_params</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>对比第 02 讲仅含 18 个参数的线性回归，这个双层 MLP 拥有 5377 个参数（而训练集分子数为 6825）。参数量的激增赋予了网络强大的非线性拟合能力，但也意味着如果不加约束，模型很容易“死记硬背”训练集中的噪声。</p>
+<h3 id="5-4-标准训练循环与基线评估">5.4 标准训练循环与基线评估</h3>
+<p>工程实践中，我们不再手写 <code>w -= lr * w.grad</code>，而是使用 PyTorch 内置的损失函数 <code>nn.MSELoss()</code> 与自适应动量优化器 <code>torch.optim.Adam</code>（Adam 会根据每个参数历史梯度的一阶矩和二阶矩自动调整有效步长，收敛比朴素梯度下降平稳得多）。</p>
+<table>
+<thead>
+<tr>
+<th>第 3 节手写循环</th>
+<th>标准 <code>nn.Module</code> 训练循环</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pred = w * logp + b</code></td>
+<td><code>pred = model(xb)</code></td>
+</tr>
+<tr>
+<td><code>loss = ((pred - y)**2).mean()</code></td>
+<td><code>loss = loss_fn(pred, yb)</code></td>
+</tr>
+<tr>
+<td><code>w.grad.zero_()</code></td>
+<td><code>optimizer.zero_grad()</code></td>
+</tr>
+<tr>
+<td><code>loss.backward()</code></td>
+<td><code>loss.backward()</code></td>
+</tr>
+<tr>
+<td><code>w -= lr * w.grad</code></td>
+<td><code>optimizer.step()</code></td>
+</tr>
+</tbody>
+</table>
+<p>下面编写通用的训练与验证辅助函数，并在训练集上训练 <code>SolubilityMLP</code> 共 100 个 Epoch。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">loss_fn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">train_one_epoch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>  <span class="c1"># 开启训练模式（Dropout 生效）</span>
+    <span class="k">for</span> <span class="n">xb</span><span class="p">,</span> <span class="n">yb</span> <span class="ow">in</span> <span class="n">loader</span><span class="p">:</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">xb</span><span class="p">),</span> <span class="n">yb</span><span class="p">)</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">rmse</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>   <span class="c1"># 开启评估模式（Dropout 关闭）</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">loss_fn</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">y</span><span class="p">))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;训练模型 n_epochs 轮，记录每轮训练/验证 RMSE，并保存验证集表现最佳的模型参数快照。&quot;&quot;&quot;</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="n">weight_decay</span><span class="p">)</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;train&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;valid&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="n">best_valid</span><span class="p">,</span> <span class="n">best_state</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">):</span>
+        <span class="n">train_one_epoch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
+        <span class="n">history</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rmse</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Xtr</span><span class="p">,</span> <span class="n">ytr</span><span class="p">))</span>
+        <span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rmse</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Xva</span><span class="p">,</span> <span class="n">yva</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">best_valid</span><span class="p">:</span>
+            <span class="n">best_valid</span> <span class="o">=</span> <span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">best_state</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">history</span><span class="p">,</span> <span class="n">best_state</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_history</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.0</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">],</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Train RMSE&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">],</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Validation RMSE&quot;</span><span class="p">)</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">]))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">best</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Best Epoch (</span><span class="si">{</span><span class="n">best</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Epoch&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;RMSE (logS)&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [16] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">mlp</span> <span class="o">=</span> <span class="n">SolubilityMLP</span><span class="p">(</span><span class="n">n_features</span><span class="o">=</span><span class="mi">17</span><span class="p">)</span>
+<span class="n">history</span><span class="p">,</span> <span class="n">best_state</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">mlp</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plot_history</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="s2">&quot;Baseline MLP (64x64) on 17 Descriptors&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;第 100 轮 -&gt; 训练 RMSE: </span><span class="si">{</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> | 验证 RMSE: </span><span class="si">{</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;valid&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;测试集 RMSE: </span><span class="si">{</span><span class="n">rmse</span><span class="p">(</span><span class="n">mlp</span><span class="p">,</span><span class="w"> </span><span class="n">Xte</span><span class="p">,</span><span class="w"> </span><span class="n">yte</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> (对照第 02 讲: 线性回归 1.64, 缩放 kNN 1.24, 随机森林 1.17)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [17] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">mlp</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+    <span class="n">y_test_list</span> <span class="o">=</span> <span class="n">yte</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">y_pred_list</span> <span class="o">=</span> <span class="n">mlp</span><span class="p">(</span><span class="n">Xte</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">4.6</span><span class="p">,</span> <span class="mf">4.6</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">y_test_list</span><span class="p">,</span> <span class="n">y_pred_list</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="o">-</span><span class="mi">13</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">13</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;k--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Measured logS&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Predicted logS&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;MLP (64x64) Parity Plot on Test Set&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>在相同的 17 个手工描述符上，64×64 MLP 的测试集 RMSE 约为 1.19，与第 02 讲的随机森林（1.17）几乎持平。这印证了我们在开篇提出的观点：<strong>当输入特征已经固定为低维手工描述符时，单纯将模型替换为多层感知机并不会带来性能飞跃。</strong></p>
+<hr />
+<h2 id="6-过拟合诊断-三类正则化对策与-mc-dropout-不确定性">6. 过拟合诊断、三类正则化对策与 MC Dropout 不确定性</h2>
+<h3 id="6-1-盲目扩大网络容量带来的严重过拟合">6.1 盲目扩大网络容量带来的严重过拟合</h3>
+<p>如果我们将每个隐藏层的神经元数目从 64 扩大 8 倍至 512（参数量从 5,377 暴增约 50 倍至 272,385），并训练 150 轮，结果会变好吗？</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [18] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">big_mlp</span> <span class="o">=</span> <span class="n">SolubilityMLP</span><span class="p">(</span><span class="n">n_features</span><span class="o">=</span><span class="mi">17</span><span class="p">,</span> <span class="n">hidden_size</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;大容量 MLP 参数总数:&quot;</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">big_mlp</span><span class="o">.</span><span class="n">parameters</span><span class="p">()))</span>
+<span class="n">big_history</span><span class="p">,</span> <span class="n">big_best_state</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">big_mlp</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+<span class="n">plot_history</span><span class="p">(</span><span class="n">big_history</span><span class="p">,</span> <span class="s2">&quot;Overfitting in Large MLP (512x512, No Regularization)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;第 150 轮 -&gt; 训练 RMSE: </span><span class="si">{</span><span class="n">big_history</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> | 验证 RMSE: </span><span class="si">{</span><span class="n">big_history</span><span class="p">[</span><span class="s1">&#39;valid&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>学习曲线呈现出教科书式的<strong>过拟合（Overfitting）</strong>：训练 RMSE 一路下探到 0.57，而验证 RMSE 在前 20 轮触底后便持续抬头恶化到 1.41 以上。拥有 27 万个参数的网络对仅含 6825 个样本的训练集产生了严重记忆效应。</p>
+<p>抑制神经网络过拟合有三种最经典且互补的技术：</p>
+<h3 id="6-2-对策一-早停-early-stopping">6.2 对策一：早停（Early Stopping）</h3>
+<p>最直接的对策是在验证集误差达到最低点的那一轮及时停止，并回滚加载当时的模型权重（<code>best_state</code>）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [19] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;第 150 轮末尾模型 测试 RMSE: </span><span class="si">{</span><span class="n">rmse</span><span class="p">(</span><span class="n">big_mlp</span><span class="p">,</span><span class="w"> </span><span class="n">Xte</span><span class="p">,</span><span class="w"> </span><span class="n">yte</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">big_mlp</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">big_best_state</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;早停最佳轮次模型   测试 RMSE: </span><span class="si">{</span><span class="n">rmse</span><span class="p">(</span><span class="n">big_mlp</span><span class="p">,</span><span class="w"> </span><span class="n">Xte</span><span class="p">,</span><span class="w"> </span><span class="n">yte</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="6-3-对策二与三-dropout-与权重衰减-weight-decay">6.3 对策二与三：Dropout 与权重衰减（Weight Decay）</h3>
+<ul>
+<li><strong>Dropout（随机失活）</strong>：在训练阶段的每次前向传播中，以概率 <span class="math-inline" data-tex="p">\(p\)</span>（如 <span class="math-inline" data-tex="p=0.2">\(p=0.2\)</span>）独立随机地将隐藏层神经元输出置零，并将保留的神经元按 <span class="math-inline" data-tex="1/(1-p)">\(1/(1-p)\)</span> 缩放。这迫使网络不能过度依赖少数特定神经元的协同记忆，相当于在训练指数级多个共享权重的子网络集成。</li>
+<li><strong>权重衰减（Weight Decay / <span class="math-inline" data-tex="L_2">\(L_2\)</span> 正则化）</strong>：在损失函数中加入权重平方和惩罚项 <span class="math-inline" data-tex="\lambda \|\mathbf{w}\|_2^2">\(\lambda \|\mathbf{w}\|_2^2\)</span>，与第 02a 讲的岭回归（Ridge）同源，限制权重幅值过度膨胀。</li>
+</ul>
+<p>我们在 512×512 的大网络上同时开启 <code>dropout=0.2</code> 与 <code>weight_decay=1e-4</code> 重新训练 150 轮：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [20] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">reg_mlp</span> <span class="o">=</span> <span class="n">SolubilityMLP</span><span class="p">(</span><span class="n">n_features</span><span class="o">=</span><span class="mi">17</span><span class="p">,</span> <span class="n">hidden_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">reg_history</span><span class="p">,</span> <span class="n">reg_best_state</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">reg_mlp</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+<span class="n">plot_history</span><span class="p">(</span><span class="n">reg_history</span><span class="p">,</span> <span class="s2">&quot;Large MLP (512x512) + Dropout (0.2) + Weight Decay (1e-4)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;第 150 轮 -&gt; 训练 RMSE: </span><span class="si">{</span><span class="n">reg_history</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> | 验证 RMSE: </span><span class="si">{</span><span class="n">reg_history</span><span class="p">[</span><span class="s1">&#39;valid&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">reg_mlp</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">reg_best_state</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;正则化 + 早停后测试 RMSE: </span><span class="si">{</span><span class="n">rmse</span><span class="p">(</span><span class="n">reg_mlp</span><span class="p">,</span><span class="w"> </span><span class="n">Xte</span><span class="p">,</span><span class="w"> </span><span class="n">yte</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>加上 Dropout 与权重衰减后，验证误差曲线在 150 轮内始终保持平稳（最终验证 RMSE 从 1.41 降至约 1.15）。但汇总所有模型在同一测试集上的表现可以发现：</p>
+<table>
+<thead>
+<tr>
+<th>模型配置</th>
+<th>测试集 RMSE (<span class="math-inline" data-tex="\log S">\(\log S\)</span>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>随机森林（第 02a 讲，17 个描述符）</td>
+<td>1.17</td>
+</tr>
+<tr>
+<td>MLP 64×64</td>
+<td>1.19</td>
+</tr>
+<tr>
+<td>MLP 512×512（早停）</td>
+<td>1.17</td>
+</tr>
+<tr>
+<td>MLP 512×512（Dropout + 权重衰减 + 早停）</td>
+<td>1.17</td>
+</tr>
+</tbody>
+</table>
+<p>即便将参数量扩大 50 倍并配齐正则化手段，测试集 RMSE 依然停留在 1.17。原因很明确：<strong>当前的性能天花板受限于 17 个手工描述符的信息量（例如缺乏晶格能与熔点相关的三维堆积信息），而不在于回归器的非线性拟合能力。</strong></p>
+<h3 id="6-4-延伸应用-monte-carlo-dropout-mc-dropout-不确定性估计">6.4 延伸应用：Monte Carlo Dropout（MC Dropout）不确定性估计</h3>
+<p>在第 04 讲贝叶斯优化中，我们学习了高斯过程回归（GPR）如何天然输出预测均值 <span class="math-inline" data-tex="\mu(\mathbf{x})">\(\mu(\mathbf{x})\)</span> 与不确定性标准差 <span class="math-inline" data-tex="\sigma(\mathbf{x})">\(\sigma(\mathbf{x})\)</span>。那么在使用深度神经网络作为代理模型时，如何低成本地获取预测不确定性？</p>
+<p>Gal 与 Ghahramani（ICML 2016）证明：在<strong>推理阶段故意保持 Dropout 开启</strong>（即调用 <code>model.train()</code>），对同一个输入样本重复进行 <span class="math-inline" data-tex="T">\(T\)</span> 次随机前向传播，就等价于从近似贝叶斯后验分布中采样 <span class="math-inline" data-tex="T">\(T\)</span> 个子网络：</p>
+<div class="math-block" data-tex="\hat{\mu}(\mathbf{x}) = \frac{1}{T}\sum_{t=1}^{T} f_{\hat{\mathbf{w}}_t}(\mathbf{x}), \qquad \hat{\sigma}(\mathbf{x}) = \sqrt{\frac{1}{T}\sum_{t=1}^{T}\left(f_{\hat{\mathbf{w}}_t}(\mathbf{x}) - \hat{\mu}(\mathbf{x})\right)^2}">\[\hat{\mu}(\mathbf{x}) = \frac{1}{T}\sum_{t=1}^{T} f_{\hat{\mathbf{w}}_t}(\mathbf{x}), \qquad \hat{\sigma}(\mathbf{x}) = \sqrt{\frac{1}{T}\sum_{t=1}^{T}\left(f_{\hat{\mathbf{w}}_t}(\mathbf{x}) - \hat{\mu}(\mathbf{x})\right)^2}\]</div>
+<p>这种方法被称为 <strong>MC Dropout</strong>。下面我们利用刚刚训练好的 <code>reg_mlp</code> 对测试集分子做 <span class="math-inline" data-tex="T=50">\(T=50\)</span> 次 MC Dropout 采样，检验高不确定性样本是否确实对应更大的实际预测误差。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [21] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">mc_dropout_predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>  <span class="c1"># 关键：在推理时保持 Dropout 激活以进行蒙特卡洛采样</span>
+    <span class="n">preds</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_samples</span><span class="p">):</span>
+            <span class="n">preds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+    <span class="n">preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (n_samples, N)</span>
+    <span class="k">return</span> <span class="n">preds</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">preds</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+<span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">mc_mean</span><span class="p">,</span> <span class="n">mc_std</span> <span class="o">=</span> <span class="n">mc_dropout_predict</span><span class="p">(</span><span class="n">reg_mlp</span><span class="p">,</span> <span class="n">Xte</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">abs_err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">mc_mean</span> <span class="o">-</span> <span class="n">yte</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+
+<span class="c1"># 按 MC Dropout 不确定性标准差分为低、中、高三组，比较各组的实际 RMSE</span>
+<span class="n">quantiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">mc_std</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="o">/</span><span class="mi">3</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MC Dropout 不确定性分组验证:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="s2">&quot;低不确定性 (Bottom 1/3)&quot;</span><span class="p">,</span> <span class="s2">&quot;中不确定性 (Middle 1/3)&quot;</span><span class="p">,</span> <span class="s2">&quot;高不确定性 (Top 1/3)   &quot;</span><span class="p">]):</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">mc_std</span> <span class="o">&gt;=</span> <span class="n">quantiles</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mc_std</span> <span class="o">&lt;=</span> <span class="n">quantiles</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">group_rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">mc_mean</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">-</span> <span class="n">yte</span><span class="o">.</span><span class="n">numpy</span><span class="p">()[</span><span class="n">mask</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: 平均预测 std = </span><span class="si">{</span><span class="n">mc_std</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> | 实际测试 RMSE = </span><span class="si">{</span><span class="n">group_rmse</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>可以看到，随着 MC Dropout 给出的预测标准差从低到高递增，分子的实际预测 RMSE 也显著上升。这为我们提供了一种无需修改网络架构即可评估深度学习模型认知不确定性（Epistemic Uncertainty）的实用工具。</p>
+<h3 id="练习-07a-2-对比不同非线性激活函数">练习 07a-2：对比不同非线性激活函数</h3>
+<p>请编写一个支持自定义激活函数的新类 <code>FlexibleMLP(nn.Module)</code>（或在 <code>SolubilityMLP</code> 中增加 <code>activation=nn.ReLU</code> 参数），在 64×64 的网络结构下分别使用 <code>nn.ReLU</code> 和 <code>nn.Tanh</code> 训练 100 轮，打印两者在最后一轮和早停后的测试集 RMSE。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [22] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 07a-2：在此编写代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="7-学习率动力学与二分类扩展">7. 学习率动力学与二分类扩展</h2>
+<h3 id="7-1-学习率对收敛轨迹的影响">7.1 学习率对收敛轨迹的影响</h3>
+<p>学习率（<code>lr</code>）是训练神经网络最重要的超参数。下面我们在 64×64 MLP 上对比三个跨数量级的学习率：<code>1e-1</code>、<code>1e-3</code>（Adam 默认值）和 <code>1e-5</code>，各训练 30 轮。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [23] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.0</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">lr</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">1e-1</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">]:</span>
+    <span class="n">set_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">h</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">SolubilityMLP</span><span class="p">(</span><span class="n">n_features</span><span class="o">=</span><span class="mi">17</span><span class="p">),</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="s2">&quot;valid&quot;</span><span class="p">],</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;lr = </span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;lr = </span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">: 第 30 轮验证集 RMSE = </span><span class="si">{</span><span class="n">h</span><span class="p">[</span><span class="s1">&#39;valid&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Epoch&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Validation RMSE (logS)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Effect of Learning Rate on Adam Optimization&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>三条曲线清晰展示了学习率选择的经验准则：</p>
+<ul>
+<li><code>lr = 1e-5</code> 步长过小，30 轮后验证 RMSE 仍停留在 3.0 以上，甚至劣于直接预测训练集均值（RMSE 2.42）；</li>
+<li><code>lr = 1e-3</code> 是 Adam 优化器的黄金起点，下降平滑且迅速收敛至 1.18 左右；</li>
+<li><code>lr = 1e-1</code> 步长过大，参数在极小值附近来回跨越，导致验证曲线明显抖动且收敛精度受损。</li>
+</ul>
+<h3 id="练习-07a-3-将-mlp-改造为水溶解度二分类器">练习 07a-3：将 MLP 改造为水溶解度二分类器</h3>
+<p>神经网络只需更换损失函数即可无缝切换为分类模型。请将任务改为第 02c 讲的“判断分子是否难溶（<span class="math-inline" data-tex="\log S &lt; -4">\(\log S &lt; -4\)</span>）”：</p>
+<ol>
+<li>将训练、验证、测试集的标签转换为浮点型 0/1 张量：<code>y_cls = (y &lt; -4).astype(float)</code>；</li>
+<li>保持 <code>SolubilityMLP(n_features=17)</code> 架构不变（此时最后一层输出的实数称为 <strong>Logit</strong>）；</li>
+<li>使用内部集成 Sigmoid 数值稳定计算的二分类交叉熵损失 <code>nn.BCEWithLogitsLoss()</code> 训练 50 轮；</li>
+<li>预测正类概率为 <code>torch.sigmoid(model(X))</code>，调用 <code>sklearn.metrics.roc_auc_score</code> 计算测试集 ROC-AUC，并与第 02c 讲的随机森林分类器（ROC-AUC <span class="math-inline" data-tex="\approx 0.953">\(\approx 0.953\)</span>）对比。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [24] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 07a-3：在此编写代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="本节小结">本节小结</h2>
+<table>
+<thead>
+<tr>
+<th>核心概念</th>
+<th>PyTorch 实现与物理/算法要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>人工神经元与激活函数</strong></td>
+<td>线性仿射变换 + 非线性激活（<code>nn.ReLU</code>）；若无非线性激活，多层堆叠退化为单层线性回归</td>
+</tr>
+<tr>
+<td><strong>张量与自动微分</strong></td>
+<td><code>torch.tensor(..., dtype=torch.float32)</code>；<code>requires_grad=True</code> 追踪计算图，<code>.backward()</code> 自动求导</td>
+</tr>
+<tr>
+<td><strong>模型封装与小批量训练</strong></td>
+<td>继承 <code>nn.Module</code> 实现 <code>__init__</code> 与 <code>forward</code>；配合 <code>DataLoader</code> 执行 <code>zero_grad -&gt; backward -&gt; step</code></td>
+</tr>
+<tr>
+<td><strong>过拟合与正则化三剑客</strong></td>
+<td>验证集早停（Early Stopping）、随机失活（<code>nn.Dropout</code>）、权重衰减（<code>weight_decay</code>）</td>
+</tr>
+<tr>
+<td><strong>MC Dropout 不确定性</strong></td>
+<td>推理阶段保持 <code>model.train()</code> 多次采样计算均值与标准差，高标准差区域对应更高的外推风险</td>
+</tr>
+<tr>
+<td><strong>表格数据的模型瓶颈</strong></td>
+<td>在相同的 17 个手工描述符上，MLP 与随机森林精度相当（RMSE <span class="math-inline" data-tex="\approx 1.17">\(\approx 1.17\)</span>）；深度学习的真正威力在于直接处理图像、序列与分子图</td>
+</tr>
+</tbody>
+</table>
+<p>在下一节 <code>07b_cnn_microstructure.ipynb</code> 中，我们将离开手工表格特征，进入深度学习真正大放异彩的第一个领域——使用**卷积神经网络（CNN）**直接从二维材料显微图像（SEM/金相微结构）中识别相貌并定量提取相体积分数。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/07-neural-networks-and-cnns/07a_neural_networks.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/07-neural-networks-and-cnns.html">返回模块 07</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../modules/07-neural-networks-and-cnns.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">模块 07 · 神经网络与材料显微视觉 CNN</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">07b · 卷积神经网络与材料显微图像（SEM/金相）智能分析</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l3"><a href="#本节大纲">本节大纲</a></li>      <li class="toc-l2"><a href="#1-人工神经元与非线性激活函数">1. 人工神经元与非线性激活函数</a></li>      <li class="toc-l3"><a href="#1-1-从线性回归到多层感知机">1.1 从线性回归到多层感知机</a></li>      <li class="toc-l3"><a href="#1-2-为什么必须引入非线性激活函数">1.2 为什么必须引入非线性激活函数？</a></li>      <li class="toc-l2"><a href="#2-pytorch-核心基石-张量与自动微分">2. PyTorch 核心基石：张量与自动微分</a></li>      <li class="toc-l3"><a href="#2-1-张量-tensor">2.1 张量（Tensor）</a></li>      <li class="toc-l3"><a href="#2-2-自动微分-autograd">2.2 自动微分（Autograd）</a></li>      <li class="toc-l2"><a href="#3-手写梯度下降-拟合-yalkowsky-溶解度线性项">3. 手写梯度下降：拟合 Yalkowsky 溶解度线性项</a></li>      <li class="toc-l2"><a href="#4-python-的类-class-与-nn-module-封装规范">4. Python 的类（class）与 nn.Module 封装规范</a></li>      <li class="toc-l3"><a href="#练习-07a-1-扩展自定义类的方法">练习 07a-1：扩展自定义类的方法</a></li>      <li class="toc-l2"><a href="#5-搭建并训练第一个多层感知机-mlp">5. 搭建并训练第一个多层感知机（MLP）</a></li>      <li class="toc-l3"><a href="#5-1-训练集-验证集与测试集的严格划分">5.1 训练集、验证集与测试集的严格划分</a></li>      <li class="toc-l3"><a href="#5-2-小批量迭代-mini-batch-与-dataloader">5.2 小批量迭代（Mini-batch）与 DataLoader</a></li>      <li class="toc-l3"><a href="#5-3-定义多层感知机架构-solubilitymlp">5.3 定义多层感知机架构 SolubilityMLP</a></li>      <li class="toc-l3"><a href="#5-4-标准训练循环与基线评估">5.4 标准训练循环与基线评估</a></li>      <li class="toc-l2"><a href="#6-过拟合诊断-三类正则化对策与-mc-dropout-不确定性">6. 过拟合诊断、三类正则化对策与 MC Dropout 不确定性</a></li>      <li class="toc-l3"><a href="#6-1-盲目扩大网络容量带来的严重过拟合">6.1 盲目扩大网络容量带来的严重过拟合</a></li>      <li class="toc-l3"><a href="#6-2-对策一-早停-early-stopping">6.2 对策一：早停（Early Stopping）</a></li>      <li class="toc-l3"><a href="#6-3-对策二与三-dropout-与权重衰减-weight-decay">6.3 对策二与三：Dropout 与权重衰减（Weight Decay）</a></li>      <li class="toc-l3"><a href="#6-4-延伸应用-monte-carlo-dropout-mc-dropout-不确定性估计">6.4 延伸应用：Monte Carlo Dropout（MC Dropout）不确定性估计</a></li>      <li class="toc-l3"><a href="#练习-07a-2-对比不同非线性激活函数">练习 07a-2：对比不同非线性激活函数</a></li>      <li class="toc-l2"><a href="#7-学习率动力学与二分类扩展">7. 学习率动力学与二分类扩展</a></li>      <li class="toc-l3"><a href="#7-1-学习率对收敛轨迹的影响">7.1 学习率对收敛轨迹的影响</a></li>      <li class="toc-l3"><a href="#练习-07a-3-将-mlp-改造为水溶解度二分类器">练习 07a-3：将 MLP 改造为水溶解度二分类器</a></li>      <li class="toc-l2"><a href="#本节小结">本节小结</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

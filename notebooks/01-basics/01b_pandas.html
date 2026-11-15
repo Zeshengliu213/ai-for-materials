@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 01b · 文件读写与 Pandas 表格处理 在上一节（01a）的最后，我们用“列表套字典”拼出了一张包含三个分子的小表。但在真实的科研工作里，数据往往来自仪器导出的文本、文献附件里的 Excel，或是包含上万个化合物的 CSV 数据库。在实际做机器学习项目时，大约八成的时间都花在 数据" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="01b · 文件读写与 Pandas 表格处理 | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 01b · 文件读写与 Pandas 表格处理 在上一节（01a）的最后，我们用“列表套字典”拼出了一张包含三个分子的小表。但在真实的科研工作里，数据往往来自仪器导出的文本、文献附件里的 Excel，或是包含上万个化合物的 CSV 数据库。在实际做机器学习项目时，大约八成的时间都花在 数据" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/01-basics/01b_pandas.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/01-basics/01b_pandas.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>01b · 文件读写与 Pandas 表格处理 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01a_python_crash_course.html"
+           data-progress-mark="notebooks/01-basics/01a_python_crash_course.html"
+>📓 01a_python_crash_course.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01b_pandas.html"
+           data-progress-mark="notebooks/01-basics/01b_pandas.html"
+class="active">📓 01b_pandas.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01c_plotting.html"
+           data-progress-mark="notebooks/01-basics/01c_plotting.html"
+>📓 01c_plotting.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01d_rdkit_basics.html"
+           data-progress-mark="notebooks/01-basics/01d_rdkit_basics.html"
+>📓 01d_rdkit_basics.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01e_exercises.html"
+           data-progress-mark="notebooks/01-basics/01e_exercises.html"
+>🏋️ 01e_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/01-basics.html">模块 01：Python 与化学/材料数据基础</a> /  <span>01b_pandas.ipynb</span>
+</div>
+<h1>01b · 文件读写与 Pandas 表格处理</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>01b_pandas.ipynb</code>（30.8 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/01%20-%20Basics/01b_pandas.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/bb552e82cac0-01b_pandas.ipynb" download="01b_pandas.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/01-basics/01_basics_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/01-basics/01b_pandas.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/01%20-%20Basics/01b_pandas.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>01b · 文件读写与 Pandas 表格处理</h1>
+<p>在上一节（<code>01a</code>）的最后，我们用“列表套字典”拼出了一张包含三个分子的小表。但在真实的科研工作里，数据往往来自仪器导出的文本、文献附件里的 Excel，或是包含上万个化合物的 CSV 数据库。在实际做机器学习项目时，大约八成的时间都花在<strong>数据的读取、清洗、筛选和整理</strong>上。</p>
+<p>这一节我们分两步走：</p>
+<ol>
+<li>先看怎样用纯 Python 读写最基础的文本文件（理解底层文件操作）；</li>
+<li>重点掌握 <strong><a href="https://pandas.pydata.org/">Pandas</a></strong>——Python 处理表格数据的标准工具，用它来探索一个包含近万个化合物的真实水溶解度数据集（<strong>AqSolDB</strong>）。</li>
+</ol>
+<h3 id="本节内容">本节内容</h3>
+<ol>
+<li>纯 Python 读写文本文件</li>
+<li>Pandas 入门：从字典列表到 DataFrame，读入 AqSolDB 数据集</li>
+<li>数据初探：查看表格结构与统计概览</li>
+<li>选列、选行与条件筛选</li>
+<li>排序与极值查找</li>
+<li>特征计算（加列、<code>apply</code>）与分组统计（<code>groupby</code>）</li>
+<li>多表合并（<code>merge</code> / <code>concat</code>）、缺失值处理与保存</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;01 - Basics&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-纯-python-读写文本文件">1. 纯 Python 读写文本文件</h2>
+<p>在调用大型工具库之前，我们先看看 Python 自带的文件读写是怎么工作的。假设你手头有一份常用有机半导体分子的名单，想把它存成硬盘上的一个 <code>.txt</code> 文本文件，每行写一个名字：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">osc_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;pentacene&quot;</span><span class="p">,</span> <span class="s2">&quot;rubrene&quot;</span><span class="p">,</span> <span class="s2">&quot;C8-BTBT&quot;</span><span class="p">,</span> <span class="s2">&quot;TIPS-pentacene&quot;</span><span class="p">,</span> <span class="s2">&quot;P3HT&quot;</span><span class="p">]</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;osc_names.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">osc_names</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>上面这三行代码是 Python 读写文件的标准写法：</p>
+<ul>
+<li><code>open(&quot;osc_names.txt&quot;, &quot;w&quot;)</code>：打开文件。第二个参数 <code>&quot;w&quot;</code>（write）表示<strong>写入模式</strong>（如果文件不存在会自动新建；如果已存在，则会清空覆盖原有内容。想在文件末尾追加内容可以用 <code>&quot;a&quot;</code>，只读模式用 <code>&quot;r&quot;</code>）。</li>
+<li><code>with ... as f:</code>：这是一个安全管家——不管代码块里有没有报错，出了这个缩进块之后，Python 都会自动把文件关好，避免文件被锁死或数据没写进硬盘。</li>
+<li><code>&quot;\n&quot;.join(osc_names)</code>：用换行符 <code>\n</code> 作粘合剂，把列表里的 5 个字符串连成一段带换行的长文本：</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">osc_names</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>现在我们把刚才存好的 <code>osc_names.txt</code> 重新读回内存里。用 <code>f.readlines()</code> 可以把文件的每一行读成列表里的一个元素：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;osc_names.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>仔细看打印出来的列表：除了最后一个名字，前面每个名字末尾都带着一个尾巴 <code>\n</code>（换行符）。这就是为什么我们在 <code>01a</code> 里专门介绍了字符串的 <code>.strip()</code> 方法——配合列表推导式，一行就能把首尾的换行符和空格清理干净：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;osc_names.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>平时如果只是存几行日志、或者解析课题组自编程序输出的特殊文本（比如 Gaussian / VASP 的输出文件），<code>with open(...)</code> 非常管用。但如果面对的是规整的行列式表格数据，手写文件解析就太费劲了——这时候就该 <strong>Pandas</strong> 上场了。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-pandas-入门与数据集读入">2. Pandas 入门与数据集读入</h2>
+<p>可以把 <strong>Pandas</strong> 理解成“写代码版的 Excel”。它最重要的两个概念是：</p>
+<ul>
+<li><strong><code>DataFrame</code></strong>：整张二维表格（有行索引 Index，也有列名 Columns）。</li>
+<li><strong><code>Series</code></strong>：表格里的单独一列（或单独一行），底层其实就是带了标签的 NumPy 数组。</li>
+</ul>
+<p>还记得 <code>01a</code> 里我们写的那个“列表套字典” <code>molecules</code> 吗？把它直接传给 <code>pd.DataFrame(...)</code>，瞬间就变成了一张漂亮的表格：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="n">molecules</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;pentacene&quot;</span><span class="p">,</span> <span class="s2">&quot;homo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="s2">&quot;lumo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">3.2</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;rubrene&quot;</span><span class="p">,</span>   <span class="s2">&quot;homo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">5.4</span><span class="p">,</span> <span class="s2">&quot;lumo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">3.1</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;C60&quot;</span><span class="p">,</span>       <span class="s2">&quot;homo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">6.1</span><span class="p">,</span> <span class="s2">&quot;lumo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">4.0</span><span class="p">},</span>
+<span class="p">]</span>
+
+<span class="n">mini_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">molecules</span><span class="p">)</span>
+<span class="n">mini_df</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>当然，实际研究中的数据表通常存在 CSV（逗号分隔值）或 Excel 文件里，常用的读写命令只有四行：</p>
+<pre><code class="language-python"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;file.csv&quot;</span><span class="p">)</span>          <span class="c1"># 读取 CSV 文件</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="s2">&quot;file.xlsx&quot;</span><span class="p">)</span>       <span class="c1"># 读取 Excel 文件</span>
+<span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;out.csv&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>     <span class="c1"># 保存为 CSV（不保存左侧行号）</span>
+<span class="n">df</span><span class="o">.</span><span class="n">to_excel</span><span class="p">(</span><span class="s2">&quot;out.xlsx&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># 保存为 Excel</span>
+</pre></div>
+</code></pre>
+<h3 id="本章主线数据集-aqsoldb-水溶解度数据库">本章主线数据集：AqSolDB 水溶解度数据库</h3>
+<p>接下来几节课，我们会反复使用 <strong>AqSolDB</strong>（Sorkun 等, <em>Scientific Data</em>, 2019）数据集。它收集了 <strong>9482 个化合物</strong>在室温下的实验水溶解度，并预先用 RDKit 算好了 17 个分子描述符。主要字段包括：</p>
+<table>
+<thead>
+<tr>
+<th>列名</th>
+<th>物理化学含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Name</code></td>
+<td>化合物名称</td>
+</tr>
+<tr>
+<td><code>SMILES</code></td>
+<td>分子结构的字符串表示（<code>01d</code> 详述）</td>
+</tr>
+<tr>
+<td><code>Solubility</code></td>
+<td>实验水溶解度 <span class="math-inline" data-tex="\log S">\(\log S\)</span>，单位 <span class="math-inline" data-tex="\log_{10}(\text{mol/L})">\(\log_{10}(\text{mol/L})\)</span>。<strong>数值越大越易溶</strong>（例如 <span class="math-inline" data-tex="0">\(0\)</span> 代表 <span class="math-inline" data-tex="1\text{ mol/L}">\(1\text{ mol/L}\)</span>，<span class="math-inline" data-tex="-6">\(-6\)</span> 代表 <span class="math-inline" data-tex="1\text{ }\mu\text{mol/L}">\(1\text{ }\mu\text{mol/L}\)</span>）</td>
+</tr>
+<tr>
+<td><code>MolWt</code></td>
+<td>相对分子质量 (g/mol)</td>
+</tr>
+<tr>
+<td><code>MolLogP</code></td>
+<td>辛醇/水分配系数的计算值（<span class="math-inline" data-tex="\log P">\(\log P\)</span>），数值越大代表分子越疏水（“亲油”）</td>
+</tr>
+<tr>
+<td><code>NumAromaticRings</code></td>
+<td>芳香环个数</td>
+</tr>
+<tr>
+<td><code>NumHeteroatoms</code></td>
+<td>杂原子（非碳、氢原子）个数</td>
+</tr>
+<tr>
+<td><code>TPSA</code></td>
+<td>拓扑极性表面积 (Å²)，反映极性基团暴露的面积</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>为什么做有机光电材料也要关心“溶解度”？</strong>
+大面积柔性有机电子器件（如旋涂、刮涂、喷墨打印制备的 OFET 和 OPV）依赖<strong>溶液加工</strong>。然而，为了获得高迁移率，有机半导体需要大尺寸的刚性 <span class="math-inline" data-tex="\pi">\(\pi\)</span> 共轭稠环骨架，这会导致极强的分子间 <span class="math-inline" data-tex="\pi\text{--}\pi">\(\pi\text{--}\pi\)</span> 堆积，使分子像砖头一样难溶。因此，化学家必须在共轭核上引入柔性侧链（如 TIPS-并五苯的硅烷基、C8-BTBT 的辛基、P3HT 的己基）来改善溶解度。在这份数据里，我们会亲眼验证“芳香环越多、分子量越大，溶解度怎样急剧下降”。</p>
+</blockquote>
+<p>运行下面的代码读入 <code>data/solubility.csv</code>：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="c1"># 本地运行时直接读取 data/solubility.csv；如果在 Colab 上找不到文件，会弹出上传按钮</span>
+<span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;data/solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">google.colab</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;请上传 solubility.csv&quot;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;找不到 solubility.csv，请确保它在 data/ 目录下&quot;</span><span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;读取成功！共包含 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个化合物。&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-数据初探-查看表格结构与统计概览">3. 数据初探：查看表格结构与统计概览</h2>
+<p>拿到一份陌生的数据集，千万不要上来就往模型里塞，第一步永远是先摸清它的长相：有几行几列？每列叫什么名字？有没有缺失值？数值范围大概在什么区间？</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>          <span class="c1"># 查看前 5 行（括号里填数字比如 df.head(10) 可以看前 10 行；看末尾用 df.tail()）</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;表格尺寸 (行数, 列数):&quot;</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>   <span class="c1"># 注意 shape 是属性，不带括号</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;所有列名:&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>          <span class="c1"># 检查每一列的数据类型 (float64 / int64 / object) 以及非空值数量</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><code>df.describe()</code> 是最省事的体检工具，它会一口气算出所有数值列的均值（<code>mean</code>）、标准差（<code>std</code>）、最小值（<code>min</code>）、四分位数（<code>25%</code>, <code>50%</code>, <code>75%</code>）和最大值（<code>max</code>）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-01b-1">🏋️ 练习 01b-1</h3>
+<p>观察上面 <code>df.describe()</code> 输出的表格，回答两个问题（直接双击下面那格文字写下你的结论即可）：</p>
+<ol>
+<li>数据集中水溶解度 <code>Solubility</code>（<span class="math-inline" data-tex="\log S">\(\log S\)</span>）的**平均值（<code>mean</code>）<strong>和</strong>中位数（<code>50%</code>）**分别是多少？</li>
+<li>相对分子质量 <code>MolWt</code> 的**最大值（<code>max</code>）**是多少？它看起来像一个普通的小分子吗？这给你什么提醒？</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><em>双击这里写下你的观察</em></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-选列-选行与条件筛选">4. 选列、选行与条件筛选</h2>
+<h3 id="4-1-取出单独一列或多列">4.1 取出单独一列或多列</h3>
+<p>从 <code>DataFrame</code> 里按列名取数据，语法和字典非常像：</p>
+<ul>
+<li>传<strong>一个列名字符串</strong> <code>df[&quot;Solubility&quot;]</code>，取出来的是单列（<code>Series</code>）；</li>
+<li>传<strong>一个包含多个列名的列表</strong> <code>df[[&quot;Name&quot;, &quot;Solubility&quot;, &quot;MolWt&quot;]]</code>（注意是两层方括号！外层表示索引，内层是一个列表），取出来的是一张只包含这几列的新 <code>DataFrame</code>。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">df</span><span class="p">[[</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>取出来的单列（<code>Series</code>）自带丰富的统计方法。除了 <code>.mean()</code>、<code>.max()</code>、<code>.min()</code>，对于离散的整数或类别列，<code>.value_counts()</code> 可以直接统计每个值出现了多少次：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;平均 logS:&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="mi">2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;最大 logS:&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="mi">2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">不同芳香环数的分子数量分布（前 6 项）:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">6</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="4-2-按位置或标签选行-iloc-与-loc">4.2 按位置或标签选行（<code>iloc</code> 与 <code>loc</code>）</h3>
+<p>想取表格里的某几行时，Pandas 提供了两套索引器：</p>
+<ul>
+<li><strong><code>df.iloc[...]</code></strong>（integer location）：纯粹按<strong>第几行、第几列的整数位置</strong>（从 0 开始）来取，规则和 Python 列表切片完全一致。</li>
+<li><strong><code>df.loc[行标签, 列名]</code></strong>（label location）：按<strong>行索引标签（Index）和列名</strong>来取。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>          <span class="c1"># 取第 0 行的全部字段</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [16] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="mi">13</span><span class="p">]</span>      <span class="c1"># 切片：取第 10、11、12 行（左闭右开，不含 13）</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [17] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 用 .loc 同时指定行标签和列名：</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;第 0 行的分子名称:&quot;</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Name&quot;</span><span class="p">])</span>
+
+<span class="c1"># 配合 .idxmin()（返回最小值所在的行标签）找出水溶解度最低的那个分子：</span>
+<span class="n">min_idx</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">idxmin</span><span class="p">()</span>
+<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">min_idx</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;SMILES&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">]]</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="4-3-按条件筛选行-布尔索引">4.3 按条件筛选行（布尔索引）</h3>
+<p>在实际数据分析中，我们很少靠背行号去取数据，绝大多数时候都是<strong>按条件筛选</strong>（比如“挑出所有极易溶于水的分子”或“挑出所有不含杂原子的多环芳烃”）。</p>
+<p>它的原理和 <code>01a</code> 最后学的 NumPy 数组筛选一模一样：先写出一个比较条件 <code>df[&quot;Solubility&quot;] &gt; 0</code>，这会产生一列由 <code>True</code> 和 <code>False</code> 组成的掩码（Mask）；再把这列掩码塞进 <code>df[...]</code>，就只留下结果为 <code>True</code> 的那些行：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [18] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">mask</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;logS &gt; 0 的分子共有:&quot;</span><span class="p">,</span> <span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="s2">&quot;个&quot;</span><span class="p">)</span>    <span class="c1"># 求和时 True 算 1，False 算 0</span>
+
+<span class="c1"># 把条件放进 df[...] 中筛选出对应行：</span>
+<span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">][[</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;SMILES&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><blockquote>
+<p><strong>多条件组合的语法坑</strong>：在 Pandas 里组合多个条件时，<strong>不能用 <code>and</code> / <code>or</code></strong>，必须改用符号 <strong><code>&amp;</code></strong>（并且）、<strong><code>|</code></strong>（或者）、<strong><code>~</code></strong>（取反）；而且由于运算符优先级的原因，<strong>每一个条件都必须用圆括号 <code>(...)</code> 括起来</strong>！</p>
+</blockquote>
+<p>例如，我们要筛选出“含有至少 3 个芳香环，且完全不含杂原子”的多环芳烃（PAH）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [19] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">pah</span> <span class="o">=</span> <span class="n">df</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;NumHeteroatoms&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;共筛出 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pah</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个多环芳烃：&quot;</span><span class="p">)</span>
+<span class="n">pah</span><span class="p">[[</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;SMILES&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>如果想按字符串列（比如 <code>Name</code> 或 <code>SMILES</code>）来筛选，可以通过 <code>.str</code> 调用各种字符串方法，比如 <code>.str.lower()</code>（转小写）、<code>.str.isin(...)</code>（在名单内）或 <code>.str.contains(...)</code>（包含某个词）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [20] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 找出名字里有 &quot;thiophene&quot;（噻吩，不区分大小写）的化合物</span>
+<span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;Name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s2">&quot;thiophene&quot;</span><span class="p">,</span> <span class="n">case</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">na</span><span class="o">=</span><span class="kc">False</span><span class="p">)][[</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;SMILES&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-01b-2">🏋️ 练习 01b-2</h3>
+<ol>
+<li>模仿 4.2 节 <code>.idxmin()</code> 的用法，用 <code>df[&quot;MolWt&quot;].idxmax()</code> 找出数据集中<strong>相对分子质量最大</strong>的那个化合物，打印出它的 <code>Name</code>、<code>MolWt</code> 和 <code>Solubility</code>。</li>
+<li>统计一下数据集中同时满足 <strong><code>MolLogP &gt; 5</code> 且 <code>Solubility &lt; -6</code></strong>（既高度疏水、又极难溶）的化合物一共有多少个？</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [21] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-排序与极值查找">5. 排序与极值查找</h2>
+<p>除了按条件过滤，我们经常想把筛选出来的数据按某个指标排个序。用 <code>df.sort_values(&quot;列名&quot;)</code> 默认按从小到大（升序）排列，加上 <code>ascending=False</code> 则按从大到小（降序）排列。</p>
+<p>下面我们把常见稠环芳烃（苯、萘、蒽、芘、苝）从表里挑出来，按芳香环数从小到大排个队，看看溶解度是怎么随共轭核增大而变化的：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [22] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">acene_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;naphthalene&quot;</span><span class="p">,</span> <span class="s2">&quot;anthracene&quot;</span><span class="p">,</span> <span class="s2">&quot;pyrene&quot;</span><span class="p">,</span> <span class="s2">&quot;perylene&quot;</span><span class="p">]</span>
+<span class="n">acenes_df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;Name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">acene_names</span><span class="p">)]</span>
+
+<span class="n">acenes_df</span><span class="p">[[</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;MolWt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>可以看到非常清晰的阶梯式下降：单环的苯 <span class="math-inline" data-tex="\log S = -1.64">\(\log S = -1.64\)</span>，二环的萘降到 <span class="math-inline" data-tex="-3.61">\(-3.61\)</span>，三环的蒽降到 <span class="math-inline" data-tex="-6.59">\(-6.59\)</span>，五环的苝（perylene）更是跌到了 <span class="math-inline" data-tex="-8.80">\(-8.80\)</span>！因为 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 是以 10 为底的对数，从苯到苝，<span class="math-inline" data-tex="\log S">\(\log S\)</span> 差了约 <span class="math-inline" data-tex="7.16">\(7.16\)</span> 个单位——意味着水溶解度足足下降了 <strong><span class="math-inline" data-tex="10^7">\(10^7\)</span>（一千万）倍</strong>以上。</p>
+<p>如果只想看整张表里最难溶或最易溶的前几名，也可以直接用 <code>sort_values</code>（或者快捷方法 <code>df.nsmallest(5, &quot;Solubility&quot;)</code> / <code>df.nlargest(5, &quot;Solubility&quot;)</code>）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [23] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 看看全库里最难溶于水的前 5 个化合物（升序前 5 行）：</span>
+<span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;Solubility&quot;</span><span class="p">)[[</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="6-特征计算与分组统计">6. 特征计算与分组统计</h2>
+<h3 id="6-1-整列运算新增一列">6.1 整列运算新增一列</h3>
+<p>因为 Pandas 的列底层是 NumPy 数组，所以直接对整列做加减乘除或指数运算，就能生成新的特征列。比如把对数溶解度 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 还原成摩尔浓度（mol/L），再乘以分子量换算成质量浓度（g/L）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [24] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility_molL&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span>                  <span class="c1"># mol/L</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility_gL&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility_molL&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolWt&quot;</span><span class="p">]</span>       <span class="c1"># g/L</span>
+
+<span class="n">df</span><span class="p">[[</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility_molL&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility_gL&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="6-2-用-apply-对每个元素应用自定义函数">6.2 用 <code>.apply()</code> 对每个元素应用自定义函数</h3>
+<p>如果新列的逻辑包含 <code>if / elif / else</code> 判断（或者后面 <code>01d</code> 要讲的 RDKit 分子操作），没法直接写成简单的加减乘除，就可以先写一个普通的 Python 函数，再用 <code>.apply(函数名)</code> 让 Pandas 自动把这一列的每个值挨个传进去计算：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [25] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">solubility_class</span><span class="p">(</span><span class="n">logs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">logs</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;highly soluble&quot;</span>     <span class="c1"># &gt;= 1 mol/L</span>
+    <span class="k">elif</span> <span class="n">logs</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;soluble&quot;</span>            <span class="c1"># 0.01 ~ 1 mol/L</span>
+    <span class="k">elif</span> <span class="n">logs</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">4</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;slightly soluble&quot;</span>   <span class="c1"># 0.1 mmol/L ~ 0.01 mol/L</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;insoluble&quot;</span>          <span class="c1"># &lt; 0.1 mmol/L</span>
+
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;sol_class&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">solubility_class</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;sol_class&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="6-3-分组统计-groupby">6.3 分组统计（<code>groupby</code>）</h3>
+<p>刚才我们只看了苯、萘、蒽、芘、苝这 5 个分子，就猜想“芳香环越多越难溶”。在全部 9482 个分子上，这个规律还成立吗？</p>
+<p>用 <code>df.groupby(&quot;分组列&quot;)[&quot;统计列&quot;].agg([...])</code> 可以按某个类别或整数把数据分成若干组，分别算出每组的均值、样本数等统计量（相当于 Excel 里的数据透视表）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [26] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">by_rings</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">)[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">agg</span><span class="p">([</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="s2">&quot;count&quot;</span><span class="p">])</span>
+<span class="n">by_rings</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>从 <code>0</code> 个芳香环到 <code>5</code> 个芳香环，平均 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 从 <code>-2.25</code> 一路单调下降到 <code>-6.42</code>，规律非常扎实。但同时也要留意右边的 <code>count</code>（样本数）列：含有 6 个以上芳香环的分子在库里只有寥寥十几个甚至几个——<strong>样本量太小时，算出来的均值极易受个别极端分子影响，统计上不再可靠</strong>。看平均值时永远要瞄一眼样本数。</p>
+<h3 id="练习-01b-3">🏋️ 练习 01b-3</h3>
+<ol>
+<li>按刚才生成的溶解度等级 <code>sol_class</code> 分组，计算每一组的<strong>平均相对分子质量（<code>MolWt</code>）<strong>和</strong>平均疏水常数（<code>MolLogP</code>）</strong>。</li>
+<li>观察算出来的表格，越难溶的组在分子量和疏水性上呈现什么趋势？</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [27] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="7-多表合并-缺失值处理与保存">7. 多表合并、缺失值处理与保存</h2>
+<h3 id="7-1-横向合并-merge-与缺失值-nan">7.1 横向合并（<code>merge</code>）与缺失值（<code>NaN</code>）</h3>
+<p>研究工作中常遇到数据分散在两张表里的情况：比如你自己在实验本上整理了一张“常用芳烃在有机电子中的用途表”（<code>roles</code>），现在想把 AqSolDB 里的溶解度和分子量匹配过来。只要两张表有共同的键（比如统一转成小写的分子名 <code>name</code>），就可以用 <code>.merge()</code> 把它们横向拼合：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [28] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">roles</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;naphthalene&quot;</span><span class="p">,</span> <span class="s2">&quot;anthracene&quot;</span><span class="p">,</span> <span class="s2">&quot;pyrene&quot;</span><span class="p">,</span> <span class="s2">&quot;perylene&quot;</span><span class="p">,</span> <span class="s2">&quot;pentacene&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;building block&quot;</span><span class="p">,</span> <span class="s2">&quot;early OFET&quot;</span><span class="p">,</span> <span class="s2">&quot;fluorescent probe&quot;</span><span class="p">,</span> <span class="s2">&quot;acceptor core&quot;</span><span class="p">,</span> <span class="s2">&quot;OFET benchmark&quot;</span><span class="p">],</span>
+<span class="p">})</span>
+
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;name_lower&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+<span class="n">merged</span> <span class="o">=</span> <span class="n">roles</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">df</span><span class="p">[[</span><span class="s2">&quot;name_lower&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">]],</span>
+                     <span class="n">left_on</span><span class="o">=</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">right_on</span><span class="o">=</span><span class="s2">&quot;name_lower&quot;</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)</span>
+<span class="n">merged</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>注意最后一行 <code>pentacene</code>（并五苯）：它的 <code>Solubility</code> 和 <code>MolWt</code> 显示为 <strong><code>NaN</code></strong>（Not a Number，代表<strong>缺失值</strong>）。这是因为并五苯实在太难溶了，AqSolDB 数据库里根本没有收录它的水溶解度！</p>
+<p>我们在 <code>merge</code> 时指定了 <code>how=&quot;left&quot;</code>（左连接），意思是“以左表 <code>roles</code> 为准，全部保留；右表里找不到的就填 <code>NaN</code>”。如果改成 <code>how=&quot;inner&quot;</code>（内连接），则只保留两张表里都存在的分子。</p>
+<p>面对表格里的缺失值 <code>NaN</code>，常用的检查和清理方法如下：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [29] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;每列的缺失值个数:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">merged</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+<span class="c1"># 最稳妥的做法：直接剔除含有缺失值的行</span>
+<span class="n">clean_merged</span> <span class="o">=</span> <span class="n">merged</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+<span class="n">clean_merged</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><blockquote>
+<p>Pandas 也提供 <code>.fillna(值)</code> 来填补缺失值，但在科学数据建模中要格外小心：<strong>千万不要随便编造一个数字（比如 0 或 -99）塞进去当成真实实验值</strong>，否则会严重误导机器学习模型。除非有明确的物理依据，通常优先剔除缺失样本，或者在特征列上使用训练集均值插补（第 2 章会具体讲）。</p>
+</blockquote>
+<h3 id="7-2-纵向拼接-concat-与保存结果">7.2 纵向拼接（<code>concat</code>）与保存结果</h3>
+<p>如果两张表的列结构完全一样（比如分别挑出了最易溶的 3 个分子和最难溶的 3 个分子），想把它们上下首尾接成一张表，用 <code>pd.concat([...])</code>：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [30] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">top3</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">)[[</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">]]</span>
+<span class="n">bottom3</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">nsmallest</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">)[[</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">]]</span>
+
+<span class="n">extremes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">top3</span><span class="p">,</span> <span class="n">bottom3</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">extremes</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>整理完的数据表，用 <code>.to_csv(&quot;文件名.csv&quot;, index=False)</code> 即可存盘。记得加上 <code>index=False</code>，否则 Pandas 会把左侧的 <code>0, 1, 2...</code> 行号也当成一列写进文件，下次读回来时就会多出一列讨厌的 <code>Unnamed: 0</code>：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [31] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">aromatic_df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">aromatic_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;aromatic_only.csv&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;已将 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">aromatic_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个含芳香环的分子保存至 aromatic_only.csv&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="小结">小结</h2>
+<p>这一节我们用 Pandas 走完了处理科研表格数据的标准流程：</p>
+<ul>
+<li><strong>读入与体检</strong>：<code>pd.read_csv()</code> 读表，第一时间用 <code>head()</code>、<code>shape</code>、<code>info()</code>、<code>describe()</code> 摸清数据规模与分布（还顺手抓出了分子量高达 5000+ 的异常大分子）；</li>
+<li><strong>定位与筛选</strong>：单列 <code>df[&quot;col&quot;]</code>、多列 <code>df[[&quot;a&quot;, &quot;b&quot;]]</code>，按位置用 <code>iloc</code>、按标签用 <code>loc</code>，按条件筛选用 <code>df[(条件1) &amp; (条件2)]</code>；</li>
+<li><strong>变换与聚合</strong>：通过向量化运算或 <code>.apply(函数)</code> 生成新特征列，用 <code>sort_values()</code> 排序，用 <code>groupby()</code> 分组统计验证了“芳香环越多、水溶解度越低”的规律；</li>
+<li><strong>拼接与导出</strong>：用 <code>merge()</code> 横向关联、处理 <code>NaN</code> 缺失值，最后用 <code>to_csv(index=False)</code> 保存结果。</li>
+</ul>
+<p><strong>下一节（<code>01c_plotting.ipynb</code>）</strong>：光看统计数字还不够直观，我们将用 <code>matplotlib</code> 和 <code>seaborn</code> 把这近万个分子的分布、趋势和相关性画成一目了然的科研图表。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/01-basics/01b_pandas.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/01-basics.html">返回模块 01</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/01-basics/01a_python_crash_course.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">01a · Python 与 Jupyter 基础速成</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/01-basics/01c_plotting.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">01c · 科研数据可视化：Matplotlib 与 Seaborn</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l3"><a href="#本节内容">本节内容</a></li>      <li class="toc-l2"><a href="#1-纯-python-读写文本文件">1. 纯 Python 读写文本文件</a></li>      <li class="toc-l2"><a href="#2-pandas-入门与数据集读入">2. Pandas 入门与数据集读入</a></li>      <li class="toc-l3"><a href="#本章主线数据集-aqsoldb-水溶解度数据库">本章主线数据集：AqSolDB 水溶解度数据库</a></li>      <li class="toc-l2"><a href="#3-数据初探-查看表格结构与统计概览">3. 数据初探：查看表格结构与统计概览</a></li>      <li class="toc-l3"><a href="#练习-01b-1">🏋️ 练习 01b-1</a></li>      <li class="toc-l2"><a href="#4-选列-选行与条件筛选">4. 选列、选行与条件筛选</a></li>      <li class="toc-l3"><a href="#4-1-取出单独一列或多列">4.1 取出单独一列或多列</a></li>      <li class="toc-l3"><a href="#4-2-按位置或标签选行-iloc-与-loc">4.2 按位置或标签选行（iloc 与 loc）</a></li>      <li class="toc-l3"><a href="#4-3-按条件筛选行-布尔索引">4.3 按条件筛选行（布尔索引）</a></li>      <li class="toc-l3"><a href="#练习-01b-2">🏋️ 练习 01b-2</a></li>      <li class="toc-l2"><a href="#5-排序与极值查找">5. 排序与极值查找</a></li>      <li class="toc-l2"><a href="#6-特征计算与分组统计">6. 特征计算与分组统计</a></li>      <li class="toc-l3"><a href="#6-1-整列运算新增一列">6.1 整列运算新增一列</a></li>      <li class="toc-l3"><a href="#6-2-用-apply-对每个元素应用自定义函数">6.2 用 .apply() 对每个元素应用自定义函数</a></li>      <li class="toc-l3"><a href="#6-3-分组统计-groupby">6.3 分组统计（groupby）</a></li>      <li class="toc-l3"><a href="#练习-01b-3">🏋️ 练习 01b-3</a></li>      <li class="toc-l2"><a href="#7-多表合并-缺失值处理与保存">7. 多表合并、缺失值处理与保存</a></li>      <li class="toc-l3"><a href="#7-1-横向合并-merge-与缺失值-nan">7.1 横向合并（merge）与缺失值（NaN）</a></li>      <li class="toc-l3"><a href="#7-2-纵向拼接-concat-与保存结果">7.2 纵向拼接（concat）与保存结果</a></li>      <li class="toc-l2"><a href="#小结">小结</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

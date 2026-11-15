@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 09d · 基础习题集：SELFIES、变分自编码器、代理模型防坑与扩散模型 本习题集配套第 09 讲（09a SELFIES 与分子 VAE、09b 目标导向逆向设计与代理模型防坑、09c 电镜图像超分辨率与去噪扩散模型），共包含 8 道自包含的基础编程练习 ，无需加载外部大型数据集即可" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="09d · 基础习题集：SELFIES、变分自编码器、代理模型防坑与扩散模型 | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 09d · 基础习题集：SELFIES、变分自编码器、代理模型防坑与扩散模型 本习题集配套第 09 讲（09a SELFIES 与分子 VAE、09b 目标导向逆向设计与代理模型防坑、09c 电镜图像超分辨率与去噪扩散模型），共包含 8 道自包含的基础编程练习 ，无需加载外部大型数据集即可" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/09-generative-models/09d_exercises.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/09-generative-models/09d_exercises.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>09d · 基础习题集：SELFIES、变分自编码器、代理模型防坑与扩散模型 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09a_vae_selfies.html"
+           data-progress-mark="notebooks/09-generative-models/09a_vae_selfies.html"
+>📓 09a_vae_selfies.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09b_goal_directed_generation.html"
+           data-progress-mark="notebooks/09-generative-models/09b_goal_directed_generation.html"
+>📓 09b_goal_directed_generation.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+           data-progress-mark="notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+>📓 09c_microscopy_diffusion_sr.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09d_exercises.html"
+           data-progress-mark="notebooks/09-generative-models/09d_exercises.html"
+class="active">🏋️ 09d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/09-generative-models.html">模块 09：生成模型：分子设计到电镜超分</a> /  <a href="../../exercises.html">习题</a> /  <span>09d_exercises.ipynb</span>
+</div>
+<h1><span class="kind-badge kind-exercise">习题</span> 09d · 基础习题集：SELFIES、变分自编码器、代理模型防坑与扩散模型</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    习题文件：<code>09d_exercises.ipynb</code>（13.1 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/09%20-%20Generative%20Models/09d_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/a88a37d096ed-09d_exercises.ipynb" download="09d_exercises.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/09-generative-models/09_exercises_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/09-generative-models/09d_exercises.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/09%20-%20Generative%20Models/09d_exercises.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>09d · 基础习题集：SELFIES、变分自编码器、代理模型防坑与扩散模型</h1>
+<p>本习题集配套第 09 讲（<code>09a</code> SELFIES 与分子 VAE、<code>09b</code> 目标导向逆向设计与代理模型防坑、<code>09c</code> 电镜图像超分辨率与去噪扩散模型），共包含 <strong>8 道自包含的基础编程练习</strong>，无需加载外部大型数据集即可独立运行检验。</p>
+<hr />
+<h2 id="习题-1-selfies-编码-符号切分与单点突变合法性验证">习题 1：SELFIES 编码、符号切分与单点突变合法性验证</h2>
+<p>在 <code>09a</code> 中我们学习了 <strong>SELFIES</strong> 如何通过形式语法状态机保证 100% 的化学价态合法性。</p>
+<p>请在下方实现函数 <code>selfies_roundtrip_and_mutate(smiles, replacement_token=&quot;[=O]&quot;)</code>：</p>
+<ol>
+<li>使用 <code>sf.encoder(smiles)</code> 将输入 SMILES 编码为 SELFIES 字符串，并用 <code>list(sf.split_selfies(...))</code> 切分为 token 列表；</li>
+<li>将 token 列表的正中间位置（<code>len(tokens) // 2</code>）替换为 <code>replacement_token</code>，再用 <code>sf.decoder(&quot;&quot;.join(tokens))</code> 解码回突变后的 SMILES；</li>
+<li>用 <code>Chem.MolFromSmiles</code> 检验突变后的 SMILES 是否依然是合法的分子，并返回 <code>(len(tokens), mutated_smiles, is_valid)</code>。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">selfies</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">selfies_roundtrip_and_mutate</span><span class="p">(</span><span class="n">smiles</span><span class="p">,</span> <span class="n">replacement_token</span><span class="o">=</span><span class="s2">&quot;[=O]&quot;</span><span class="p">):</span>
+    <span class="c1"># TODO:</span>
+    <span class="c1"># 1. 编码并切分为 SELFIES token 列表</span>
+    <span class="c1"># 2. 将索引 len(tokens)//2 处的 token 替换为 replacement_token 并解码为 SMILES</span>
+    <span class="c1"># 3. 返回 (原本 token 数, 突变后解码的 SMILES, Chem.MolFromSmiles 是否非 None)</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># print(selfies_roundtrip_and_mutate(&quot;c1ccc2c(c1)sc1c3ccccc3sc21&quot;))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-2-手写-vae-重参数化技巧与对角高斯-kl-散度">习题 2：手写 VAE 重参数化技巧与对角高斯 KL 散度</h2>
+<p>变分自编码器（VAE）的编码器输出均值 <span class="math-inline" data-tex="\boldsymbol{\mu}">\(\boldsymbol{\mu}\)</span> 与对数方差 <span class="math-inline" data-tex="\log \boldsymbol{\sigma}^2">\(\log \boldsymbol{\sigma}^2\)</span>（形状均为 <code>(B, d)</code>）：</p>
+<ol>
+<li><strong>重参数化采样</strong>：<span class="math-inline" data-tex="\mathbf{z} = \boldsymbol{\mu} + \exp\!\left(\tfrac{1}{2}\log \boldsymbol{\sigma}^2\right) \odot \boldsymbol{\epsilon}">\(\mathbf{z} = \boldsymbol{\mu} + \exp\!\left(\tfrac{1}{2}\log \boldsymbol{\sigma}^2\right) \odot \boldsymbol{\epsilon}\)</span>；</li>
+<li><strong>批平均 KL 散度</strong>：
+<div class="math-block" data-tex="D_{\text{KL}} = -\frac{1}{2B}\sum_{i=1}^{B}\sum_{j=1}^{d}\left(1 + \log \sigma_{ij}^2 - \mu_{ij}^2 - \exp(\log \sigma_{ij}^2)\right)">\[D_{\text{KL}} = -\frac{1}{2B}\sum_{i=1}^{B}\sum_{j=1}^{d}\left(1 + \log \sigma_{ij}^2 - \mu_{ij}^2 - \exp(\log \sigma_{ij}^2)\right)\]</div></li>
+</ol>
+<p>请在下方补全 <code>reparameterize(mu, logvar, eps)</code> 与 <code>kl_divergence(mu, logvar)</code>，并验证当 <code>mu = 0, logvar = 0</code> 时 KL 散度严格等于 <code>0.0</code>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">reparameterize</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span><span class="p">,</span> <span class="n">eps</span><span class="p">):</span>
+    <span class="c1"># TODO: 使用给定的标准正态噪声张量 eps 计算 z = mu + sigma * eps</span>
+    <span class="k">pass</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">kl_divergence</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span><span class="p">):</span>
+    <span class="c1"># TODO: 返回 batch 平均的标量 KL 散度 (float 或 0D Tensor)</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># z_mu = torch.zeros(4, 16)</span>
+<span class="c1"># z_lv = torch.zeros(4, 16)</span>
+<span class="c1"># print(&quot;Zero KL check:&quot;, float(kl_divergence(z_mu, z_lv)))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-3-高维潜空间中的直线插值-lerp-范数塌陷-vs-球面线性插值-slerp">习题 3：高维潜空间中的直线插值（Lerp）范数塌陷 vs. 球面线性插值（Slerp）</h2>
+<p>在 <span class="math-inline" data-tex="d = 128">\(d = 128\)</span> 维潜空间中，两个正交且模长均为 <span class="math-inline" data-tex="r">\(r\)</span> 的向量 <span class="math-inline" data-tex="\mathbf{z}_A, \mathbf{z}_B">\(\mathbf{z}_A, \mathbf{z}_B\)</span> 的直线中点 <span class="math-inline" data-tex="\frac{1}{2}(\mathbf{z}_A + \mathbf{z}_B)">\(\frac{1}{2}(\mathbf{z}_A + \mathbf{z}_B)\)</span> 模长会缩水为 <span class="math-inline" data-tex="r / \sqrt{2} \approx 0.707\,r">\(r / \sqrt{2} \approx 0.707\,r\)</span>，掉入高维球壳内部的空腔。</p>
+<p>请在下方实现函数 <code>compare_midpoint_norms(z_a, z_b)</code>，计算 <span class="math-inline" data-tex="t = 0.5">\(t = 0.5\)</span> 时的直线插值中点 <code>z_lerp_mid</code> 与球面线性插值中点 <code>z_slerp_mid</code>，并返回两者的欧氏范数 <code>(float(z_lerp_mid.norm()), float(z_slerp_mid.norm()))</code>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">slerp_midpoint</span><span class="p">(</span><span class="n">z_a</span><span class="p">,</span> <span class="n">z_b</span><span class="p">):</span>
+    <span class="c1"># TODO: 计算 t = 0.5 时的球面线性插值向量</span>
+    <span class="k">pass</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">compare_midpoint_norms</span><span class="p">(</span><span class="n">z_a</span><span class="p">,</span> <span class="n">z_b</span><span class="p">):</span>
+    <span class="c1"># TODO: 返回 ( ||0.5*(z_a+z_b)||_2, ||slerp_midpoint(z_a, z_b)||_2 )</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># torch.manual_seed(0)</span>
+<span class="c1"># a = torch.randn(128); a = a / a.norm() * 10.0</span>
+<span class="c1"># b = torch.randn(128); b = b / b.norm() * 10.0</span>
+<span class="c1"># print(&quot;Lerp vs Slerp midpoint norms:&quot;, compare_midpoint_norms(a, b))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-4-高维高斯球壳半径与-vae-先验空洞-prior-hole-定量计算">习题 4：高维高斯球壳半径与 VAE 先验空洞（Prior Hole）定量计算</h2>
+<p>在 <span class="math-inline" data-tex="d">\(d\)</span> 维空间中，标准正态先验 <span class="math-inline" data-tex="\mathbf{z} \sim \mathcal{N}(\mathbf{0}, \mathbf{I}_d)">\(\mathbf{z} \sim \mathcal{N}(\mathbf{0}, \mathbf{I}_d)\)</span> 的欧氏范数平方 <span class="math-inline" data-tex="\|\mathbf{z}\|_2^2 \sim \chi^2(d)">\(\|\mathbf{z}\|_2^2 \sim \chi^2(d)\)</span>，其模长高度集中在 <span class="math-inline" data-tex="\sqrt{d}">\(\sqrt{d}\)</span> 附近；若编码器学到的聚合后验每维标准差只有 <span class="math-inline" data-tex="s &lt; 1">\(s &lt; 1\)</span>（即 <span class="math-inline" data-tex="\mathbf{z}_{\text{enc}} \sim \mathcal{N}(\mathbf{0}, s^2 \mathbf{I}_d)">\(\mathbf{z}_{\text{enc}} \sim \mathcal{N}(\mathbf{0}, s^2 \mathbf{I}_d)\)</span>），则真实样本居住在半径 <span class="math-inline" data-tex="s\sqrt{d}">\(s\sqrt{d}\)</span> 的内层球壳上。</p>
+<p>请实现函数 <code>gaussian_shell_radii(d=128, posterior_std=0.55, n_samples=5000)</code>，通过蒙特卡洛采样返回 <code>(prior_median_norm, posterior_median_norm, theoretical_ratio)</code>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">gaussian_shell_radii</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">posterior_std</span><span class="o">=</span><span class="mf">0.55</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">5000</span><span class="p">):</span>
+    <span class="c1"># TODO:</span>
+    <span class="c1"># 1. 采样 z_prior ~ N(0, I) 与 z_post = posterior_std * z_prior</span>
+    <span class="c1"># 2. 计算两者模长的中位数，以及它们的比值 posterior_median / prior_median</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># print(gaussian_shell_radii(128, 0.55))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-5-二值-morgan-指纹的比特饱和-bit-saturation-实验">习题 5：二值 Morgan 指纹的比特饱和（Bit Saturation）实验</h2>
+<p>在 <code>09b</code> 第 3.2 节中，我们发现随机森林代理模型给 6 聚体和 12 聚体打出了完全相同的分数，根源在于<strong>二值 Morgan 指纹对重复局部子结构的饱和效应</strong>。</p>
+<p>请在下方编写函数 <code>count_oligomer_on_bits(monomer_smiles=&quot;c1ccc2nsnc2c1&quot;, lengths=(1, 2, 4, 6, 10))</code>：</p>
+<ol>
+<li>对每个聚合度 <code>k in lengths</code>，用 <code>&quot;-&quot;.join([monomer_smiles] * k)</code> 构造 <span class="math-inline" data-tex="k">\(k\)</span> 聚体 SMILES；</li>
+<li>提取半径 <code>radius=2, fpSize=2048</code> 的二值 Morgan 指纹，统计其中取值为 <code>1</code> 的非零比特个数（<code>On-Bits</code>）；</li>
+<li>返回字典 <code>{k: on_bit_count}</code>，观察从 <span class="math-inline" data-tex="k=3">\(k=3\)</span> 以后非零比特数为何彻底停止增长。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">rdFingerprintGenerator</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">count_oligomer_on_bits</span><span class="p">(</span><span class="n">monomer_smiles</span><span class="o">=</span><span class="s2">&quot;c1ccc2nsnc2c1&quot;</span><span class="p">,</span> <span class="n">lengths</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">10</span><span class="p">)):</span>
+    <span class="c1"># TODO: 构造 k 聚体并统计 2048 位二值 Morgan 指纹中 1 的个数</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># print(&quot;On-bits vs oligomer length:&quot;, count_oligomer_on_bits())</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-6-结合适用域过滤与悲观置信下界-lcb-的候选材料筛选器">习题 6：结合适用域过滤与悲观置信下界（LCB）的候选材料筛选器</h2>
+<p>给定 <span class="math-inline" data-tex="M">\(M\)</span> 个生成候选分子在包含 <span class="math-inline" data-tex="T">\(T\)</span> 棵决策树的随机森林上的预测矩阵 <code>tree_preds</code>（形状 <code>(M, T)</code>）以及每个候选分子到训练集的最近邻 Tanimoto 相似度数组 <code>max_sims</code>（形状 <code>(M,)</code>）：</p>
+<p>请实现函数 <code>select_best_candidate_lcb(tree_preds, max_sims, sim_threshold=0.40, kappa=2.0)</code>：</p>
+<ol>
+<li>计算每个候选分子的预测均值 <span class="math-inline" data-tex="\hat{\mu}_i">\(\hat{\mu}_i\)</span>、树间标准差 <span class="math-inline" data-tex="\hat{\sigma}_i">\(\hat{\sigma}_i\)</span> 以及悲观得分 <span class="math-inline" data-tex="\text{LCB}_i = \hat{\mu}_i - \kappa\,\hat{\sigma}_i">\(\text{LCB}_i = \hat{\mu}_i - \kappa\,\hat{\sigma}_i\)</span>；</li>
+<li>过滤掉所有 <code>max_sims &lt; sim_threshold</code> 的分布外分子；</li>
+<li>在通过适用域过滤的候选分子中，返回具有最高 <span class="math-inline" data-tex="\text{LCB}_i">\(\text{LCB}_i\)</span> 的原始候选索引 <code>best_idx</code> 与其对应的 <code>float(LCB[best_idx])</code>。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">select_best_candidate_lcb</span><span class="p">(</span><span class="n">tree_preds</span><span class="p">,</span> <span class="n">max_sims</span><span class="p">,</span> <span class="n">sim_threshold</span><span class="o">=</span><span class="mf">0.40</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="mf">2.0</span><span class="p">):</span>
+    <span class="c1"># TODO: 过滤 max_sims &lt; sim_threshold 的样本，在剩余样本中按 mean - kappa*std 选出最优索引与得分</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># fake_preds = np.array([[8.0, 4.0, 9.0, 3.0], [6.5, 6.4, 6.6, 6.5], [7.2, 7.0, 7.1, 7.3]])</span>
+<span class="c1"># fake_sims  = np.array([0.55, 0.62, 0.25])  # 第 2 号虽然均值高但超出适用域 (0.25 &lt; 0.40)</span>
+<span class="c1"># print(&quot;Selected (idx, LCB):&quot;, select_best_candidate_lcb(fake_preds, fake_sims))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-7-电镜超分辨率图像的峰值信噪比-psnr-计算">习题 7：电镜超分辨率图像的峰值信噪比（PSNR）计算</h2>
+<p>在 <code>09c</code> 中，峰值信噪比（PSNR）定义为（假设像素值归一化在 <span class="math-inline" data-tex="[0, 1]">\([0, 1]\)</span> 区间）：</p>
+<div class="math-block" data-tex="\text{MSE} = \frac{1}{N}\sum_{k=1}^{N} (\hat{I}_k - I_k)^2, \qquad \text{PSNR (dB)} = -10 \log_{10}(\text{MSE})">\[\text{MSE} = \frac{1}{N}\sum_{k=1}^{N} (\hat{I}_k - I_k)^2, \qquad \text{PSNR (dB)} = -10 \log_{10}(\text{MSE})\]</div>
+<p>请实现函数 <code>compute_psnr_db(pred, target)</code>，并验证当均方误差缩小为原来的 <span class="math-inline" data-tex="1/4">\(1/4\)</span>（即噪声幅度减半）时，PSNR 提升了约 <span class="math-inline" data-tex="6.02\text{ dB}">\(6.02\text{ dB}\)</span>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_psnr_db</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+    <span class="c1"># TODO: 计算 MSE 并返回 float(-10 * log10(MSE))</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># gt = torch.ones(1, 1, 16, 16) * 0.5</span>
+<span class="c1"># p1 = gt + 0.10</span>
+<span class="c1"># p2 = gt + 0.05</span>
+<span class="c1"># print(f&quot;PSNR(err=0.10) = {compute_psnr_db(p1, gt):.2f} dB, PSNR(err=0.05) = {compute_psnr_db(p2, gt):.2f} dB&quot;)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-8-去噪扩散模型-ddpm-的前向闭合加噪与信噪比计算">习题 8：去噪扩散模型（DDPM）的前向闭合加噪与信噪比计算</h2>
+<p>给定线性方差调度 <span class="math-inline" data-tex="\boldsymbol{\beta} = (\beta_1, \dots, \beta_T)">\(\boldsymbol{\beta} = (\beta_1, \dots, \beta_T)\)</span>，令 <span class="math-inline" data-tex="\alpha_t = 1 - \beta_t">\(\alpha_t = 1 - \beta_t\)</span>，<span class="math-inline" data-tex="\bar{\alpha}_t = \prod_{s=1}^t \alpha_s">\(\bar{\alpha}_t = \prod_{s=1}^t \alpha_s\)</span>。</p>
+<p>请在下方实现函数 <code>ddpm_forward_step(x0, t_index, betas, noise)</code>：</p>
+<ol>
+<li>计算累积信号保留率序列 <code>alphas_bar = torch.cumprod(1.0 - betas, dim=0)</code>；</li>
+<li>取出标量下标 <code>t_index</code> 对应的 <span class="math-inline" data-tex="\bar{\alpha}_t">\(\bar{\alpha}_t\)</span>，计算加噪图像 <span class="math-inline" data-tex="\mathbf{x}_t = \sqrt{\bar{\alpha}_t}\,\mathbf{x}_0 + \sqrt{1 - \bar{\alpha}_t}\,\boldsymbol{\epsilon}">\(\mathbf{x}_t = \sqrt{\bar{\alpha}_t}\,\mathbf{x}_0 + \sqrt{1 - \bar{\alpha}_t}\,\boldsymbol{\epsilon}\)</span>；</li>
+<li>计算该时刻的信噪比 <span class="math-inline" data-tex="\text{SNR}(t) = \bar{\alpha}_t / (1 - \bar{\alpha}_t)">\(\text{SNR}(t) = \bar{\alpha}_t / (1 - \bar{\alpha}_t)\)</span>，返回 <code>(x_t, float(snr_t))</code>。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">ddpm_forward_step</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">t_index</span><span class="p">,</span> <span class="n">betas</span><span class="p">,</span> <span class="n">noise</span><span class="p">):</span>
+    <span class="c1"># TODO: 计算 alphas_bar[t_index]，返回 (x_t, float(snr))</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># betas_demo = torch.linspace(1e-4, 0.08, 40)</span>
+<span class="c1"># x0_demo = torch.ones(1, 1, 8, 8)</span>
+<span class="c1"># eps_demo = torch.zeros(1, 1, 8, 8)</span>
+<span class="c1"># xt_out, snr_val = ddpm_forward_step(x0_demo, 10, betas_demo, eps_demo)</span>
+<span class="c1"># print(f&quot;x_t mean: {xt_out.mean().item():.4f}, SNR(t=10): {snr_val:.4f}&quot;)</span>
+</pre></div>
+</div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/09-generative-models/09d_exercises.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/09-generative-models.html">返回模块 09</a>  <a class="btn btn-secondary" href="../../exercises.html">全部习题汇总</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/09-generative-models/09c_microscopy_diffusion_sr.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">09c · 材料显微图像超分辨率与去噪扩散概率模型（DDPM）入门</span>
+  </a>  <a class="pager-link pager-next" href="../../modules/10-graph-neural-networks-and-mlips.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">模块 10 · 图神经网络（GNN）与机器学习势函数</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#习题-1-selfies-编码-符号切分与单点突变合法性验证">习题 1：SELFIES 编码、符号切分与单点突变合法性验证</a></li>      <li class="toc-l2"><a href="#习题-2-手写-vae-重参数化技巧与对角高斯-kl-散度">习题 2：手写 VAE 重参数化技巧与对角高斯 KL 散度</a></li>      <li class="toc-l2"><a href="#习题-3-高维潜空间中的直线插值-lerp-范数塌陷-vs-球面线性插值-slerp">习题 3：高维潜空间中的直线插值（Lerp）范数塌陷 vs. 球面线性插值（Slerp）</a></li>      <li class="toc-l2"><a href="#习题-4-高维高斯球壳半径与-vae-先验空洞-prior-hole-定量计算">习题 4：高维高斯球壳半径与 VAE 先验空洞（Prior Hole）定量计算</a></li>      <li class="toc-l2"><a href="#习题-5-二值-morgan-指纹的比特饱和-bit-saturation-实验">习题 5：二值 Morgan 指纹的比特饱和（Bit Saturation）实验</a></li>      <li class="toc-l2"><a href="#习题-6-结合适用域过滤与悲观置信下界-lcb-的候选材料筛选器">习题 6：结合适用域过滤与悲观置信下界（LCB）的候选材料筛选器</a></li>      <li class="toc-l2"><a href="#习题-7-电镜超分辨率图像的峰值信噪比-psnr-计算">习题 7：电镜超分辨率图像的峰值信噪比（PSNR）计算</a></li>      <li class="toc-l2"><a href="#习题-8-去噪扩散模型-ddpm-的前向闭合加噪与信噪比计算">习题 8：去噪扩散模型（DDPM）的前向闭合加噪与信噪比计算</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

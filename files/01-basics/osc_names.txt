@@ -1,0 +1,5 @@
+pentacene
+rubrene
+C8-BTBT
+TIPS-pentacene
+P3HT

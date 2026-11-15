@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PyTorch MLP、梯度下降与 MC Dropout 不确定性；卷积神经网络与显微图像识别。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="模块 07：神经网络与材料显微视觉 CNN | AI for Materials Science" />
+  <meta property="og:description" content="PyTorch MLP、梯度下降与 MC Dropout 不确定性；卷积神经网络与显微图像识别。" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/modules/07-neural-networks-and-cnns.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/modules/07-neural-networks-and-cnns.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../assets/pygments.css" />
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../assets/search-index.js"></script>
+  <script defer src="../assets/app.js"></script>  <title>模块 07：神经网络与材料显微视觉 CNN | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../index.html">课程主页</a>
+      <a href="../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../exercises.html">习题与答案</a>
+      <a href="../index.html#legend">学习指南</a>
+      <a href="../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../modules/07-neural-networks-and-cnns.html"
+class="active">
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/07-neural-networks-and-cnns/07a_neural_networks.html"
+           data-progress-mark="notebooks/07-neural-networks-and-cnns/07a_neural_networks.html"
+>📓 07a_neural_networks.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html"
+           data-progress-mark="notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html"
+>📓 07b_cnn_microstructure.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/07-neural-networks-and-cnns/07c_exercises.html"
+           data-progress-mark="notebooks/07-neural-networks-and-cnns/07c_exercises.html"
+>🏋️ 07c_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb"><a href="../index.html">课程主页</a> / <span>模块 07</span></div>
+<div class="module-head">
+  <span class="module-num">Module 07</span>
+  <span class="status-badge status-done">已完成</span>
+  <span class="module-head-en">Neural Networks &amp; CNNs</span>
+</div>
+<h1>神经网络与材料显微视觉 CNN</h1><div class="progress-panel" data-progress-keys="notebooks/07-neural-networks-and-cnns/07a_neural_networks.html,notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html,notebooks/07-neural-networks-and-cnns/07c_exercises.html">
+  <div class="progress-head">
+    <strong>本模块学习进度</strong>
+    <span class="progress-count" data-progress-count>0 / 3</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+  <p class="hint-inline">进度只保存在你当前浏览器（localStorage），不会上传到任何服务器。</p>
+</div><h2 id="lectures">互动实战课件（Notebooks）</h2>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>课件名称</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/07-neural-networks-and-cnns/07a_neural_networks.html"
+                 aria-label="把 07a_neural_networks.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/07-neural-networks-and-cnns/07a_neural_networks.html"><strong>07a · 神经网络基础：从单个神经元到多层感知机与不确定性估计</strong></a><br/>
+          <code>07a_neural_networks.ipynb</code></td>
+        <td>42.2 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/07-neural-networks-and-cnns/07a_neural_networks.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/7d4f4254aeb9-07a_neural_networks.ipynb" download="07a_neural_networks.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/07%20-%20Neural%20Networks%20and%20CNNs/07a_neural_networks.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html"
+                 aria-label="把 07b_cnn_microstructure.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html"><strong>07b · 卷积神经网络与材料显微图像（SEM/金相）智能分析</strong></a><br/>
+          <code>07b_cnn_microstructure.ipynb</code></td>
+        <td>32.9 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/e1f38bc536c0-07b_cnn_microstructure.ipynb" download="07b_cnn_microstructure.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/07%20-%20Neural%20Networks%20and%20CNNs/07b_cnn_microstructure.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="exercises">课后习题（Exercises）<span class="kind-badge kind-exercise">习题</span></h2>
+<p class="hint-inline">建议在完成本模块全部课件后再做习题；参考答案默认折叠，请先独立完成。
+  也可以在<a href="../exercises.html">全部习题汇总页</a>统一查看各模块习题。</p>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/07-neural-networks-and-cnns/07c_exercises.html"
+                 aria-label="把 07c_exercises.ipynb 标记为已完成" />
+        </td>
+        <td><a href="../notebooks/07-neural-networks-and-cnns/07c_exercises.html"><strong>07c · 第七讲基础巩固习题：PyTorch 神经网络与显微图像卷积</strong></a><br/>
+          <code>07c_exercises.ipynb</code></td>
+        <td>13.1 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/07-neural-networks-and-cnns/07c_exercises.html">开始做题</a>
+          <a class="btn btn-secondary" href="../files/_shared/15c4f3b820f2-07c_exercises.ipynb" download="07c_exercises.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/07%20-%20Neural%20Networks%20and%20CNNs/07c_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>          <a class="btn btn-secondary" href="../solutions/07-neural-networks-and-cnns/07_exercises_solutions.html">参考答案</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="solutions">参考答案（Solutions）</h2>
+<p class="hint-inline">答案页默认折叠，请先独立完成练习再展开。</p>
+<ul class="solution-list">  <li><span class="kind-badge kind-exercise">习题答案</span>
+    <a href="../solutions/07-neural-networks-and-cnns/07_exercises_solutions.html">✅ 第七讲基础习题参考答案</a>
+    (<code>07_exercises_solutions.ipynb</code> · 12.2 KB) —
+    <a href="../files/_shared/c4ffb64a1448-07_exercises_solutions.ipynb" download="07_exercises_solutions.ipynb">下载 .ipynb</a></li>  <li><span class="kind-badge kind-lecture">课件答案</span>
+    <a href="../solutions/07-neural-networks-and-cnns/07_nn_solutions.html">✅ 第七讲随堂练习参考答案（`07a` – `07b`）</a>
+    (<code>07_nn_solutions.ipynb</code> · 15.9 KB) —
+    <a href="../files/_shared/6a4966bf9c3e-07_nn_solutions.ipynb" download="07_nn_solutions.ipynb">下载 .ipynb</a></li></ul><h2>配套数据集（Datasets）</h2>
+<ul>  <li><code>solubility.csv</code> (2.1 MB) —
+    <a href="../files/_shared/f274636a3ed2-solubility.csv" download="solubility.csv">下载数据集</a></li></ul>
+<h2>模块导读与教学设计</h2><div class="markdown-body"><h1>第七讲：神经网络与材料显微视觉 CNN（Neural Networks &amp; CNNs）</h1>
+<p>本讲是课程下半学期（深度学习与前沿生成/图模型）的开篇模块。我们先使用纯 PyTorch 从单个神经元和手写梯度下降出发，搭建多层感知机（MLP）并在与第 02 讲完全一致的 AqSolDB 测试集上对比深度网络与随机森林的边界；随后进入深度学习真正发挥表征优势的领域——使用二维卷积神经网络（CNN）分析材料显微组织（SEM/金相）图像。</p>
+<h2>课件与习题结构</h2>
+<table>
+<thead>
+<tr>
+<th>Notebook</th>
+<th>核心内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>07a_neural_networks.ipynb</code></td>
+<td>人工神经元与非线性激活函数（ReLU/Sigmoid/Tanh）；PyTorch 张量与 Autograd 自动求导；手写梯度下降拟合 Yalkowsky <span class="math-inline" data-tex="\log S - \log P">\(\log S - \log P\)</span> 关系；Python <code>class</code> 与 <code>nn.Module</code> 封装；训练/验证/测试划分与 <code>DataLoader</code>；过拟合诊断与早停、Dropout、权重衰减；MC Dropout 不确定性估计；学习率动力学与二分类扩展</td>
+</tr>
+<tr>
+<td><code>07b_cnn_microstructure.ipynb</code></td>
+<td>为什么展平 MLP 在二维显微图像上会遭遇参数爆炸与平移失配；二维离散卷积与平滑/Sobel 相界边缘提取算子；<code>nn.Conv2d</code>、<code>MaxPool2d</code> 与全局平均池化 <code>AdaptiveAvgPool2d</code>；四类典型合成金相微结构（球状析出相、层片珠光体、凝固枝晶、多晶晶界）CNN vs. MLP 分类对比；物理合规的旋转/翻转数据增强；特征图可视化与析出相面积分数（Area Fraction）回归</td>
+</tr>
+<tr>
+<td><code>07c_exercises.ipynb</code></td>
+<td>第七讲基础巩固习题（8 道独立小练习：张量操作、Autograd 多元求导、MLP 参数量手算、自定义 <code>nn.Module</code>、手写回归训练循环、MC Dropout 均值与标准差、二维卷积核响应与输出尺寸、轻量级微结构 CNN 搭建）</td>
+</tr>
+<tr>
+<td><code>solutions/07_nn_solutions.ipynb</code></td>
+<td><code>07a</code> 与 <code>07b</code> 全部随堂练习（<code>07a-1</code> 至 <code>07b-3</code>）的完整参考代码与解析</td>
+</tr>
+<tr>
+<td><code>solutions/07_exercises_solutions.ipynb</code></td>
+<td><code>07c_exercises.ipynb</code> 8 道基础巩固习题的完整参考答案</td>
+</tr>
+</tbody>
+</table>
+<h2>建议学习顺序</h2>
+<p>建议按 <code>07a</code> <span class="math-inline" data-tex="\to">\(\to\)</span> <code>07b</code> <span class="math-inline" data-tex="\to">\(\to\)</span> <code>07c_exercises</code> 的顺序阅读与运行，全部代码均针对 CPU 环境做过轻量化设计，单本 notebook 运行时间在 1–2 分钟以内。</p>
+</div><nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../modules/06-materials-informatics.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">模块 06 · 无机与晶体材料信息学</span>
+  </a>  <a class="pager-link pager-next" href="../notebooks/07-neural-networks-and-cnns/07a_neural_networks.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">07a · 神经网络基础：从单个神经元到多层感知机与不确定性估计</span>
+  </a></nav>  </main></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

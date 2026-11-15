@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 09b · 目标导向的分子逆向设计：迁移微调、代理模型欺骗与可合成性评估 在 08a 与 09a 中，我们分别掌握了基于自回归语言模型和基于连续潜空间的无条件分子生成。然而在真实的材料研发中，科学家真正关心的问题是 目标导向的逆向设计（Goal Directed Inverse Desig" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="09b · 目标导向的分子逆向设计：迁移微调、代理模型欺骗与可合成性评估 | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 09b · 目标导向的分子逆向设计：迁移微调、代理模型欺骗与可合成性评估 在 08a 与 09a 中，我们分别掌握了基于自回归语言模型和基于连续潜空间的无条件分子生成。然而在真实的材料研发中，科学家真正关心的问题是 目标导向的逆向设计（Goal Directed Inverse Desig" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/09-generative-models/09b_goal_directed_generation.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/09-generative-models/09b_goal_directed_generation.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>09b · 目标导向的分子逆向设计：迁移微调、代理模型欺骗与可合成性评估 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09a_vae_selfies.html"
+           data-progress-mark="notebooks/09-generative-models/09a_vae_selfies.html"
+>📓 09a_vae_selfies.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09b_goal_directed_generation.html"
+           data-progress-mark="notebooks/09-generative-models/09b_goal_directed_generation.html"
+class="active">📓 09b_goal_directed_generation.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+           data-progress-mark="notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+>📓 09c_microscopy_diffusion_sr.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09d_exercises.html"
+           data-progress-mark="notebooks/09-generative-models/09d_exercises.html"
+>🏋️ 09d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/09-generative-models.html">模块 09：生成模型：分子设计到电镜超分</a> /  <span>09b_goal_directed_generation.ipynb</span>
+</div>
+<h1>09b · 目标导向的分子逆向设计：迁移微调、代理模型欺骗与可合成性评估</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>09b_goal_directed_generation.ipynb</code>（37.7 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/09%20-%20Generative%20Models/09b_goal_directed_generation.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/b2eec0760cf8-09b_goal_directed_generation.ipynb" download="09b_goal_directed_generation.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/09-generative-models/09_generative_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/09-generative-models/09b_goal_directed_generation.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/09%20-%20Generative%20Models/09b_goal_directed_generation.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>09b · 目标导向的分子逆向设计：迁移微调、代理模型欺骗与可合成性评估</h1>
+<p>在 <code>08a</code> 与 <code>09a</code> 中，我们分别掌握了基于自回归语言模型和基于连续潜空间的无条件分子生成。然而在真实的材料研发中，科学家真正关心的问题是<strong>目标导向的逆向设计（Goal-Directed Inverse Design）</strong>：如何让生成模型主动朝着“更高光电转换效率（PCE）”、“更宽带隙”或“更高溶解度”的方向演化？</p>
+<p>要实现这一闭环，我们需要把前几讲的核心工具串联成一条完整的管线，同时直面生成式材料设计中最隐蔽、最普遍的两大工程陷阱：</p>
+<ol>
+<li><strong>构建快速“裁判”：代理预测模型（Surrogate Model）</strong>：量子化学 DFT 计算一个有机光伏分子的 PCE 需要数小时，无法在生成循环中实时打分；我们首先复用第 02 讲的 <code>Morgan 指纹 + 随机森林</code> 训练一个毫秒级响应的 PCE 代理裁判；</li>
+<li><strong>分布定向推移：迭代精英微调（Iterative Fine-Tuning）</strong>：从 <code>08a</code> 预训练好的通用有机光伏语言模型出发，在 Top-10% 高 PCE 分子子集上以小学习率微调，观察生成分子的 PCE 分布右移，并验证模型如何在没有任何化学先验指导的情况下“自主重新发现”**苯并噻二唑（Benzothiadiazole）**等经典吸电子受体单元（内嵌 <strong>练习 09b-1</strong>）；</li>
+<li><strong>头号陷阱：代理模型欺骗（Surrogate Model Exploitation / Reward Hacking）</strong>：当优化器或生成模型过度追求代理模型的高分时，极易钻进代理模型的适用域盲区——我们将现场演示为什么随机森林会给<strong>一个水分子</strong>打出 <code>1.2%</code> 的光伏效率且各棵决策树高度一致，为什么二值指纹会让无限拉长的聚合物得分饱和，以及如何用 Tanimoto 适用域约束与悲观下界（LCB）防御模型欺骗（内嵌 <strong>练习 09b-2</strong> 与 <strong>练习 09b-3</strong>）；</li>
+<li><strong>二号陷阱：合成可及性（SA Score）与候选材料诚实检验清单</strong>。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;09 - Generative Models&quot;</span><span class="p">))</span>
+    <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">run_line_magic</span><span class="p">(</span><span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install -q rdkit&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">rdkit</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">rdkit</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">rdkit</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">DataStructs</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Draw</span><span class="p">,</span> <span class="n">RDConfig</span><span class="p">,</span> <span class="n">rdFingerprintGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>课程统一绘图风格</strong>：下方单元加载 <code>ai4m.mplstyle</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">DATA_DIR</span> <span class="o">=</span> <span class="s2">&quot;data&quot;</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;data/cep.csv&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;course/09 - Generative Models/data&quot;</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;cep.csv&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded CEP dataset: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> molecules&quot;</span><span class="p">)</span>
+<span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-构建快速-裁判-预测光电转换效率-pce-的随机森林代理模型">1. 构建快速“裁判”：预测光电转换效率（PCE）的随机森林代理模型</h2>
+<p>在哈佛清洁能源项目（CEP）中，每个分子的 <code>PCE</code>（Power Conversion Efficiency，单位 <code>%</code>）是由量子化学密度泛函理论（DFT）结合 Scharber 模型估算得到的。由于无法在每次采样生成新分子时实时运行数小时的 DFT 计算，我们在整个数据集上提取 2048 位二值 Morgan 指纹（半径 <span class="math-inline" data-tex="r = 2">\(r = 2\)</span>），留出 20% 作为测试集，训练一个包含 200 棵决策树的随机森林回归器作为<strong>代理模型（Surrogate Oracle）</strong>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">mols</span> <span class="o">=</span> <span class="p">[</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]]</span>
+<span class="n">fp_gen</span> <span class="o">=</span> <span class="n">rdFingerprintGenerator</span><span class="o">.</span><span class="n">GetMorganGenerator</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fpSize</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+<span class="n">fingerprints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprintAsNumPy</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mols</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;PCE&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+<span class="n">train_idx</span><span class="p">,</span> <span class="n">test_idx</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)),</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">rf</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">rf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">fingerprints</span><span class="p">[</span><span class="n">train_idx</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">train_idx</span><span class="p">])</span>
+
+<span class="n">pred_test</span> <span class="o">=</span> <span class="n">rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">fingerprints</span><span class="p">[</span><span class="n">test_idx</span><span class="p">])</span>
+<span class="n">rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">pred_test</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="n">test_idx</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+<span class="n">r2</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">pred_test</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="n">test_idx</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">y</span><span class="p">[</span><span class="n">test_idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="n">test_idx</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Surrogate Random Forest | Test RMSE = </span><span class="si">{</span><span class="n">rmse</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%, R^2 = </span><span class="si">{</span><span class="n">r2</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">10.2</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">test_idx</span><span class="p">],</span> <span class="n">pred_test</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="o">-</span><span class="mi">7</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">7</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span> <span class="s2">&quot;k--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;True DFT PCE (%)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Predicted PCE (%)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Surrogate Model on Test Set (R² = </span><span class="si">{</span><span class="n">r2</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.85</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;DFT PCE (%)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Count&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;PCE Distribution in CEP Dataset&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CEP PCE Statistics: Mean = </span><span class="si">{</span><span class="n">y</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%, Median = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%, Max = </span><span class="si">{</span><span class="n">y</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>代理模型在同分布测试集上的决定系数达到 <span class="math-inline" data-tex="R^2 \approx 0.74">\(R^2 \approx 0.74\)</span>，足以作为快速初筛工具；但请牢记它的测试集均方根误差 <span class="math-inline" data-tex="\text{RMSE} \approx 1.3\%">\(\text{RMSE} \approx 1.3\%\)</span>——<strong>代理模型只是真实物理性质的有噪近似，而且它的准确性严格依赖于输入分子落在训练数据的适用域（Applicability Domain）之内</strong>。</p>
+<hr />
+<h2 id="2-目标导向微调-把生成分布推向高-pce-区域">2. 目标导向微调：把生成分布推向高 PCE 区域</h2>
+<p>要让生成模型偏爱高 PCE 分子，工业界有两条主流技术路线：</p>
+<ol>
+<li><strong>策略梯度强化学习（如 REINVENT）</strong>：将代理模型预测的 PCE 作为奖励信号（Reward），通过策略梯度直接最大化期望奖励；</li>
+<li><strong>精英子集迁移微调（Transfer Fine-Tuning / Hill-Climb MLE）</strong>：先在全量数据上预训练先验语言模型 <span class="math-inline" data-tex="P_{\text{prior}}(x)">\(P_{\text{prior}}(x)\)</span> 掌握分子语法，再筛选出性质最优的 Top-<span class="math-inline" data-tex="k\%">\(k\%\)</span> 分子子集，用较小的学习率继续微调几轮。</li>
+</ol>
+<p>相比于容易发生模式坍缩（Mode Collapse）的强化学习，精英子集微调无需复杂的超参数调节，且天然受真实精英分子的序列分布约束。下面我们复用 <code>08a</code> 中预训练好的 <code>SmilesRNN</code> 架构与 <code>data/cep_rnn.pt</code> 权重作为先验模型 <code>prior_model</code>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">TOKEN_PATTERN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(\[[^\]]+\]|Br|Cl|[BCNOPSFIbcnops]|\(|\)|\.|=|#|-|\+|</span><span class="se">\\</span><span class="s2">|/|:|%\d</span><span class="si">{2}</span><span class="s2">|\d)&quot;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">tokenize</span><span class="p">(</span><span class="n">smiles</span><span class="p">):</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="n">TOKEN_PATTERN</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">==</span> <span class="n">smiles</span><span class="p">,</span> <span class="n">smiles</span>
+    <span class="k">return</span> <span class="n">tokens</span>
+
+<span class="n">token_lists</span> <span class="o">=</span> <span class="p">[</span><span class="n">tokenize</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]]</span>
+<span class="n">vocab</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&lt;pad&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="s2">&quot;$&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">t</span> <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="n">token_lists</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ts</span><span class="p">})</span>
+<span class="n">stoi</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vocab</span><span class="p">)}</span>
+<span class="n">max_len</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span> <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="n">token_lists</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">token_lists</span><span class="p">),</span> <span class="n">max_len</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tokens</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">token_lists</span><span class="p">):</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">stoi</span><span class="p">[</span><span class="s2">&quot;^&quot;</span><span class="p">]]</span> <span class="o">+</span> <span class="p">[</span><span class="n">stoi</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">stoi</span><span class="p">[</span><span class="s2">&quot;$&quot;</span><span class="p">]]</span>
+    <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SmilesRNN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">hidden_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">n_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lstm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LSTM</span><span class="p">(</span><span class="n">embedding_dim</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">out</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lstm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">out</span><span class="p">),</span> <span class="n">state</span>
+
+<span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="n">max_len</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">stoi</span><span class="p">[</span><span class="s2">&quot;^&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+    <span class="n">finished</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_steps</span><span class="p">):</span>
+        <span class="n">logits</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="n">probs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">out</span><span class="p">,</span> <span class="n">x</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">finished</span> <span class="o">|=</span> <span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">stoi</span><span class="p">[</span><span class="s2">&quot;$&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">finished</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">break</span>
+
+    <span class="n">smiles_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+        <span class="n">tokens</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">row</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="n">stoi</span><span class="p">[</span><span class="s2">&quot;$&quot;</span><span class="p">]:</span>
+                <span class="k">break</span>
+            <span class="n">tokens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">vocab</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+        <span class="n">smiles_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tokens</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">smiles_list</span>
+
+<span class="n">CKPT</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;cep_rnn.pt&quot;</span><span class="p">)</span>
+<span class="n">prior_model</span> <span class="o">=</span> <span class="n">SmilesRNN</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">))</span>
+<span class="n">raw_ckpt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">CKPT</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+<span class="n">prior_model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">raw_ckpt</span><span class="p">[</span><span class="s2">&quot;model_state_dict&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_ckpt</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;model_state_dict&quot;</span> <span class="ow">in</span> <span class="n">raw_ckpt</span> <span class="k">else</span> <span class="n">raw_ckpt</span><span class="p">)</span>
+<span class="n">prior_model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded prior SmilesRNN from </span><span class="si">{</span><span class="n">CKPT</span><span class="si">}</span><span class="s2"> (vocab size = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">)</span><span class="si">}</span><span class="s2">, max_len = </span><span class="si">{</span><span class="n">max_len</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="2-1-筛选-top-10-高-pce-精英子集并执行微调">2.1 筛选 Top-10% 高 PCE 精英子集并执行微调</h3>
+<p>在挑选微调子集时，比例 <span class="math-inline" data-tex="k\%">\(k\%\)</span> 存在鲜明的统计权衡：</p>
+<ul>
+<li>若阈值过于苛刻（如仅取 Top-1%，约 300 个分子），样本量过小会导致模型在几轮内死记硬背，生成分子的唯一性（Uniqueness）和新颖性下降；</li>
+<li>若阈值过于宽松（如 Top-50%），子集分布与原分布几乎没有拉开差距，微调推动力太弱。</li>
+</ul>
+<p>我们先选取 <strong>Top-10%（2,997 个高 PCE 分子，PCE 门槛 <span class="math-inline" data-tex="\ge 6.48\%">\(\ge 6.48\%\)</span>，均值 <span class="math-inline" data-tex="7.60\%">\(7.60\%\)</span>）</strong>，以比预训练小 10 倍的学习率（<code>lr = 1e-4</code>）微调 4 个 Epoch。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">top_fraction</span> <span class="o">=</span> <span class="mf">0.10</span>
+<span class="n">n_top</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">*</span> <span class="n">top_fraction</span><span class="p">)</span>
+<span class="n">top_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">y</span><span class="p">)[:</span><span class="n">n_top</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fine-tuning elite subset: </span><span class="si">{</span><span class="n">n_top</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> molecules | Min PCE = </span><span class="si">{</span><span class="n">y</span><span class="p">[</span><span class="n">top_idx</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">% | Mean PCE = </span><span class="si">{</span><span class="n">y</span><span class="p">[</span><span class="n">top_idx</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+
+<span class="n">tuned_model</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">prior_model</span><span class="p">)</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">tuned_model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+<span class="n">loss_fn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">(</span><span class="n">ignore_index</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">subset</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">top_idx</span><span class="p">]</span>
+<span class="n">tuned_model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">subset</span><span class="p">))</span>
+    <span class="n">total_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">order</span><span class="p">),</span> <span class="mi">128</span><span class="p">):</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="n">subset</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">128</span><span class="p">]]</span>
+        <span class="n">logits</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tuned_model</span><span class="p">(</span><span class="n">batch</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">logits</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">)),</span> <span class="n">batch</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">tuned_model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="mf">5.0</span><span class="p">)</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">total_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fine-tune Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/4 | Cross-Entropy Loss = </span><span class="si">{</span><span class="n">total_loss</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">order</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">128</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">tuned_model</span><span class="o">.</span><span class="n">eval</span><span class="p">();</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="2-2-微调前后的性质分布推移与电子给体-受体构筑单元演化">2.2 微调前后的性质分布推移与电子给体-受体构筑单元演化</h3>
+<p>我们从微调前的 <code>prior_model</code> 与微调后的 <code>tuned_model</code> 各采样 1,500 个分子，用随机森林代理模型评估其预测 PCE，并统计各个杂环构筑单元（Building Blocks）在微调前后的出现频率变化。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">canonical_train</span> <span class="o">=</span> <span class="p">{</span><span class="n">Chem</span><span class="o">.</span><span class="n">CanonSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">analyse_generator</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">)</span>
+    <span class="n">parsed</span> <span class="o">=</span> <span class="p">[</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">]</span>
+    <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolToSmiles</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">canonical</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">parsed</span> <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">GetNumAtoms</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">unique</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+    <span class="n">fps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprintAsNumPy</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">unique</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="n">predictions</span> <span class="o">=</span> <span class="n">rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">fps</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">14s</span><span class="si">}</span><span class="s2"> | Valid: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">valid</span><span class="p">)</span><span class="o">/</span><span class="n">n</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> | Unique: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unique</span><span class="p">)</span><span class="o">/</span><span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">valid</span><span class="p">),</span><span class="mi">1</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> | &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;Novel: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">unique</span><span class="p">)</span><span class="o">-</span><span class="n">canonical_train</span><span class="p">)</span><span class="o">/</span><span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">unique</span><span class="p">),</span><span class="mi">1</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> | &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;Mean Pred PCE: </span><span class="si">{</span><span class="n">predictions</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">% (Max: </span><span class="si">{</span><span class="n">predictions</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%)&quot;</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;smiles&quot;</span><span class="p">:</span> <span class="n">unique</span><span class="p">,</span> <span class="s2">&quot;pred_PCE&quot;</span><span class="p">:</span> <span class="n">predictions</span><span class="p">})</span>
+
+<span class="n">before</span> <span class="o">=</span> <span class="n">analyse_generator</span><span class="p">(</span><span class="n">prior_model</span><span class="p">,</span> <span class="s2">&quot;Before Tuning&quot;</span><span class="p">)</span>
+<span class="n">after</span> <span class="o">=</span> <span class="n">analyse_generator</span><span class="p">(</span><span class="n">tuned_model</span><span class="p">,</span> <span class="s2">&quot;After Tuning&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.8</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">))</span>
+<span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;CEP Training Data (True DFT)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">before</span><span class="p">[</span><span class="s2">&quot;pred_PCE&quot;</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s2">&quot;step&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Generated Before Fine-Tuning&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">after</span><span class="p">[</span><span class="s2">&quot;pred_PCE&quot;</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s2">&quot;step&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Generated After Fine-Tuning&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">top_idx</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Top-10</span><span class="si">% E</span><span class="s2">lite Threshold&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;PCE (%)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Density&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Goal-Directed Fine-Tuning Shifts the Generated PCE Distribution&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mf">8.5</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">best_candidates</span> <span class="o">=</span> <span class="n">after</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;pred_PCE&quot;</span><span class="p">)</span>
+<span class="n">Draw</span><span class="o">.</span><span class="n">MolsToGridImage</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">best_candidates</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]],</span>
+    <span class="n">molsPerRow</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">subImgSize</span><span class="o">=</span><span class="p">(</span><span class="mi">270</span><span class="p">,</span> <span class="mi">210</span><span class="p">),</span>
+    <span class="n">legends</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Pred PCE: </span><span class="si">{</span><span class="n">p</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">best_candidates</span><span class="p">[</span><span class="s2">&quot;pred_PCE&quot;</span><span class="p">]],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 统计微调前后各共轭构筑单元（杂环片段）的出现频率变化</span>
+<span class="n">fragments</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;thiadiazole (acceptor)&quot;</span><span class="p">:</span> <span class="s2">&quot;c1nsnc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;thiophene (donor)&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccsc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;furan&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccoc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pyrrole&quot;</span><span class="p">:</span> <span class="s2">&quot;c1cc[nH]c1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;benzene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccccc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;selenophene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1cc[se]c1&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fragment_frequency</span><span class="p">(</span><span class="n">smiles_list</span><span class="p">):</span>
+    <span class="n">parsed</span> <span class="o">=</span> <span class="p">[</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">smiles_list</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">HasSubstructMatch</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">sm</span><span class="p">))</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">parsed</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">sm</span> <span class="ow">in</span> <span class="n">fragments</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">}</span>
+
+<span class="n">freq_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;CEP All&quot;</span><span class="p">:</span> <span class="n">fragment_frequency</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)),</span>
+    <span class="s2">&quot;CEP Top 10%&quot;</span><span class="p">:</span> <span class="n">fragment_frequency</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">top_idx</span><span class="p">][:</span><span class="mi">2000</span><span class="p">]),</span>
+    <span class="s2">&quot;Generated Before&quot;</span><span class="p">:</span> <span class="n">fragment_frequency</span><span class="p">(</span><span class="n">before</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]),</span>
+    <span class="s2">&quot;Generated After&quot;</span><span class="p">:</span> <span class="n">fragment_frequency</span><span class="p">(</span><span class="n">after</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]),</span>
+<span class="p">})</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">7.2</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">))</span>
+<span class="n">freq_df</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Fraction of Molecules Containing Fragment&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Fine-Tuning Autonomously Enriches Electron-Accepting Thiadiazole Units&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">freq_df</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>观察上方表格与条形图中的 <code>thiadiazole (acceptor)</code>（噻二唑，即苯并噻二唑 <code>[2,1,3]-benzothiadiazole</code> 的核心杂环）：</p>
+<ul>
+<li>在全体 CEP 数据库中，仅约 27% 的分子含有噻二唑单元；而在 Top-10% 高效光伏分子中，这一比例高达 <strong>87%</strong>；</li>
+<li>经过短短 4 轮微调，生成模型在完全没有被告知“给体-受体（Donor-Acceptor, D-A）推拉电子能带工程理论”的前提下，自动将生成分子中噻二唑单元的占比从 <code>26%</code> 大幅提升至 <strong><code>67%</code></strong>，同时降低了富电子呋喃/吡咯的占比！这生动展示了序列生成模型如何从高维结构数据中提炼并复现领域专家的分子设计法则。</li>
+</ul>
+<h3 id="练习-09b-1-精英子集比例的权衡实验-top-1-vs-10-vs-30">练习 09b-1：精英子集比例的权衡实验（Top 1% vs. 10% vs. 30%）</h3>
+<p>在第 2.1 节中我们指出：微调子集选得太窄会导致模型“死记硬背（过拟合）”，选得太宽则缺乏定向推动力。</p>
+<p>请在下方编写代码，每次从 <code>prior_model</code> 深拷贝一份新模型（<code>copy.deepcopy(prior_model)</code>），分别在 PCE 最高的 <strong>1%（约 300 个分子）</strong>、**10%（约 3,000 个分子）**与 **30%（约 9,000 个分子）**子集上以相同步数（或相同迭代次数）微调 4 轮，各采样 800 个分子，对比三组模型的：</p>
+<ol>
+<li>唯一性（<code>Uniqueness</code>）与新颖性（<code>Novelty</code>）；</li>
+<li>代理模型预测的平均 PCE（<code>Mean Predicted PCE</code>）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 09b-1：在此对比 Top 1%, 10%, 30% 微调子集的生成指标与预测 PCE</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_finetune_fractions</span><span class="p">(</span><span class="n">fractions</span><span class="o">=</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">)):</span>
+    <span class="c1"># TODO: 对每个 fraction 从 prior_model 深拷贝并微调 4 轮，调用 analyse_generator 汇总对比</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-头号陷阱-代理模型欺骗-model-exploitation-与适用域崩塌">3. 头号陷阱：代理模型欺骗（Model Exploitation）与适用域崩塌</h2>
+<h3 id="3-1-检验微调分子是否仍在代理模型的适用域-applicability-domain-内">3.1 检验微调分子是否仍在代理模型的适用域（Applicability Domain）内</h3>
+<p>在宣布“微调后预测 PCE 提升了近 2 个百分点”之前，一个严谨的研究者必须先追问：<strong>这些新生成的分子还在随机森林代理模型见过的数据分布之内吗？代理模型给它们打出的高分可信吗？</strong></p>
+<p>我们复用 <code>03b</code> 的方法，计算每个微调生成分子到 CEP 训练集参考样本的<strong>最近邻 Tanimoto 相似度（Max Tanimoto Similarity）</strong>，并与训练集内部真实分子彼此之间的最近邻相似度分布进行对照。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">reference_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="mi">3000</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">reference_fps</span> <span class="o">=</span> <span class="p">[</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">mols</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">reference_idx</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">max_similarity_to_ref</span><span class="p">(</span><span class="n">smiles_list</span><span class="p">):</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">smiles_list</span><span class="p">:</span>
+        <span class="n">fp</span> <span class="o">=</span> <span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">DataStructs</span><span class="o">.</span><span class="n">BulkTanimotoSimilarity</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">reference_fps</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+<span class="n">sim_before</span> <span class="o">=</span> <span class="n">max_similarity_to_ref</span><span class="p">(</span><span class="n">before</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">][:</span><span class="mi">500</span><span class="p">])</span>
+<span class="n">sim_after</span> <span class="o">=</span> <span class="n">max_similarity_to_ref</span><span class="p">(</span><span class="n">after</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">][:</span><span class="mi">500</span><span class="p">])</span>
+
+<span class="c1"># 对照基准：CEP 训练集分子与其余训练集分子之间的次近邻相似度（排除自身 1.0）</span>
+<span class="n">inside_sim</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">fp</span> <span class="o">=</span> <span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+    <span class="n">sims</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">DataStructs</span><span class="o">.</span><span class="n">BulkTanimotoSimilarity</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">reference_fps</span><span class="p">))</span>
+    <span class="n">inside_sim</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sims</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">inside_sim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">inside_sim</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Median Nearest-Neighbor Tanimoto Similarity:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Within CEP Training Set : </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">inside_sim</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Generated (Before Tune) : </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">sim_before</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Generated (After Tune)  : </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">sim_after</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.2</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">))</span>
+<span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">inside_sim</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;CEP Molecule vs. CEP&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">sim_after</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s2">&quot;step&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Fine-Tuned Generated vs. CEP&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Max Tanimoto Similarity to Training Set&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Density&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Fine-Tuned Molecules Remain Inside the Applicability Domain&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mf">8.5</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>可以看到，微调后的生成分子与训练集的最近邻相似度中位数（约 <code>0.48</code>）同训练集内部水平（约 <code>0.49</code>）几乎完全一致。这是因为小学习率的语言模型微调始终受真实分子的序列似然牵引，不会轻易脱离训练流形。</p>
+<h3 id="3-2-探针实验-当优化器离开适用域时-代理模型会错得多离谱">3.2 探针实验：当优化器离开适用域时，代理模型会错得多离谱？</h3>
+<p>如果不用温和的微调，而是把代理模型交给一个不受约束的搜索算法（如遗传算法、爬山法或无 KL 约束的强化学习）去全力最大化预测 PCE，会发生什么？</p>
+<p>这种现象在机器学习中被称为<strong>代理模型欺骗（Model Exploitation / Reward Hacking）</strong>：搜索算法很快会发现代理模型的数学盲区，构造出在物理上荒谬绝伦、但代理模型却自信满满给出高分的“对抗分子”。</p>
+<p>下面我们构造一组极端探针分子——包括不同长度的苯并噻二唑齐聚物（<span class="math-inline" data-tex="\times 1, \times 3, \times 6, \times 12">\(\times 1, \times 3, \times 6, \times 12\)</span>）、完全没有 <span class="math-inline" data-tex="\pi">\(\pi\)</span> 共轭体系的正辛烷（<code>CCCCCCCC</code>）、四十碳长链烷烃（<code>C40</code>）以及<strong>一个普通的水分子（<code>O</code>）</strong>——直接送入随机森林代理模型，同时记录 200 棵决策树预测值的标准差（<code>Tree Spread</code>，常被用作集成不确定度指标）以及最近邻 Tanimoto 相似度。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">benzothiadiazole</span> <span class="o">=</span> <span class="s2">&quot;c1ccc2nsnc2c1&quot;</span>
+<span class="n">probes</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Benzothiadiazole x1&quot;</span><span class="p">:</span> <span class="n">benzothiadiazole</span><span class="p">,</span>
+    <span class="s2">&quot;Benzothiadiazole x3&quot;</span><span class="p">:</span> <span class="s2">&quot;-&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">benzothiadiazole</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">&quot;Benzothiadiazole x6&quot;</span><span class="p">:</span> <span class="s2">&quot;-&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">benzothiadiazole</span><span class="p">]</span> <span class="o">*</span> <span class="mi">6</span><span class="p">),</span>
+    <span class="s2">&quot;Benzothiadiazole x12&quot;</span><span class="p">:</span> <span class="s2">&quot;-&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">benzothiadiazole</span><span class="p">]</span> <span class="o">*</span> <span class="mi">12</span><span class="p">),</span>
+    <span class="s2">&quot;Thiophene x12&quot;</span><span class="p">:</span> <span class="s2">&quot;-&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;c1ccsc1&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">12</span><span class="p">),</span>
+    <span class="s2">&quot;Benzene x20&quot;</span><span class="p">:</span> <span class="s2">&quot;-&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;c1ccccc1&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">20</span><span class="p">),</span>
+    <span class="s2">&quot;n-Octane (No conjugation)&quot;</span><span class="p">:</span> <span class="s2">&quot;CCCCCCCC&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Alkane C40&quot;</span><span class="p">:</span> <span class="s2">&quot;C&quot;</span> <span class="o">*</span> <span class="mi">40</span><span class="p">,</span>
+    <span class="s2">&quot;Water (H2O)&quot;</span><span class="p">:</span> <span class="s2">&quot;O&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">probe_rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">probes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
+    <span class="n">x_fp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprintAsNumPy</span><span class="p">(</span><span class="n">mol</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="n">tree_preds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_fp</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">rf</span><span class="o">.</span><span class="n">estimators_</span><span class="p">])</span>
+    <span class="n">probe_rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s2">&quot;Probe Molecule&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+        <span class="s2">&quot;Heavy Atoms&quot;</span><span class="p">:</span> <span class="n">mol</span><span class="o">.</span><span class="n">GetNumHeavyAtoms</span><span class="p">(),</span>
+        <span class="s2">&quot;Predicted PCE (%)&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tree_preds</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="s2">&quot;Tree Spread Std (%)&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tree_preds</span><span class="o">.</span><span class="n">std</span><span class="p">()),</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="s2">&quot;Max Tanimoto Sim&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">DataStructs</span><span class="o">.</span><span class="n">BulkTanimotoSimilarity</span><span class="p">(</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">mol</span><span class="p">),</span> <span class="n">reference_fps</span><span class="p">)),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="p">})</span>
+
+<span class="n">typical_spread</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">fingerprints</span><span class="p">[</span><span class="n">test_idx</span><span class="p">[:</span><span class="mi">300</span><span class="p">]])</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">rf</span><span class="o">.</span><span class="n">estimators_</span><span class="p">])</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reference | Mean Tree Spread on CEP Test Set = </span><span class="si">{</span><span class="n">typical_spread</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reference | Heavy Atom Range in CEP Training = </span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">GetNumHeavyAtoms</span><span class="p">()</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">mols</span><span class="p">)</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">GetNumHeavyAtoms</span><span class="p">()</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">mols</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">probe_rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;Probe Molecule&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>仔细审视上方这张表，它揭示了材料逆向设计中三个必须刻在脑海里的核心教训：</p>
+<ol>
+<li><strong>回归模型永远不会主动拒绝回答，哪怕输入毫无物理意义</strong>：
+水分子（<code>H2O</code>）和正辛烷（<code>CCCCCCCC</code>）连一根共轭双键都没有，根本不可能作为有机太阳能电池的吸光给体，但随机森林依然面不改色地给水分子预测出 <code>1.20%</code> 的光电转换效率，给长链烷烃预测出 <code>1.5%</code> 以上的效率。</li>
+<li><strong>集成模型的内部方差（Tree Spread）在分布外可能彻底失灵</strong>：
+人们常以为“离开训练分布后，随机森林各棵树的分歧一定会变大”。但看表格最后三行：水分子和烷烃的 <code>Tree Spread</code>（约 <code>0.46%</code>）甚至<strong>比正常测试集分子的平均分歧（<code>1.07%</code>）还要小一半</strong>！原因很简单：水分子的 2048 位 Morgan 指纹几乎全为 <code>0</code>，在全部 200 棵决策树中，遇到“特征全为 0”的分支都会一致地走入同一片冷门叶节点，从而<strong>步调高度一致地输出同一个错误答案</strong>。</li>
+<li><strong>二值指纹的比特饱和（Bit Saturation）使模型对重复单元失明</strong>：
+对比 <code>Benzothiadiazole x6</code>（54 个重原子）与 <code>Benzothiadiazole x12</code>（108 个重原子，远超训练集上限 35 个重原子）：两者的预测 PCE 和树标准差<strong>精确到小数点后每一位都完全相等（<code>6.12%</code>）</strong>！这是因为二值 Morgan 指纹只记录“某种半径 <span class="math-inline" data-tex="r \le 2">\(r \le 2\)</span> 的局部子结构是否出现过（0 或 1）”——从第 6 个重复单元到第 12 个重复单元，没有任何新的局部半径子结构诞生，两者的 2048 维输入向量一模一样。</li>
+<li><strong>真正可靠的防线是化学空间距离（Max Tanimoto Similarity）</strong>：
+水分子（<code>0.000</code>）与烷烃（<code>0.030</code>）的最近邻 Tanimoto 相似度瞬间暴露了它们处于适用域之外。</li>
+</ol>
+<h3 id="练习-09b-2-无约束-vs-适用域约束的片段爬山搜索-hill-climbing">练习 09b-2：无约束 vs. 适用域约束的片段爬山搜索（Hill Climbing）</h3>
+<p>现在我们写一个自动优化器，体验当优化器直接最大化代理模型得分时是如何一步步走向模型欺骗的，以及如何用我们在 <code>04a</code>/<code>04b</code> 学过的<strong>悲观置信下界（Lower Confidence Bound, <span class="math-inline" data-tex="\hat{\mu} - 2\hat{\sigma}">\(\hat{\mu} - 2\hat{\sigma}\)</span>）<strong>与</strong>适用域硬阈值</strong>将其拉回正轨。</p>
+<p>设每个分子由若干个共轭芳香片段通过单键 <code>-</code> 串联而成：</p>
+<pre><code class="language-python"><div class="highlight"><pre><span></span><span class="n">FRAGMENTS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;c1ccsc1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccoc1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1cc[nH]c1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccccc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;c1cc[se]c1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccc2nsnc2c1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccc2[nH]ccc2c1&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+</code></pre>
+<p>从初始三聚体 <code>[&quot;c1ccsc1&quot;, &quot;c1ccc2nsnc2c1&quot;, &quot;c1ccsc1&quot;]</code> 出发，每一步随机执行<strong>插入、删除或替换</strong>一个片段，运行 120 步爬山搜索，对比以下两种策略找到的最终分子：</p>
+<ol>
+<li><strong>无约束策略（Unconstrained）</strong>：直接最大化代理模型预测均值 <span class="math-inline" data-tex="\hat{\mu}(\mathbf{x})">\(\hat{\mu}(\mathbf{x})\)</span>；</li>
+<li><strong>受约束策略（Constrained）</strong>：若候选分子到训练集的最近邻 Tanimoto 相似度 <code>&lt; 0.40</code> 则直接拒绝，且目标函数改为最大化悲观得分 <span class="math-inline" data-tex="\hat{\mu}(\mathbf{x}) - 2\,\hat{\sigma}_{\text{trees}}(\mathbf{x})">\(\hat{\mu}(\mathbf{x}) - 2\,\hat{\sigma}_{\text{trees}}(\mathbf{x})\)</span>。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [16] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 09b-2：在此实现无约束 vs. 受约束的片段爬山优化器并对比终点分子</span>
+<span class="n">FRAGMENTS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;c1ccsc1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccoc1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1cc[nH]c1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccccc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;c1cc[se]c1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccc2nsnc2c1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccc2[nH]ccc2c1&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># TODO: 实现 hill_climb(constrained=False/True) 并打印两者的预测均值、悲观得分、相似度与重原子数</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-09b-3-检验树模型的外推天花板-它能发现比训练集更好的材料吗">练习 09b-3：检验树模型的外推天花板——它能发现比训练集更好的材料吗？</h3>
+<p>在 <code>02a</code> 中我们学过：决策树与随机森林的预测值是叶节点内训练样本标签的加权平均，因此在数学上<strong>永远不可能输出高于训练集最大标签的预测值</strong>。这一性质对“生成 + 代理筛选”意味着什么？</p>
+<p>请在下方完成一个留出检验（Hold-out Extrapolation Test）：</p>
+<ol>
+<li>仅使用 <code>PCE &lt; 6.0%</code> 的分子训练一个新的随机森林 <code>rf_low</code>；</li>
+<li>用 <code>rf_low</code> 去预测那些真实 <code>PCE &gt; 8.0%</code> 的顶尖分子（模拟我们在只见过中低效材料时，试图用代理模型去筛选突破性材料）；</li>
+<li>绘制真实 PCE vs. 预测 PCE 散点图，并统计预测值超过 <code>6.0%</code> 的样本比例（思考：为什么该比例严格为 <code>0.0%</code>？这说明在主动材料发现中为什么必须引入 DFT/实验闭环更新训练集？）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [17] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 09b-3：在此验证仅在 PCE &lt; 6% 上训练的随机森林能否识别出 PCE &gt; 8% 的顶尖分子</span>
+<span class="c1"># TODO: 训练 rf_low 并评估其在 y &gt; 8 样本上的预测上限与平均低估幅度</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-二号陷阱-合成可及性-sa-score-与候选材料六步核查清单">4. 二号陷阱：合成可及性（SA Score）与候选材料六步核查清单</h2>
+<p>即使一个生成的候选分子通过了适用域检验、且预测性能优异，走向实验室合成前还有最后一道关卡：<strong>这个分子在有机化学上容易合成吗？</strong></p>
+<p>RDKit 的 <code>Contrib/SA_Score</code> 模块提供了经典的经验<strong>合成可及性评分（Synthetic Accessibility Score, SA Score；Ertl &amp; Schuffenhauer, 2009）</strong>，范围从 <code>1.0</code>（极易合成，如常见商业试剂）到 <code>10.0</code>（极难合成，含大量罕见桥环、螺环或手性中心）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [18] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">RDConfig</span><span class="o">.</span><span class="n">RDContribDir</span><span class="p">,</span> <span class="s2">&quot;SA_Score&quot;</span><span class="p">))</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sascorer</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">calc_sa_scores</span><span class="p">(</span><span class="n">smiles_list</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">sascorer</span><span class="o">.</span><span class="n">calculateScore</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">))</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">smiles_list</span><span class="p">])</span>
+
+<span class="n">sa_train</span> <span class="o">=</span> <span class="n">calc_sa_scores</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+<span class="n">sa_after</span> <span class="o">=</span> <span class="n">calc_sa_scores</span><span class="p">(</span><span class="n">after</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">][:</span><span class="mi">1000</span><span class="p">])</span>
+<span class="n">sa_best</span> <span class="o">=</span> <span class="n">calc_sa_scores</span><span class="p">(</span><span class="n">best_candidates</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">])</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.2</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">))</span>
+<span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">sa_train</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;CEP Training Data&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">sa_after</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s2">&quot;step&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Generated (Fine-Tuned)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;SA Score (1 = Easy to Synthesize, 10 = Very Difficult)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Density&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Synthetic Accessibility Distribution&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mf">8.5</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;Median SA Score | CEP Training: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">sa_train</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> | &quot;</span>
+    <span class="sa">f</span><span class="s2">&quot;Fine-Tuned Generated: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">sa_after</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> | Top-8 Best PCE: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">sa_best</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>微调生成的分子在 SA Score 分布上与 CEP 训练集基本一致（中位数约 <code>3.4</code>）。但需要注意两点：</p>
+<ol>
+<li>CEP 数据库本身是通过组合化学规则在计算机中枚举生成的虚拟库，其中相当一部分稠环异构体在实验室中并未真正合成过；</li>
+<li><code>SA Score</code> 仅统计子结构片段在历史化合物库中的出现频率，并不做真正的反应机理推演——判断一条具体合成路线是否可行，还需结合我们在 <code>08c</code> 学习的化学反应预测与逆合成规划工具。</li>
+</ol>
+<hr />
+<h2 id="5-本节小结-生成式材料发现的六步诚实核查清单">5. 本节小结：生成式材料发现的六步诚实核查清单</h2>
+<p>在实际科研课题中，当你使用生成模型产出一批候选分子准备提交给计算或实验团队之前，请对照以下清单逐项核查：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">核查步骤</th>
+<th style="text-align:left">具体检验方法</th>
+<th style="text-align:left">对应课程章节</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>1. 语法与价态合法性</strong></td>
+<td style="text-align:left"><code>Chem.MolFromSmiles</code> 与 <code>DetectChemistryProblems</code> 能否无错通过？</td>
+<td style="text-align:left"><code>08a</code>、<code>09a</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>2. 结构分布合理性</strong></td>
+<td style="text-align:left">芳香环数、重原子数、<span class="math-inline" data-tex="sp^3">\(sp^3\)</span> 碳比例与关键官能团频率是否符合领域物理常识？（警惕先验空洞！）</td>
+<td style="text-align:left"><code>08a</code>、<code>09a</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>3. 代理模型适用域</strong></td>
+<td style="text-align:left">候选分子到训练集的最近邻 Tanimoto 相似度是否高于安全阈值（如 <span class="math-inline" data-tex="\ge 0.4">\(\ge 0.4\)</span>）？特征是否发生二值饱和？</td>
+<td style="text-align:left"><code>03b</code>、<code>09b</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>4. 预测不确定度校准</strong></td>
+<td style="text-align:left">结合集成模型方差或高斯过程不确定度，按悲观下界（<span class="math-inline" data-tex="\hat{\mu} - k\hat{\sigma}">\(\hat{\mu} - k\hat{\sigma}\)</span>）或期望改进（EI）排序后是否依然领先？</td>
+<td style="text-align:left"><code>04a</code>、<code>04b</code>、<code>09b</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>5. 合成可及性评估</strong></td>
+<td style="text-align:left"><code>SA Score</code> 是否处于合理区间？逆合成模型或合成化学家能否给出可行的偶联/成环路线？</td>
+<td style="text-align:left"><code>08c</code>、<code>09b</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>6. 物理计算与实验闭环</strong></td>
+<td style="text-align:left">将筛选出的 Top-<span class="math-inline" data-tex="K">\(K\)</span> 分子送入真实 DFT 计算或湿实验测试，并将新数据并入训练集迭代更新代理模型</td>
+<td style="text-align:left"><code>03c</code>、<code>04b</code>、<code>09b</code></td>
+</tr>
+</tbody>
+</table>
+<p>到目前为止，我们在 <code>09a</code> 与 <code>09b</code> 中讨论的生成模型都聚焦于一维分子序列。在材料科学的另一半版图——<strong>材料显微表征（SEM/TEM）与二维/三维多相微结构设计</strong>中，生成模型同样正在引发革命。下一节 <strong><code>09c · 材料显微图像超分辨率与去噪扩散概率模型（DDPM）入门</code></strong> 将带你从 <code>07b</code> 的卷积神经网络出发，亲手构建电镜超分辨率网络与条件扩散生成模型。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/09-generative-models/09b_goal_directed_generation.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/09-generative-models.html">返回模块 09</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/09-generative-models/09a_vae_selfies.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">09a · 分子的连续潜空间：SELFIES 表示与变分自编码器（VAE）</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/09-generative-models/09c_microscopy_diffusion_sr.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">09c · 材料显微图像超分辨率与去噪扩散概率模型（DDPM）入门</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#1-构建快速-裁判-预测光电转换效率-pce-的随机森林代理模型">1. 构建快速“裁判”：预测光电转换效率（PCE）的随机森林代理模型</a></li>      <li class="toc-l2"><a href="#2-目标导向微调-把生成分布推向高-pce-区域">2. 目标导向微调：把生成分布推向高 PCE 区域</a></li>      <li class="toc-l3"><a href="#2-1-筛选-top-10-高-pce-精英子集并执行微调">2.1 筛选 Top-10% 高 PCE 精英子集并执行微调</a></li>      <li class="toc-l3"><a href="#2-2-微调前后的性质分布推移与电子给体-受体构筑单元演化">2.2 微调前后的性质分布推移与电子给体-受体构筑单元演化</a></li>      <li class="toc-l3"><a href="#练习-09b-1-精英子集比例的权衡实验-top-1-vs-10-vs-30">练习 09b-1：精英子集比例的权衡实验（Top 1% vs. 10% vs. 30%）</a></li>      <li class="toc-l2"><a href="#3-头号陷阱-代理模型欺骗-model-exploitation-与适用域崩塌">3. 头号陷阱：代理模型欺骗（Model Exploitation）与适用域崩塌</a></li>      <li class="toc-l3"><a href="#3-1-检验微调分子是否仍在代理模型的适用域-applicability-domain-内">3.1 检验微调分子是否仍在代理模型的适用域（Applicability Domain）内</a></li>      <li class="toc-l3"><a href="#3-2-探针实验-当优化器离开适用域时-代理模型会错得多离谱">3.2 探针实验：当优化器离开适用域时，代理模型会错得多离谱？</a></li>      <li class="toc-l3"><a href="#练习-09b-2-无约束-vs-适用域约束的片段爬山搜索-hill-climbing">练习 09b-2：无约束 vs. 适用域约束的片段爬山搜索（Hill Climbing）</a></li>      <li class="toc-l3"><a href="#练习-09b-3-检验树模型的外推天花板-它能发现比训练集更好的材料吗">练习 09b-3：检验树模型的外推天花板——它能发现比训练集更好的材料吗？</a></li>      <li class="toc-l2"><a href="#4-二号陷阱-合成可及性-sa-score-与候选材料六步核查清单">4. 二号陷阱：合成可及性（SA Score）与候选材料六步核查清单</a></li>      <li class="toc-l2"><a href="#5-本节小结-生成式材料发现的六步诚实核查清单">5. 本节小结：生成式材料发现的六步诚实核查清单</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

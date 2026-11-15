@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="08d · 基础习题集：化学序列分词、语言模型与注意力机制 本习题集配套第 08 讲（08a SMILES 语言模型、08b 数据增强与迁移微调、08c 注意力机制与反应预测 Transformer），共包含 8 道循序渐进的基础练习 。所有题目均可在无需外部大型数据文件的情况下独立运行，帮助你巩固化学序列建模与 Py" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="08d · 基础习题集：化学序列分词、语言模型与注意力机制 | AI for Materials Science" />
+  <meta property="og:description" content="08d · 基础习题集：化学序列分词、语言模型与注意力机制 本习题集配套第 08 讲（08a SMILES 语言模型、08b 数据增强与迁移微调、08c 注意力机制与反应预测 Transformer），共包含 8 道循序渐进的基础练习 。所有题目均可在无需外部大型数据文件的情况下独立运行，帮助你巩固化学序列建模与 Py" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/08-sequence-models-and-transformers/08d_exercises.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/08-sequence-models-and-transformers/08d_exercises.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>08d · 基础习题集：化学序列分词、语言模型与注意力机制 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html"
+           data-progress-mark="notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html"
+>📓 08a_smiles_language_model.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html"
+           data-progress-mark="notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html"
+>📓 08b_smiles_lstm_aqsoldb.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html"
+           data-progress-mark="notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html"
+>📓 08c_reaction_transformer.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/08-sequence-models-and-transformers/08d_exercises.html"
+           data-progress-mark="notebooks/08-sequence-models-and-transformers/08d_exercises.html"
+class="active">🏋️ 08d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/08-sequence-models-and-transformers.html">模块 08：序列模型、Transformer 与反应预测</a> /  <a href="../../exercises.html">习题</a> /  <span>08d_exercises.ipynb</span>
+</div>
+<h1><span class="kind-badge kind-exercise">习题</span> 08d · 基础习题集：化学序列分词、语言模型与注意力机制</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    习题文件：<code>08d_exercises.ipynb</code>（13.8 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/08%20-%20Sequence%20Models%20and%20Transformers/08d_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/7a7fcf8a6878-08d_exercises.ipynb" download="08d_exercises.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/08-sequence-models-and-transformers/08_exercises_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/08-sequence-models-and-transformers/08d_exercises.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>本习题集配套第 08 讲（<code>08a</code> SMILES 语言模型、<code>08b</code> 数据增强与迁移微调、<code>08c</code> 注意力机制与反应预测 Transformer），共包含 <strong>8 道循序渐进的基础练习</strong>。所有题目均可在无需外部大型数据文件的情况下独立运行，帮助你巩固化学序列建模与 PyTorch 张量操作的核心基本功。</p>
+<hr />
+<h2 id="习题-1-化学感知的正则表达式分词与无损还原检验">习题 1：化学感知的正则表达式分词与无损还原检验</h2>
+<p>在 <code>08a</code> 中我们强调过：如果直接用 <code>list(smiles)</code> 按单字符切分，溴原子 <code>Br</code>、氯原子 <code>Cl</code> 以及带电荷/手性的方括号原子团 <code>[nH]</code>、<code>[N+]</code>、<code>[O-]</code> 会被拆碎成毫无化学意义的字母（例如把溴 <code>Br</code> 拆成硼 <code>B</code> 和芳香碳/环符号）。</p>
+<p>请在下方完善函数 <code>chem_tokenize(smiles)</code> 与 <code>verify_roundtrip(smiles_list)</code>：</p>
+<ol>
+<li>使用给定的正则表达式 <code>TOKEN_PATTERN</code> 将输入 <code>smiles</code> 切分为 token 列表；</li>
+<li>对 <code>test_molecules</code> 中的每个分子执行分词，再用 <code>&quot;&quot;.join(tokens)</code> 拼接还原，检验还原后的字符串是否与原 SMILES 完全一致，并返回每个分子的 <code>(token个数, 单字符长度)</code> 对比列表。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+<span class="n">TOKEN_PATTERN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">&quot;(\[[^\]]+]|Br|Cl|Si|Se|@@|@|\(|\)|\.|=|#|-|\+|</span><span class="se">\\\\</span><span class="s2">|\/|~|[0-9]|[A-Za-z])&quot;</span>
+<span class="p">)</span>
+
+<span class="n">test_molecules</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Brc1ccc(-c2scc3cc(Cl)sc23)s1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CN1C=NC2=C1C(=O)N(C(=O)N2C)C&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;O=[N+]([O-])c1ccc2[nH]ccc2c1&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">chem_tokenize</span><span class="p">(</span><span class="n">smiles</span><span class="p">):</span>
+    <span class="c1"># TODO: 返回正则匹配出的 token 列表</span>
+    <span class="k">pass</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_roundtrip</span><span class="p">(</span><span class="n">smiles_list</span><span class="p">):</span>
+    <span class="c1"># TODO: 检查 &quot;&quot;.join(chem_tokenize(s)) == s，返回 [(len(tokens), len(s)), ...]</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># stats = verify_roundtrip(test_molecules)</span>
+<span class="c1"># print(&quot;Token count vs. Character length:&quot;, stats)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-2-起止符封装-长度填充与教师强制-teacher-forcing-切片">习题 2：起止符封装、长度填充与教师强制（Teacher Forcing）切片</h2>
+<p>训练自回归序列模型时，我们需要：</p>
+<ol>
+<li>在每条 token 序列首尾分别加上起始符 <code>^</code>（<code>BOS</code>）和终止符 <code>$</code>（<code>EOS</code>），并用 <code>&lt;pad&gt;</code>（索引 <code>0</code>）在右侧填充到固定长度 <code>max_len</code>；</li>
+<li>将编码后的批张量 <code>X</code>（形状 <code>(B, L)</code>）切分为<strong>输入前缀</strong> <code>x_in = X[:, :-1]</code> 与<strong>错位一步的目标序列</strong> <code>y_target = X[:, 1:]</code>。</li>
+</ol>
+<p>请在下方补全函数 <code>encode_and_slice_batch(smiles_list, tok2idx, max_len=12)</code>，返回 <code>(x_in, y_target)</code> 两个 <code>torch.long</code> 张量。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="n">mini_vocab</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&lt;pad&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">,</span> <span class="s2">&quot;(&quot;</span><span class="p">,</span> <span class="s2">&quot;)&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="s2">&quot;Br&quot;</span><span class="p">]</span>
+<span class="n">mini_tok2idx</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mini_vocab</span><span class="p">)}</span>
+
+<span class="n">batch_smiles</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;CC=O&quot;</span><span class="p">,</span> <span class="s2">&quot;Brc1cccs1&quot;</span><span class="p">,</span> <span class="s2">&quot;CC(=O)C&quot;</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">encode_and_slice_batch</span><span class="p">(</span><span class="n">smiles_list</span><span class="p">,</span> <span class="n">tok2idx</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">12</span><span class="p">):</span>
+    <span class="c1"># TODO:</span>
+    <span class="c1"># 1. 对每条 SMILES 分词，前后加 &quot;^&quot; 和 &quot;$&quot;，右侧用 &quot;&lt;pad&gt;&quot; 补齐到 max_len</span>
+    <span class="c1"># 2. 转为 torch.long 张量 X，返回 X[:, :-1] 和 X[:, 1:]</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># x_in, y_target = encode_and_slice_batch(batch_smiles, mini_tok2idx, max_len=12)</span>
+<span class="c1"># print(&quot;x_in shape:&quot;, x_in.shape, &quot;y_target shape:&quot;, y_target.shape)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-3-手写一阶马尔可夫-bigram-转移概率矩阵">习题 3：手写一阶马尔可夫（Bigram）转移概率矩阵</h2>
+<p>在 <code>08a</code> 的第 2 节中，我们首先构建了一个无神经网络的一阶马尔可夫基线模型：统计每个当前 token <span class="math-inline" data-tex="x_t">\(x_t\)</span> 之后紧跟下一个 token <span class="math-inline" data-tex="x_{t+1}">\(x_{t+1}\)</span> 的条件概率分布 <span class="math-inline" data-tex="P(x_{t+1} \mid x_t)">\(P(x_{t+1} \mid x_t)\)</span>。</p>
+<p>给定下方由 4 条简单链烃/醚组成的迷你语料库 <code>toy_corpus</code>，请补全函数 <code>build_bigram_matrix(corpus, vocab)</code>：</p>
+<ol>
+<li>对每条分子首尾加上 <code>^</code> 和 <code>$</code>（无需填充 <code>&lt;pad&gt;</code>），统计所有相邻二元组 <span class="math-inline" data-tex="(x_t, x_{t+1})">\((x_t, x_{t+1})\)</span> 的出现频次矩阵 <code>counts</code>（形状 <code>(V, V)</code>）；</li>
+<li>采用拉普拉斯平滑（加 <code>1e-2</code> 防止零除），将每一行归一化为概率和等于 <code>1.0</code> 的条件概率矩阵 <code>probs</code>。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">toy_vocab</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">]</span>
+<span class="n">toy_corpus</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;CCC&quot;</span><span class="p">,</span> <span class="s2">&quot;COCO&quot;</span><span class="p">,</span> <span class="s2">&quot;CC=O&quot;</span><span class="p">,</span> <span class="s2">&quot;COCC&quot;</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_bigram_matrix</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">vocab</span><span class="p">):</span>
+    <span class="c1"># TODO:</span>
+    <span class="c1"># 1. 构造 V x V 的频次矩阵 counts</span>
+    <span class="c1"># 2. 加上 1e-2 平滑后按行归一化，返回 probs</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># P = build_bigram_matrix(toy_corpus, toy_vocab)</span>
+<span class="c1"># print(&quot;Row sums:&quot;, P.sum(axis=1))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-4-追踪-nn-embedding-nn-lstm-nn-linear-的张量维度">习题 4：追踪 <code>nn.Embedding + nn.LSTM + nn.Linear</code> 的张量维度</h2>
+<p>理解序列模型各层张量的维度变化是调试 PyTorch 代码的关键。给定批大小 <span class="math-inline" data-tex="B = 4">\(B = 4\)</span>、输入序列长度 <span class="math-inline" data-tex="T = 10">\(T = 10\)</span>、词表大小 <span class="math-inline" data-tex="V = 20">\(V = 20\)</span>、词嵌入维度 <span class="math-inline" data-tex="E = 16">\(E = 16\)</span>、双层单向 LSTM（<code>num_layers = 2</code>）隐状态维度 <span class="math-inline" data-tex="H = 32">\(H = 32\)</span>：</p>
+<p>请在下方补全函数 <code>trace_lstm_shapes(x)</code>，依次构建 <code>emb</code>、<code>lstm</code> 和 <code>fc</code> 层，并返回字典记录：</p>
+<ul>
+<li><code>&quot;emb_shape&quot;</code>：嵌入层输出张量的形状；</li>
+<li><code>&quot;lstm_out_shape&quot;</code>：LSTM 各时间步输出张量的形状；</li>
+<li><code>&quot;h_n_shape&quot;</code>：LSTM 最终隐状态 <code>h_n</code> 的形状（注意第 0 维是 <code>num_layers</code>）；</li>
+<li><code>&quot;logits_shape&quot;</code>：线性输出层 <code>logits</code> 的形状。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">trace_lstm_shapes</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">vocab_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">emb_dim</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">hid_dim</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">num_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="c1"># TODO: 实例化 nn.Embedding, nn.LSTM(batch_first=True), nn.Linear 并返回各步张量的 tuple(shape)</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># dummy_x = torch.randint(0, 20, (4, 10))</span>
+<span class="c1"># print(trace_lstm_shapes(dummy_x))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-5-采样温度-t-对-softmax-概率分布与信息熵的调控">习题 5：采样温度 <span class="math-inline" data-tex="T">\(T\)</span> 对 Softmax 概率分布与信息熵的调控</h2>
+<p>在自回归生成时，我们将模型输出的未归一化对数几率 <span class="math-inline" data-tex="\mathbf{z}">\(\mathbf{z}\)</span>（logits）除以温度参数 <span class="math-inline" data-tex="T &gt; 0">\(T &gt; 0\)</span>：</p>
+<div class="math-block" data-tex="P_i(T) = \frac{\exp(z_i / T)}{\sum_j \exp(z_j / T)}, \qquad H(P) = -\sum_i P_i(T) \ln P_i(T)">\[P_i(T) = \frac{\exp(z_i / T)}{\sum_j \exp(z_j / T)}, \qquad H(P) = -\sum_i P_i(T) \ln P_i(T)\]</div>
+<p>请在下方实现函数 <code>temperature_stats(logits, temperature)</code>，输入一维张量 <code>logits</code> 与标量 <code>temperature</code>，返回 <code>(max_prob, entropy)</code>（即最大单 token 概率与分布的自然对数香农熵），并验证当 <span class="math-inline" data-tex="T">\(T\)</span> 从 <code>0.5</code> 增大到 <code>2.0</code> 时，<code>max_prob</code> 单调递减而 <code>entropy</code> 单调递增。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+
+<span class="n">sample_logits</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.8</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.5</span><span class="p">])</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">temperature_stats</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">temperature</span><span class="p">):</span>
+    <span class="c1"># TODO: 计算 probs = softmax(logits / temperature)，返回 ( float(probs.max()), float(entropy) )</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># for T in [0.5, 1.0, 2.0]:</span>
+<span class="c1">#     print(f&quot;T={T} -&gt; max_prob={temperature_stats(sample_logits, T)[0]:.4f}, H={temperature_stats(sample_logits, T)[1]:.4f}&quot;)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-6-计算每-token-平均负对数似然-nll-per-token-并剔除-pad-干扰">习题 6：计算每 Token 平均负对数似然（<code>NLL per token</code>）并剔除 <code>&lt;pad&gt;</code> 干扰</h2>
+<p>在 <code>08b</code> 中，我们使用每 token 平均负对数似然（<code>NLL per token</code>）作为无监督探针，衡量一个分子在语言模型眼里是否“自然”（或是否属于分布外样本）。计算时必须将 <code>ignore_index=pad_id</code> 传给交叉熵，并且分母只能除以<strong>非 <code>&lt;pad&gt;</code> 的真实有效目标 token 数量</strong>。</p>
+<p>给定模拟的模型输出 <code>logits</code>（形状 <code>(B, T, V)</code>）和目标序列 <code>targets</code>（形状 <code>(B, T)</code>，其中 <code>0</code> 代表 <code>&lt;pad&gt;</code>），请实现函数 <code>sequence_nll_per_token(logits, targets, pad_id=0)</code>，返回形状为 <code>(B,)</code> 的每条样本平均 NLL 张量。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sequence_nll_per_token</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">pad_id</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="c1"># TODO:</span>
+    <span class="c1"># 1. 使用 F.cross_entropy(..., ignore_index=pad_id, reduction=&quot;none&quot;) 计算逐位置损失</span>
+    <span class="c1"># 2. 按行求和后除以每行 targets != pad_id 的有效 token 个数</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># torch.manual_seed(42)</span>
+<span class="c1"># fake_logits = torch.randn(3, 6, 10)</span>
+<span class="c1"># fake_targets = torch.tensor([[3, 4, 5, 2, 0, 0], [3, 6, 2, 0, 0, 0], [3, 4, 5, 6, 7, 2]])</span>
+<span class="c1"># print(&quot;Per-sequence NLL:&quot;, sequence_nll_per_token(fake_logits, fake_targets, pad_id=0))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-7-手写带因果掩码-causal-mask-的缩放点积注意力">习题 7：手写带因果掩码（Causal Mask）的缩放点积注意力</h2>
+<p>在 <code>08c</code> 中，解码器自注意力层必须施加一个上三角掩码矩阵（<code>torch.triu(..., diagonal=1)</code>），使得时间步 <span class="math-inline" data-tex="t">\(t\)</span> 的 Query 只能关注 <span class="math-inline" data-tex="j \le t">\(j \le t\)</span> 的历史位置，而对未来位置 <span class="math-inline" data-tex="j &gt; t">\(j &gt; t\)</span> 的注意力权重严格为 <code>0.0</code>。</p>
+<p>请在下方补全函数 <code>causal_scaled_dot_product_attention(Q, K, V)</code>，输入形状均为 <code>(B, T, d_k)</code> 的张量 <code>Q, K, V</code>，返回 <code>(output, attn_weights)</code>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">causal_scaled_dot_product_attention</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">):</span>
+    <span class="c1"># TODO:</span>
+    <span class="c1"># 1. 计算 Q @ K^T / sqrt(d_k)</span>
+    <span class="c1"># 2. 构造上三角布尔掩码 (diagonal=1) 并将对应分数填充为 -inf</span>
+    <span class="c1"># 3. 执行 softmax 并乘以 V，返回 (output, attn_weights)</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># q_demo = torch.randn(2, 5, 8)</span>
+<span class="c1"># out_demo, w_demo = causal_scaled_dot_product_attention(q_demo, q_demo, q_demo)</span>
+<span class="c1"># print(&quot;Upper triangle sum (should be 0.0):&quot;, float(torch.triu(w_demo, diagonal=1).sum()))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="习题-8-用-rdkit-反应模板预测-suzuki-偶联产物并做-canonical-精确匹配评估">习题 8：用 RDKit 反应模板预测 Suzuki 偶联产物并做 Canonical 精确匹配评估</h2>
+<p>在评估化学反应预测模型（无论是模板法还是 <code>ReactionTransformer</code>）时，同一个分子可能写出不同的有效 SMILES 字符串（例如 <code>c1ccc(-c2cccs2)cc1</code> 与 <code>c1csc(-c2ccccc2)c1</code>）。因此评估 Top-1 准确率时，必须先将预测字符串与真实产物字符串都转换为 <strong>RDKit Canonical SMILES</strong> 再做相等比较。</p>
+<p>请在下方实现函数 <code>run_suzuki_and_check_match(halide_smi, boronic_smi, expected_product_smi)</code>：</p>
+<ol>
+<li>使用 SMARTS 模板 <code>[c:1][Br,Cl].[c:2]B(O)O&gt;&gt;[c:1]-[c:2]</code> 对 <code>(halide_smi, boronic_smi)</code> 执行反应预测；</li>
+<li>将预测得到的第一个产物分子做 <code>Chem.SanitizeMol</code> 并转为 Canonical SMILES；</li>
+<li>将 <code>expected_product_smi</code> 也转为 Canonical SMILES，返回 <code>(pred_canon, is_exact_match)</code>。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">rdChemReactions</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">run_suzuki_and_check_match</span><span class="p">(</span><span class="n">halide_smi</span><span class="p">,</span> <span class="n">boronic_smi</span><span class="p">,</span> <span class="n">expected_product_smi</span><span class="p">):</span>
+    <span class="c1"># TODO:</span>
+    <span class="c1"># 1. 构建 Suzuki 反应模板并运行 RunReactants</span>
+    <span class="c1"># 2. 将首个产物与 expected_product_smi 均转为 Canonical SMILES 并比较是否相等</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 运行自检</span>
+<span class="c1"># pred_c, matched = run_suzuki_and_check_match(&quot;Brc1ccccc1&quot;, &quot;OB(O)c1cccs1&quot;, &quot;c1ccc(-c2cccs2)cc1&quot;)</span>
+<span class="c1"># print(f&quot;Predicted Canonical: {pred_c} | Exact Match: {matched}&quot;)</span>
+</pre></div>
+</div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/08-sequence-models-and-transformers/08d_exercises.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/08-sequence-models-and-transformers.html">返回模块 08</a>  <a class="btn btn-secondary" href="../../exercises.html">全部习题汇总</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">08c · 注意力机制与手写迷你 Transformer：化学反应产物预测</span>
+  </a>  <a class="pager-link pager-next" href="../../modules/09-generative-models.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">模块 09 · 生成模型：分子设计到电镜超分</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#习题-1-化学感知的正则表达式分词与无损还原检验">习题 1：化学感知的正则表达式分词与无损还原检验</a></li>      <li class="toc-l2"><a href="#习题-2-起止符封装-长度填充与教师强制-teacher-forcing-切片">习题 2：起止符封装、长度填充与教师强制（Teacher Forcing）切片</a></li>      <li class="toc-l2"><a href="#习题-3-手写一阶马尔可夫-bigram-转移概率矩阵">习题 3：手写一阶马尔可夫（Bigram）转移概率矩阵</a></li>      <li class="toc-l2"><a href="#习题-4-追踪-nn-embedding-nn-lstm-nn-linear-的张量维度">习题 4：追踪 nn.Embedding + nn.LSTM + nn.Linear 的张量维度</a></li>      <li class="toc-l2"><a href="#习题-5-采样温度-t-对-softmax-概率分布与信息熵的调控">习题 5：采样温度 \(T\) 对 Softmax 概率分布与信息熵的调控</a></li>      <li class="toc-l2"><a href="#习题-6-计算每-token-平均负对数似然-nll-per-token-并剔除-pad-干扰">习题 6：计算每 Token 平均负对数似然（NLL per token）并剔除 &lt;pad&gt; 干扰</a></li>      <li class="toc-l2"><a href="#习题-7-手写带因果掩码-causal-mask-的缩放点积注意力">习题 7：手写带因果掩码（Causal Mask）的缩放点积注意力</a></li>      <li class="toc-l2"><a href="#习题-8-用-rdkit-反应模板预测-suzuki-偶联产物并做-canonical-精确匹配评估">习题 8：用 RDKit 反应模板预测 Suzuki 偶联产物并做 Canonical 精确匹配评估</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

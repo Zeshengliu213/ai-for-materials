@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="高斯过程回归（GPR）、Tanimoto 分子核、EI/UCB 采集函数与 Science 钯催化偶联反应主动实验设计。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="模块 04：贝叶斯优化与主动实验设计 | AI for Materials Science" />
+  <meta property="og:description" content="高斯过程回归（GPR）、Tanimoto 分子核、EI/UCB 采集函数与 Science 钯催化偶联反应主动实验设计。" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/modules/04-bayesian-optimization.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/modules/04-bayesian-optimization.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../assets/pygments.css" />
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../assets/search-index.js"></script>
+  <script defer src="../assets/app.js"></script>  <title>模块 04：贝叶斯优化与主动实验设计 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../index.html">课程主页</a>
+      <a href="../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../exercises.html">习题与答案</a>
+      <a href="../index.html#legend">学习指南</a>
+      <a href="../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../modules/04-bayesian-optimization.html"
+class="active">
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/04-bayesian-optimization/04a_gaussian_processes.html"
+           data-progress-mark="notebooks/04-bayesian-optimization/04a_gaussian_processes.html"
+>📓 04a_gaussian_processes.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/04-bayesian-optimization/04b_bayesian_optimization.html"
+           data-progress-mark="notebooks/04-bayesian-optimization/04b_bayesian_optimization.html"
+>📓 04b_bayesian_optimization.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/04-bayesian-optimization/04c_exercises.html"
+           data-progress-mark="notebooks/04-bayesian-optimization/04c_exercises.html"
+>🏋️ 04c_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb"><a href="../index.html">课程主页</a> / <span>模块 04</span></div>
+<div class="module-head">
+  <span class="module-num">Module 04</span>
+  <span class="status-badge status-done">已完成</span>
+  <span class="module-head-en">Bayesian Optimization</span>
+</div>
+<h1>贝叶斯优化与主动实验设计</h1><div class="progress-panel" data-progress-keys="notebooks/04-bayesian-optimization/04a_gaussian_processes.html,notebooks/04-bayesian-optimization/04b_bayesian_optimization.html,notebooks/04-bayesian-optimization/04c_exercises.html">
+  <div class="progress-head">
+    <strong>本模块学习进度</strong>
+    <span class="progress-count" data-progress-count>0 / 3</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+  <p class="hint-inline">进度只保存在你当前浏览器（localStorage），不会上传到任何服务器。</p>
+</div><h2 id="lectures">互动实战课件（Notebooks）</h2>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>课件名称</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/04-bayesian-optimization/04a_gaussian_processes.html"
+                 aria-label="把 04a_gaussian_processes.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/04-bayesian-optimization/04a_gaussian_processes.html"><strong>04a — 贝叶斯优化（上）：高斯过程回归与预测不确定性量化</strong></a><br/>
+          <code>04a_gaussian_processes.ipynb</code></td>
+        <td>29.3 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/04-bayesian-optimization/04a_gaussian_processes.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/7bd374ec174c-04a_gaussian_processes.ipynb" download="04a_gaussian_processes.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/04%20-%20Bayesian%20Optimization/04a_gaussian_processes.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/04-bayesian-optimization/04b_bayesian_optimization.html"
+                 aria-label="把 04b_bayesian_optimization.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/04-bayesian-optimization/04b_bayesian_optimization.html"><strong>04b — 贝叶斯优化（下）：主动实验设计与合成配方寻优</strong></a><br/>
+          <code>04b_bayesian_optimization.ipynb</code></td>
+        <td>26.0 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/04-bayesian-optimization/04b_bayesian_optimization.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/bac75ddb7506-04b_bayesian_optimization.ipynb" download="04b_bayesian_optimization.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/04%20-%20Bayesian%20Optimization/04b_bayesian_optimization.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="exercises">课后习题（Exercises）<span class="kind-badge kind-exercise">习题</span></h2>
+<p class="hint-inline">建议在完成本模块全部课件后再做习题；参考答案默认折叠，请先独立完成。
+  也可以在<a href="../exercises.html">全部习题汇总页</a>统一查看各模块习题。</p>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/04-bayesian-optimization/04c_exercises.html"
+                 aria-label="把 04c_exercises.ipynb 标记为已完成" />
+        </td>
+        <td><a href="../notebooks/04-bayesian-optimization/04c_exercises.html"><strong>04c — 第四讲基础习题：高斯过程回归与贝叶斯优化巩固练习</strong></a><br/>
+          <code>04c_exercises.ipynb</code></td>
+        <td>11.9 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/04-bayesian-optimization/04c_exercises.html">开始做题</a>
+          <a class="btn btn-secondary" href="../files/_shared/769ef8ec26f3-04c_exercises.ipynb" download="04c_exercises.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/04%20-%20Bayesian%20Optimization/04c_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>          <a class="btn btn-secondary" href="../solutions/04-bayesian-optimization/04_exercises_solutions.html">参考答案</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="solutions">参考答案（Solutions）</h2>
+<p class="hint-inline">答案页默认折叠，请先独立完成练习再展开。</p>
+<ul class="solution-list">  <li><span class="kind-badge kind-lecture">课件答案</span>
+    <a href="../solutions/04-bayesian-optimization/04_bo_solutions.html">✅ 04 — 贝叶斯优化与主动学习：随堂练习参考答案（Solutions）</a>
+    (<code>04_bo_solutions.ipynb</code> · 19.5 KB) —
+    <a href="../files/_shared/0b2c23ba3b28-04_bo_solutions.ipynb" download="04_bo_solutions.ipynb">下载 .ipynb</a></li>  <li><span class="kind-badge kind-exercise">习题答案</span>
+    <a href="../solutions/04-bayesian-optimization/04_exercises_solutions.html">✅ 第四讲基础习题参考答案</a>
+    (<code>04_exercises_solutions.ipynb</code> · 13.8 KB) —
+    <a href="../files/_shared/debd1f993df6-04_exercises_solutions.ipynb" download="04_exercises_solutions.ipynb">下载 .ipynb</a></li></ul><h2>配套数据集（Datasets）</h2>
+<ul>  <li><code>bh-reactions.csv</code> (1.5 MB) —
+    <a href="../files/_shared/26aa96075e1e-bh-reactions.csv" download="bh-reactions.csv">下载数据集</a></li>  <li><code>solubility.csv</code> (2.1 MB) —
+    <a href="../files/_shared/f274636a3ed2-solubility.csv" download="solubility.csv">下载数据集</a></li></ul>
+<h2>模块导读与教学设计</h2><div class="markdown-body"><h1>04 — 贝叶斯优化与主动实验设计（Bayesian Optimization）</h1>
+<p>在前三讲中，我们讨论的监督学习与无监督学习大多建立在“已经拥有上千条实验数据”的前提之上。然而在真实的材料工艺开发（如钙钛矿退火温度与前驱体配比优化）与有机合成条件筛选（如催化剂、碱与溶剂组合寻优）中，每一次实验都十分昂贵，初始阶段往往只有寥寥几个实验点。</p>
+<p>本讲介绍小样本主动学习与“自动驾驶实验室（Self-Driving Labs）”的核心算法——<strong>高斯过程回归（Gaussian Process Regression, GPR）<strong>与</strong>贝叶斯优化（Bayesian Optimization, BO）</strong>：看模型如何同时输出预测值与不确定性，并通过平衡“利用（Exploitation）”与“探索（Exploration）”自动推荐下一轮最值得做的实验。</p>
+<hr />
+<h2>课程模块结构</h2>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>Notebook</th>
+<th>核心内容</th>
+<th>建议课时</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>04a</strong></td>
+<td><code>04a_gaussian_processes.ipynb</code></td>
+<td><strong>高斯过程与不确定性量化</strong>：小样本实验为何需要不确定性、二维至多维相关正态分布、RBF / Matérn / WhiteKernel 核函数的物理意义与先验函数采样、10 行 NumPy 手写 GPR 后验解析解、<code>scikit-learn</code> 自动超参数似然拟合與实验噪声剥离、离散分子指纹的 <strong>Tanimoto 核函数</strong>与自带适用域预警</td>
+<td>60–75 min</td>
+</tr>
+<tr>
+<td><strong>04b</strong></td>
+<td><code>04b_bayesian_optimization.ipynb</code></td>
+<td><strong>贝叶斯优化与合成配方寻优</strong>：四步主动学习闭环、利用 vs 探索权衡、手写三大采集函数（Greedy / UCB / EI）、1D 与 2D 材料工艺窗口寻优可视化（跳出局部最优陷阱）、Buchwald–Hartwig 钯催化偶联反应高通量数据集实战（3,955 个反应中仅用 25 次实验找到 &gt;95% 产率配方）、贝叶斯优化工程边界与并行批次推荐（Batch BO）</td>
+<td>60–75 min</td>
+</tr>
+<tr>
+<td><strong>04c</strong></td>
+<td><code>04c_exercises.ipynb</code></td>
+<td><strong>第四讲基础巩固习题</strong>：涵盖 RBF 核矩阵计算、GPR 拟合与置信区间绘制、<code>WhiteKernel</code> 噪声估计、UCB 与 EI 采集函数计算、单步实验推荐及 Buchwald–Hartwig 反应子集寻优的 8 道分步基础练习</td>
+<td>30–45 min</td>
+</tr>
+<tr>
+<td><strong>参考答案</strong></td>
+<td><code>solutions/04_bo_solutions.ipynb</code><br><code>solutions/04_exercises_solutions.ipynb</code></td>
+<td>分别汇总 <code>04a</code>–<code>04b</code> 随堂练习（6 道）与 <code>04c</code> 基础巩固习题（8 道）的完整可运行代码、图表与解析</td>
+<td>课后自查</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>与前三讲的前后呼应</h2>
+<table>
+<thead>
+<tr>
+<th>前序模块埋下的伏笔</th>
+<th>本讲在何处兑现与深化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>02b</code> / <code>03a</code>：模型在外推时盲目自信，需额外计算最近邻距离检查适用域（AD）</td>
+<td><strong><code>04a</code> 第 4 &amp; 6 节</strong>：高斯过程回归将“离训练集有多远”直接转化为后验标准差 <span class="math-inline" data-tex="\sigma(x)">\(\sigma(x)\)</span>；在分子指纹上使用 Tanimoto 核时，模型对 <code>C8-BTBT</code> 等域外分子自动输出接近上限的高不确定性</td>
+</tr>
+<tr>
+<td><code>02b</code>：网格搜索（Grid Search）在参数组合多时面临指数级维数灾难</td>
+<td><strong><code>04b</code> 第 3 &amp; 4 节</strong>：在 3,955 种 Buchwald–Hartwig 催化反应组合中，无需遍历网格，仅靠 25 次序贯贝叶斯优化（不到全空间的 0.7%）即可稳定找到 &gt;94% 产率的最优配方</td>
+</tr>
+<tr>
+<td><code>03a</code>：高维稀疏分子指纹可通过 PCA 压缩为低维连续特征</td>
+<td><strong><code>04b</code> 练习 <code>04b-3</code></strong>：将 4 个反应组分的 1,024 维拼接 Morgan 指纹经 <code>PCA(30)</code> 降维后输入 GPR，实现跨分子结构的反应产率泛化寻优</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>数据集说明</h2>
+<ul>
+<li><code>data/solubility.csv</code>：AqSolDB 水溶解度数据集，用于 <code>04a</code> 第 6 节演示 Tanimoto 分子核高斯过程的不确定性校准与适用域自检；</li>
+<li><code>data/bh-reactions.csv</code>：Buchwald–Hartwig 钯催化碳氮偶联反应高通量实验数据集（Ahneman et al., <em>Science</em> <strong>360</strong>, 186–190, 2018），共 3,955 个反应配方（含配体、添加剂、碱、芳基卤代物的 SMILES 及实测产率 <code>yield</code>），用于 <code>04b</code> 第 4 节及 <code>04c</code> 基础习题。</li>
+</ul>
+</div><nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../notebooks/03-unsupervised-learning/03d_exercises.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习</span>
+  </a>  <a class="pager-link pager-next" href="../notebooks/04-bayesian-optimization/04a_gaussian_processes.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">04a — 贝叶斯优化（上）：高斯过程回归与预测不确定性量化</span>
+  </a></nav>  </main></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

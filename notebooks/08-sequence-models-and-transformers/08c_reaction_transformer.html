@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="08c · 注意力机制与手写迷你 Transformer：化学反应产物预测 在 08a 和 08b 中，我们构建了仅含解码器（Decoder only）的自回归语言模型（SmilesRNN / SmilesLSTM），从无条件分布 中采样生成新的有机光电分子。然而在合成化学与材料研发中，更常见的一类核心任务是 受条件约" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="08c · 注意力机制与手写迷你 Transformer：化学反应产物预测 | AI for Materials Science" />
+  <meta property="og:description" content="08c · 注意力机制与手写迷你 Transformer：化学反应产物预测 在 08a 和 08b 中，我们构建了仅含解码器（Decoder only）的自回归语言模型（SmilesRNN / SmilesLSTM），从无条件分布 中采样生成新的有机光电分子。然而在合成化学与材料研发中，更常见的一类核心任务是 受条件约" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>08c · 注意力机制与手写迷你 Transformer：化学反应产物预测 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html"
+           data-progress-mark="notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html"
+>📓 08a_smiles_language_model.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html"
+           data-progress-mark="notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html"
+>📓 08b_smiles_lstm_aqsoldb.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html"
+           data-progress-mark="notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html"
+class="active">📓 08c_reaction_transformer.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/08-sequence-models-and-transformers/08d_exercises.html"
+           data-progress-mark="notebooks/08-sequence-models-and-transformers/08d_exercises.html"
+>🏋️ 08d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/08-sequence-models-and-transformers.html">模块 08：序列模型、Transformer 与反应预测</a> /  <span>08c_reaction_transformer.ipynb</span>
+</div>
+<h1>08c · 注意力机制与手写迷你 Transformer：化学反应产物预测</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>08c_reaction_transformer.ipynb</code>（45.2 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/08%20-%20Sequence%20Models%20and%20Transformers/08c_reaction_transformer.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/147dbd83433b-08c_reaction_transformer.ipynb" download="08c_reaction_transformer.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/08-sequence-models-and-transformers/08_sequence_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>在 <code>08a</code> 和 <code>08b</code> 中，我们构建了仅含解码器（Decoder-only）的自回归语言模型（<code>SmilesRNN</code> / <code>SmilesLSTM</code>），从无条件分布 <span class="math-inline" data-tex="P(x_1, \dots, x_T)">\(P(x_1, \dots, x_T)\)</span> 中采样生成新的有机光电分子。然而在合成化学与材料研发中，更常见的一类核心任务是<strong>受条件约束的序列到序列转换（Sequence-to-Sequence, Seq2Seq）</strong>：</p>
+<ul>
+<li><strong>正向反应产物预测（Forward Reaction Prediction）</strong>：给定反应物（Reactants）与试剂（Reagents），预测主产物（Major Product）的分子结构；</li>
+<li><strong>逆合成路线规划（Single-Step Retrosynthesis）</strong>：给定目标产物分子，反推可行的前驱体反应物组合。</li>
+</ul>
+<p>如果沿用传统的 RNN 编码器-解码器（Encoder-Decoder）架构，编码器必须把长达数十个 token 的反应物 SMILES 压缩进<strong>单个固定维度的隐状态向量</strong> <span class="math-inline" data-tex="\mathbf{h}_T">\(\mathbf{h}_T\)</span> 中，再由解码器从中还原出产物结构。对于有机化学反应而言，这种“单向量信息瓶颈”尤为致命：绝大多数反应只改变分子局部的 1~2 个化学键，而占分子主体 80% 以上的芳环骨架与取代基需要原封不动（或仅调整环闭合数字编号）地复制到产物中。</p>
+<p>2017 年提出的 <strong>Transformer</strong> 架构彻底抛弃了循环递归，改用**注意力机制（Attention Mechanism）**让解码器在生成每一个产物 token 时，都能直接回顾并聚焦于反应物序列中的任意原子位置。本节我们将以有机光电材料合成中最经典的 <strong>Suzuki-Miyaura 交叉偶联反应</strong>为载体，对比基于专家规则的反应模板（SMARTS）与数据驱动的序列翻译范式，亲手实现缩放点积注意力、正弦位置编码与编码器-解码器 Transformer，并通过交叉注意力热力图（Cross-Attention Map）直观观察模型如何“定位”反应活性位点。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h2 id="1-化学反应预测的两种范式-反应模板-vs-序列到序列翻译">1. 化学反应预测的两种范式：反应模板 vs. 序列到序列翻译</h2>
+<p>在 <code>08a</code> 与 <code>08b</code> 探讨的噻吩类共轭聚合物及给体-受体（D-A）有机半导体合成中，<strong>Suzuki-Miyaura 交叉偶联反应</strong>是构筑芳基-芳基碳碳单键（<span class="math-inline" data-tex="\text{Ar}_1\text{–Ar}_2">\(\text{Ar}_1\text{–Ar}_2\)</span>）最核心的工具：在钯（Pd）催化剂与碱的作用下，芳基卤代物（<span class="math-inline" data-tex="\text{Ar}_1\text{–Br}">\(\text{Ar}_1\text{–Br}\)</span> 或 <span class="math-inline" data-tex="\text{Ar}_1\text{–Cl}">\(\text{Ar}_1\text{–Cl}\)</span>）与芳基硼酸（<span class="math-inline" data-tex="\text{Ar}_2\text{–B(OH)}_2">\(\text{Ar}_2\text{–B(OH)}_2\)</span>）发生脱卤-转金属-还原消除循环，偶联生成联芳基产物。</p>
+<p>在计算机辅助合成设计（CASP）中，预测该反应产物主要有两种路径：</p>
+<ol>
+<li><strong>基于专家规则的反应模板（Reaction SMARTS Templates）</strong>：化学家把反应机理编码为子结构匹配与图编辑规则（例如 <code>[c:1][Br,Cl].[c:2]B(O)O&gt;&gt;[c:1]-[c:2]</code>），利用 RDKit 搜索反应物中的卤素与硼酸位点并拼接成键；</li>
+<li><strong>无模板序列到序列翻译（Template-Free Seq2Seq Translation）</strong>：把用点号 <code>.</code> 分隔的反应物 SMILES 视为“源语言句子”（如 <code>Brc1cc2ccccc2s1.CC(C)(C)c1csc(B(O)O)c1</code>），把产物 SMILES 视为“目标语言句子”（<code>CC(C)(C)c1csc(-c2cc3ccccc3s2)c1</code>），交由神经网络端到端学习。</li>
+</ol>
+<p>我们先导入依赖库，并用 RDKit 演示反应模板法的工作方式与局限性。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">TensorDataset</span><span class="p">,</span> <span class="n">DataLoader</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">AllChem</span><span class="p">,</span> <span class="n">Draw</span><span class="p">,</span> <span class="n">rdChemReactions</span>
+
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.spines.top&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.spines.right&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="n">SEED</span> <span class="o">=</span> <span class="mi">42</span>
+<span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">SEED</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">SEED</span><span class="p">)</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">SEED</span><span class="p">)</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using device: </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 演示：用 RDKit Reaction SMARTS 模板执行 Suzuki 偶联预测</span>
+<span class="n">suzuki_smarts</span> <span class="o">=</span> <span class="s2">&quot;[c:1][Br,Cl].[c:2]B(O)O&gt;&gt;[c:1]-[c:2]&quot;</span>
+<span class="n">rxn_rule</span> <span class="o">=</span> <span class="n">rdChemReactions</span><span class="o">.</span><span class="n">ReactionFromSmarts</span><span class="p">(</span><span class="n">suzuki_smarts</span><span class="p">)</span>
+
+<span class="n">sample_halide</span> <span class="o">=</span> <span class="s2">&quot;Brc1cc2ccccc2s1&quot;</span>            <span class="c1"># 2-溴苯并[b]噻吩</span>
+<span class="n">sample_boronic</span> <span class="o">=</span> <span class="s2">&quot;CC(C)(C)c1csc(B(O)O)c1&quot;</span>    <span class="c1"># 4-叔丁基噻吩-2-硼酸</span>
+
+<span class="n">halide_mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">sample_halide</span><span class="p">)</span>
+<span class="n">boronic_mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">sample_boronic</span><span class="p">)</span>
+<span class="n">products</span> <span class="o">=</span> <span class="n">rxn_rule</span><span class="o">.</span><span class="n">RunReactants</span><span class="p">((</span><span class="n">halide_mol</span><span class="p">,</span> <span class="n">boronic_mol</span><span class="p">))</span>
+
+<span class="n">pred_smiles_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">prod_tuple</span> <span class="ow">in</span> <span class="n">products</span><span class="p">:</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">prod_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">Chem</span><span class="o">.</span><span class="n">SanitizeMol</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span>
+        <span class="n">pred_smiles_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolToSmiles</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">canonical</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reactant 1 (Aryl Halide)  : </span><span class="si">{</span><span class="n">sample_halide</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reactant 2 (Boronic Acid) : </span><span class="si">{</span><span class="n">sample_boronic</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SMARTS Predicted Product  : </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">pred_smiles_set</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>对于上述单一活性位点的标准底物，SMARTS 模板给出了完全准确的产物。但当反应物中同时存在多个卤素（如既有 <code>-Br</code> 又有 <code>-Cl</code>，在 Suzuki 反应中 <code>-Br</code> 的氧化加成活性远高于 <code>-Cl</code>）、或者存在复杂杂环互变异构与立体电子效应时，死板的子结构模板会枚举出所有拓扑匹配的副产物，无法自主判断<strong>区域选择性（Regioselectivity）<strong>与</strong>化学选择性（Chemoselectivity）</strong>。</p>
+<p>接下来我们加载本节使用的 <code>data/suzuki_toy.csv</code> 数据集，观察序列模型面临的数据格式与泛化挑战。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">DATA_DIR</span> <span class="o">=</span> <span class="s2">&quot;./data&quot;</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;./data/suzuki_toy.csv&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;course/08 - Sequence Models and Transformers/data&quot;</span>
+<span class="n">suzuki_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;suzuki_toy.csv&quot;</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total reactions: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">suzuki_df</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Split counts:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">suzuki_df</span><span class="p">[</span><span class="s2">&quot;split&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">())</span>
+
+<span class="n">suzuki_df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>注意 <code>suzuki_df[&quot;split&quot;]</code> 包含三个精心设计的子集，这与我们在 <code>02c</code> 中学习的**分子骨架划分（Scaffold Split）**一脉相承：</p>
+<ul>
+<li><strong><code>train</code>（8,000 条）</strong>：由常见芳基卤代物与芳基硼酸组合而成的训练集；</li>
+<li><strong><code>val</code>（500 条，分布内新组合）</strong>：卤代物与硼酸片段各自都在 <code>train</code> 中出现过，但它们的<strong>配对组合</strong>在训练集中从未见过；</li>
+<li><strong><code>test_new_aryl</code>（500 条，分布外新芳环骨架）</strong>：包含训练集中从未出现过的全新芳基卤代物骨架，专门检验模型是死记硬背了特定反应物词段，还是真正学会了“识别离去基团并拼接芳环”的反应规律。</li>
+</ul>
+<p>仔细对比第一行数据的输入与输出：</p>
+<ul>
+<li>输入 <code>reactants</code>：<code>Brc1cc2ccccc2s1.CC(C)(C)c1csc(B(O)O)c1</code></li>
+<li>输出 <code>product</code>：<code>CC(C)(C)c1csc(-c2cc3ccccc3s2)c1</code></li>
+</ul>
+<p>没有任何显式的原子映射编号或图连接矩阵，序列模型必须独立完成三件事：</p>
+<ol>
+<li>找到点号 <code>.</code> 两侧的离去基团 <code>Br</code> 与 <code>B(O)O</code> 并将其切除；</li>
+<li>在原来连接 <code>B(O)O</code> 的碳原子处插入芳香单键分支 <code>(-...)</code>；</li>
+<li>将第一个反应物原本的环闭合编号 <code>c1cc2ccccc2s1</code> 整体顺延重写为 <code>c2cc3ccccc3s2</code>，以避免与左侧噻吩环的 <code>1</code> 号环发生冲突！</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 构建反应序列词表与张量编码</span>
+<span class="n">TOKEN_PATTERN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">&quot;(\[[^\]]+]|Br|Cl|Si|Se|Na|Li|Mg|Ca|Fe|Zn|Cu|Mn|@@|@|\(|\)|\.|=|#|-|\+|</span><span class="se">\\\\</span><span class="s2">|\/|~|[0-9]|[A-Za-z])&quot;</span>
+<span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">tokenize_smiles</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">TOKEN_PATTERN</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+<span class="n">all_reaction_texts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">suzuki_df</span><span class="p">[</span><span class="s2">&quot;reactants&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">suzuki_df</span><span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">])</span>
+<span class="n">raw_tokens</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">tok</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">all_reaction_texts</span> <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">tokenize_smiles</span><span class="p">(</span><span class="n">s</span><span class="p">)})</span>
+<span class="n">vocab</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&lt;pad&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="s2">&quot;$&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">raw_tokens</span>
+<span class="n">tok2idx</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vocab</span><span class="p">)}</span>
+<span class="n">idx2tok</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">t</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vocab</span><span class="p">)}</span>
+
+<span class="n">PAD_ID</span><span class="p">,</span> <span class="n">BOS_ID</span><span class="p">,</span> <span class="n">EOS_ID</span> <span class="o">=</span> <span class="n">tok2idx</span><span class="p">[</span><span class="s2">&quot;&lt;pad&gt;&quot;</span><span class="p">],</span> <span class="n">tok2idx</span><span class="p">[</span><span class="s2">&quot;^&quot;</span><span class="p">],</span> <span class="n">tok2idx</span><span class="p">[</span><span class="s2">&quot;$&quot;</span><span class="p">]</span>
+<span class="n">MAX_SRC_LEN</span> <span class="o">=</span> <span class="mi">64</span>
+<span class="n">MAX_TGT_LEN</span> <span class="o">=</span> <span class="mi">64</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reaction vocabulary size: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tokens: </span><span class="si">{</span><span class="n">vocab</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">encode_seq</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">64</span><span class="p">):</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">BOS_ID</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">tok2idx</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tokenize_smiles</span><span class="p">(</span><span class="n">s</span><span class="p">)][:</span> <span class="n">max_len</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">EOS_ID</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">ids</span> <span class="o">+</span> <span class="p">[</span><span class="n">PAD_ID</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_len</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">decode_ids</span><span class="p">(</span><span class="n">ids</span><span class="p">):</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">EOS_ID</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">PAD_ID</span><span class="p">,</span> <span class="n">BOS_ID</span><span class="p">):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx2tok</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+    <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_split_tensors</span><span class="p">(</span><span class="n">sub_df</span><span class="p">):</span>
+    <span class="n">src</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">encode_seq</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">MAX_SRC_LEN</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sub_df</span><span class="p">[</span><span class="s2">&quot;reactants&quot;</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+    <span class="n">tgt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">encode_seq</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">MAX_TGT_LEN</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sub_df</span><span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">src</span><span class="p">,</span> <span class="n">tgt</span>
+
+<span class="n">train_df</span> <span class="o">=</span> <span class="n">suzuki_df</span><span class="p">[</span><span class="n">suzuki_df</span><span class="p">[</span><span class="s2">&quot;split&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;train&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">val_df</span> <span class="o">=</span> <span class="n">suzuki_df</span><span class="p">[</span><span class="n">suzuki_df</span><span class="p">[</span><span class="s2">&quot;split&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;val&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">test_aryl_df</span> <span class="o">=</span> <span class="n">suzuki_df</span><span class="p">[</span><span class="n">suzuki_df</span><span class="p">[</span><span class="s2">&quot;split&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;test_new_aryl&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">train_src</span><span class="p">,</span> <span class="n">train_tgt</span> <span class="o">=</span> <span class="n">build_split_tensors</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+<span class="n">val_src</span><span class="p">,</span> <span class="n">val_tgt</span> <span class="o">=</span> <span class="n">build_split_tensors</span><span class="p">(</span><span class="n">val_df</span><span class="p">)</span>
+<span class="n">test_src</span><span class="p">,</span> <span class="n">test_tgt</span> <span class="o">=</span> <span class="n">build_split_tensors</span><span class="p">(</span><span class="n">test_aryl_df</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;train_src shape: </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="n">train_src</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">, train_tgt shape: </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="n">train_tgt</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-拆解-transformer-核心组件-缩放点积注意力与位置编码">2. 拆解 Transformer 核心组件：缩放点积注意力与位置编码</h2>
+<h3 id="2-1-缩放点积注意力-scaled-dot-product-attention">2.1 缩放点积注意力（Scaled Dot-Product Attention）</h3>
+<p>为什么 Transformer 不需要像 LSTM 那样按时间步传递隐状态？答案在于它把序列交互抽象成了<strong>可微分的字典检索</strong>。对于序列中的每一个位置：</p>
+<ul>
+<li><strong>Query（查询向量 <span class="math-inline" data-tex="\mathbf{q}_i \in \mathbb{R}^{d_k}">\(\mathbf{q}_i \in \mathbb{R}^{d_k}\)</span>）</strong>：代表当前位置正在寻找什么化学环境（例如解码器正在生成偶联单键 <code>-</code> 之后的原子，它发出查询：“反应物中哪个芳香碳原子刚脱去了 <code>Br</code>？”）；</li>
+<li><strong>Key（键向量 <span class="math-inline" data-tex="\mathbf{k}_j \in \mathbb{R}^{d_k}">\(\mathbf{k}_j \in \mathbb{R}^{d_k}\)</span>）</strong>：代表被检索位置的特征标签；</li>
+<li><strong>Value（值向量 <span class="math-inline" data-tex="\mathbf{v}_j \in \mathbb{R}^{d_v}">\(\mathbf{v}_j \in \mathbb{R}^{d_v}\)</span>）</strong>：代表一旦匹配成功，被检索位置向当前位置传递的上下文表示。</li>
+</ul>
+<p>将所有位置的向量堆叠为矩阵 <span class="math-inline" data-tex="\mathbf{Q} \in \mathbb{R}^{T_q \times d_k}">\(\mathbf{Q} \in \mathbb{R}^{T_q \times d_k}\)</span>、<span class="math-inline" data-tex="\mathbf{K} \in \mathbb{R}^{T_k \times d_k}">\(\mathbf{K} \in \mathbb{R}^{T_k \times d_k}\)</span>、<span class="math-inline" data-tex="\mathbf{V} \in \mathbb{R}^{T_k \times d_v}">\(\mathbf{V} \in \mathbb{R}^{T_k \times d_v}\)</span>，<strong>缩放点积注意力</strong>定义为：</p>
+<div class="math-block" data-tex="\text{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{softmax}\!\left(\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d_k}} + \mathbf{M}\right)\mathbf{V}">\[\text{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{softmax}\!\left(\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d_k}} + \mathbf{M}\right)\mathbf{V}\]</div>
+<p>这里有两个关键细节：</p>
+<ol>
+<li><strong>为什么要除以 <span class="math-inline" data-tex="\sqrt{d_k}">\(\sqrt{d_k}\)</span>？</strong> 若 <span class="math-inline" data-tex="\mathbf{q}">\(\mathbf{q}\)</span> 与 <span class="math-inline" data-tex="\mathbf{k}">\(\mathbf{k}\)</span> 的各分量独立同分布且均值为 <span class="math-inline" data-tex="0">\(0\)</span>、方差为 <span class="math-inline" data-tex="1">\(1\)</span>，则它们的内积 <span class="math-inline" data-tex="\mathbf{q}^\top \mathbf{k} = \sum_{m=1}^{d_k} q_m k_m">\(\mathbf{q}^\top \mathbf{k} = \sum_{m=1}^{d_k} q_m k_m\)</span> 的均值为 <span class="math-inline" data-tex="0">\(0\)</span>，方差会随维度线性增长至 <span class="math-inline" data-tex="d_k">\(d_k\)</span>（标准差为 <span class="math-inline" data-tex="\sqrt{d_k}">\(\sqrt{d_k}\)</span>）。当 <span class="math-inline" data-tex="d_k">\(d_k\)</span> 较大时，未经缩放的内积绝对值很大，会把 Softmax 推入梯度接近 <span class="math-inline" data-tex="0">\(0\)</span> 的极度饱和区；除以 <span class="math-inline" data-tex="\sqrt{d_k}">\(\sqrt{d_k}\)</span> 能将内积方差重新拉回 <span class="math-inline" data-tex="1">\(1\)</span>。</li>
+<li><strong>加性掩码矩阵 <span class="math-inline" data-tex="\mathbf{M}">\(\mathbf{M}\)</span></strong>：对于不允许关注的位置（例如 <code>&lt;pad&gt;</code> 填充符，或解码器自注意力中尚未生成的未来位置 <span class="math-inline" data-tex="j &gt; i">\(j &gt; i\)</span>），令 <span class="math-inline" data-tex="M_{ij} = -\infty">\(M_{ij} = -\infty\)</span>，经过 <span class="math-inline" data-tex="\exp(-\infty) = 0">\(\exp(-\infty) = 0\)</span> 后，该位置的注意力权重严格归零。</li>
+</ol>
+<p>下面我们用纯 PyTorch 编写 <code>scaled_dot_product_attention</code> 并验证其数值性质。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">scaled_dot_product_attention</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    计算缩放点积注意力。</span>
+<span class="sd">    Q: (..., T_q, d_k)</span>
+<span class="sd">    K: (..., T_k, d_k)</span>
+<span class="sd">    V: (..., T_k, d_v)</span>
+<span class="sd">    mask: 布尔张量或加性掩码，形状可广播至 (..., T_q, T_k)。</span>
+<span class="sd">          若为布尔张量，True 表示该位置被屏蔽（填入 -inf）。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">d_k</span> <span class="o">=</span> <span class="n">Q</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">K</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">d_k</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">mask</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">:</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">masked_fill</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">scores</span> <span class="o">+</span> <span class="n">mask</span>
+    <span class="n">attn_weights</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">attn_weights</span><span class="p">,</span> <span class="n">V</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">attn_weights</span>
+
+<span class="c1"># 用 5 个化学 token 测试因果自注意力（Causal Self-Attention）</span>
+<span class="n">demo_tokens</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="s2">&quot;Brc1&quot;</span><span class="p">,</span> <span class="s2">&quot;cc&quot;</span><span class="p">,</span> <span class="s2">&quot;s1&quot;</span><span class="p">,</span> <span class="s2">&quot;$&quot;</span><span class="p">]</span>
+<span class="n">T_demo</span><span class="p">,</span> <span class="n">d_k_demo</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">demo_tokens</span><span class="p">),</span> <span class="mi">8</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">Q_demo</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">T_demo</span><span class="p">,</span> <span class="n">d_k_demo</span><span class="p">)</span>
+<span class="n">K_demo</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">T_demo</span><span class="p">,</span> <span class="n">d_k_demo</span><span class="p">)</span>
+<span class="n">V_demo</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">T_demo</span><span class="p">,</span> <span class="n">d_k_demo</span><span class="p">)</span>
+
+<span class="c1"># 上三角布尔掩码（diagonal=1）：位置 i 无法看到 j &gt; i 的未来 token</span>
+<span class="n">causal_mask_demo</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">triu</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">T_demo</span><span class="p">,</span> <span class="n">T_demo</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">),</span> <span class="n">diagonal</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">out_demo</span><span class="p">,</span> <span class="n">weights_demo</span> <span class="o">=</span> <span class="n">scaled_dot_product_attention</span><span class="p">(</span><span class="n">Q_demo</span><span class="p">,</span> <span class="n">K_demo</span><span class="p">,</span> <span class="n">V_demo</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">causal_mask_demo</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Causal Attention Weights (rows = query step t, cols = key step j &lt;= t):&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">weights_demo</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>可以看到，注意力权重矩阵严格呈下三角分布：第 <span class="math-inline" data-tex="0">\(0\)</span> 行（<code>^</code>）只能关注自己（权重为 <code>1.0</code>），第 <span class="math-inline" data-tex="2">\(2\)</span> 行（<code>cc</code>）的权重分布在列 <code>0, 1, 2</code> 上且行和为 <code>1.0</code>，而所有上三角部分（<span class="math-inline" data-tex="j &gt; i">\(j &gt; i\)</span>）严格为 <code>0.0</code>。</p>
+<h3 id="2-2-正弦位置编码-sinusoidal-positional-encoding">2.2 正弦位置编码（Sinusoidal Positional Encoding）</h3>
+<p>仔细审视上面的注意力公式可以发现：如果没有因果掩码，同时置换序列中任意两个 token 的位置，注意力输出也只是做完全相同的行置换——也就是说，<strong>纯注意力机制本身对序列顺序是盲目的（置换等变，Permutation-Equivariant）</strong>。但在 SMILES 中，<code>CC(=O)O</code>（乙酸）和 <code>O=C(C)O</code> 或原子顺序打乱后的字符串截然不同，环闭合数字与括号的相对位置更是决定了分子拓扑。</p>
+<p>为此，我们在把词嵌入送入编码器与解码器之前，需要加上与位置索引 <span class="math-inline" data-tex="pos \in \{0, 1, \dots, T-1\}">\(pos \in \{0, 1, \dots, T-1\}\)</span> 唯一对应的<strong>正弦位置编码</strong>：</p>
+<div class="math-block" data-tex="PE_{(pos,\, 2i)} = \sin\!\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right), \qquad PE_{(pos,\, 2i+1)} = \cos\!\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)">\[PE_{(pos,\, 2i)} = \sin\!\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right), \qquad PE_{(pos,\, 2i+1)} = \cos\!\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)\]</div>
+<p>不同维度 <span class="math-inline" data-tex="2i">\(2i\)</span> 对应从 <span class="math-inline" data-tex="2\pi">\(2\pi\)</span> 到 <span class="math-inline" data-tex="10000 \cdot 2\pi">\(10000 \cdot 2\pi\)</span> 呈几何级数递增的波长。由三角恒等式 <span class="math-inline" data-tex="\sin(\alpha+\beta) = \sin\alpha\cos\beta + \cos\alpha\sin\beta">\(\sin(\alpha+\beta) = \sin\alpha\cos\beta + \cos\alpha\sin\beta\)</span> 可知，位置 <span class="math-inline" data-tex="pos + k">\(pos + k\)</span> 的编码向量可以表示为位置 <span class="math-inline" data-tex="pos">\(pos\)</span> 编码向量的线性变换，这使模型能轻而易举地捕捉<strong>相对位置间距</strong> <span class="math-inline" data-tex="k">\(k\)</span>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SinusoidalPositionalEncoding</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">128</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="n">pe</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">max_len</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_len</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">div_term</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">10000.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">d_model</span><span class="p">))</span>
+        <span class="n">pe</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">position</span> <span class="o">*</span> <span class="n">div_term</span><span class="p">)</span>
+        <span class="n">pe</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">position</span> <span class="o">*</span> <span class="n">div_term</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">&quot;pe&quot;</span><span class="p">,</span> <span class="n">pe</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>  <span class="c1"># (1, max_len, d_model)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="c1"># x: (B, T, d_model)</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pe</span><span class="p">[:,</span> <span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+
+<span class="n">pos_enc</span> <span class="o">=</span> <span class="n">SinusoidalPositionalEncoding</span><span class="p">(</span><span class="n">d_model</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+<span class="n">pe_matrix</span> <span class="o">=</span> <span class="n">pos_enc</span><span class="o">.</span><span class="n">pe</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>  <span class="c1"># (64, 64)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mf">3.8</span><span class="p">))</span>
+<span class="n">im0</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">pe_matrix</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;RdBu_r&quot;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Embedding Dimension (i)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Token Position (pos)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Sinusoidal Positional Encoding Matrix&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im0</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.046</span><span class="p">)</span>
+
+<span class="c1"># 计算位置 20 与所有其他位置的内积相似度</span>
+<span class="n">sim_to_20</span> <span class="o">=</span> <span class="n">pe_matrix</span> <span class="o">@</span> <span class="n">pe_matrix</span><span class="p">[</span><span class="mi">20</span><span class="p">]</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">),</span> <span class="n">sim_to_20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#1f77b4&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#d62728&quot;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;pos = 20&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Token Position (pos)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Dot Product with PE[20]&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Relative Distance Decay in Positional Encoding&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-08c-1-验证解码器因果掩码防止未来信息泄露">练习 08c-1：验证解码器因果掩码防止未来信息泄露</h3>
+<p>在训练 Transformer 解码器时，最常见的新手 Bug 是忘记传入因果掩码（<code>causal_mask</code>）。如果没有因果掩码，当解码器在位置 <span class="math-inline" data-tex="t">\(t\)</span> 预测下一个目标 token <span class="math-inline" data-tex="y_{t+1}">\(y_{t+1}\)</span> 时，多头注意力可以直接在输入序列的位置 <span class="math-inline" data-tex="t+1">\(t+1\)</span> 看到标准答案，导致训练损失在几个迭代内迅速降到接近 <span class="math-inline" data-tex="0">\(0\)</span>，但推理生成时却一塌糊涂。</p>
+<p>请在下方实现函数 <code>check_causal_leakage(Q, K, V)</code>：</p>
+<ol>
+<li>分别计算<strong>带因果掩码</strong>与<strong>不带掩码</strong>时的缩放点积注意力输出 <code>out_masked</code> 和 <code>out_unmasked</code>；</li>
+<li>将输入序列最后一个位置的值向量 <code>V[:, -1, :]</code> 加上一个巨大的扰动（例如 <code>+ 100.0</code>），再次计算两者的输出；</li>
+<li>对比第 <span class="math-inline" data-tex="0">\(0\)</span> 个时间步（<code>t = 0</code>）的输出变化范数 <span class="math-inline" data-tex="\|\Delta \text{out}_{t=0}\|_2">\(\|\Delta \text{out}_{t=0}\|_2\)</span>：验证带因果掩码时，未来位置 <span class="math-inline" data-tex="T-1">\(T-1\)</span> 的剧烈变化对 <span class="math-inline" data-tex="t=0">\(t=0\)</span> 的影响严格为 <code>0.0</code>，而不带掩码时则会发生严重的信息泄露。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 08c-1：在此编写代码验证因果掩码对未来信息泄露的阻断作用</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_causal_leakage</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">):</span>
+    <span class="c1"># TODO:</span>
+    <span class="c1"># 1. 构造上三角布尔掩码 causal_mask</span>
+    <span class="c1"># 2. 克隆 V 并对最后一个时间步 V_perturbed[:, -1, :] += 100.0</span>
+    <span class="c1"># 3. 比较带掩码与不带掩码在 t=0 处的输出差异范数</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-构建与训练-reactiontransformer-分布内组合-vs-新芳环骨架外推">3. 构建与训练 ReactionTransformer：分布内组合 vs. 新芳环骨架外推</h2>
+<p>现在我们将编码器（Encoder）与解码器（Decoder）组装成完整的 <code>ReactionTransformer</code>。为了在下一节能够直接提取并可视化解码器对反应物的**交叉注意力（Cross-Attention）**权重，我们显式编写 <code>EncoderLayer</code> 和 <code>DecoderLayer</code>，并在 <code>DecoderLayer</code> 中将最新一次前向传播的交叉注意力图保存在 <code>self.last_cross_attn</code> 属性中（形状为 <code>(B, nhead, T_tgt, T_src)</code>）：</p>
+<ul>
+<li><strong>编码器层（<code>EncoderLayer</code>）</strong>：双向自注意力（反应物中的每个原子可以同时看到左侧卤代物和右侧硼酸的所有原子） + 前馈网络（FFN）；</li>
+<li><strong>解码器层（<code>DecoderLayer</code>）</strong>：
+<ol>
+<li><strong>掩码自注意力（Masked Self-Attention）</strong>：已生成的产物前缀彼此交互（受因果掩码约束）；</li>
+<li><strong>交叉注意力（Cross-Attention）</strong>：以产物前缀作为 Query，去检索编码器输出的反应物记忆表示（Memory，作为 Key 和 Value）；</li>
+<li><strong>前馈网络（Position-wise FFN）</strong>。</li>
+</ol>
+</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">EncoderLayer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">nhead</span><span class="p">,</span> <span class="n">dim_ff</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">self_attn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MultiheadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">nhead</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ffn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">dim_ff</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">dim_ff</span><span class="p">,</span> <span class="n">d_model</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">norm1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">norm2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">src_key_padding_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">attn_out</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">self_attn</span><span class="p">(</span>
+            <span class="n">src</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">key_padding_mask</span><span class="o">=</span><span class="n">src_key_padding_mask</span><span class="p">,</span> <span class="n">need_weights</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm1</span><span class="p">(</span><span class="n">src</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">attn_out</span><span class="p">))</span>
+        <span class="n">ffn_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ffn</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm2</span><span class="p">(</span><span class="n">src</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">ffn_out</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">src</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DecoderLayer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">nhead</span><span class="p">,</span> <span class="n">dim_ff</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">self_attn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MultiheadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">nhead</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cross_attn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MultiheadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">nhead</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ffn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">dim_ff</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">dim_ff</span><span class="p">,</span> <span class="n">d_model</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">norm1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">norm2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">norm3</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_cross_attn</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tgt</span><span class="p">,</span> <span class="n">memory</span><span class="p">,</span> <span class="n">tgt_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tgt_key_padding_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">memory_key_padding_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># 1. 因果掩码自注意力</span>
+        <span class="n">self_out</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">self_attn</span><span class="p">(</span>
+            <span class="n">tgt</span><span class="p">,</span> <span class="n">tgt</span><span class="p">,</span> <span class="n">tgt</span><span class="p">,</span>
+            <span class="n">attn_mask</span><span class="o">=</span><span class="n">tgt_mask</span><span class="p">,</span>
+            <span class="n">key_padding_mask</span><span class="o">=</span><span class="n">tgt_key_padding_mask</span><span class="p">,</span>
+            <span class="n">need_weights</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">tgt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm1</span><span class="p">(</span><span class="n">tgt</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">self_out</span><span class="p">))</span>
+
+        <span class="c1"># 2. 编码器-解码器交叉注意力（保留各注意力头的权重用于可视化）</span>
+        <span class="n">cross_out</span><span class="p">,</span> <span class="n">cross_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cross_attn</span><span class="p">(</span>
+            <span class="n">tgt</span><span class="p">,</span> <span class="n">memory</span><span class="p">,</span> <span class="n">memory</span><span class="p">,</span>
+            <span class="n">key_padding_mask</span><span class="o">=</span><span class="n">memory_key_padding_mask</span><span class="p">,</span>
+            <span class="n">need_weights</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">average_attn_weights</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_cross_attn</span> <span class="o">=</span> <span class="n">cross_weights</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="n">tgt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm2</span><span class="p">(</span><span class="n">tgt</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">cross_out</span><span class="p">))</span>
+
+        <span class="c1"># 3. 逐位置前馈网络</span>
+        <span class="n">ffn_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ffn</span><span class="p">(</span><span class="n">tgt</span><span class="p">)</span>
+        <span class="n">tgt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm3</span><span class="p">(</span><span class="n">tgt</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">ffn_out</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">tgt</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ReactionTransformer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">,</span> <span class="n">d_model</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">nhead</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim_ff</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">d_model</span> <span class="o">=</span> <span class="n">d_model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">padding_idx</span><span class="o">=</span><span class="n">PAD_ID</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos_encoder</span> <span class="o">=</span> <span class="n">SinusoidalPositionalEncoding</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enc_layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span><span class="n">EncoderLayer</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">nhead</span><span class="p">,</span> <span class="n">dim_ff</span><span class="p">,</span> <span class="n">dropout</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_layers</span><span class="p">)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dec_layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span><span class="n">DecoderLayer</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">nhead</span><span class="p">,</span> <span class="n">dim_ff</span><span class="p">,</span> <span class="n">dropout</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_layers</span><span class="p">)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_out</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
+        <span class="n">src_pad_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">src</span> <span class="o">==</span> <span class="n">PAD_ID</span><span class="p">)</span>
+        <span class="n">memory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_encoder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">src</span><span class="p">)</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_model</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">enc_layers</span><span class="p">:</span>
+            <span class="n">memory</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">memory</span><span class="p">,</span> <span class="n">src_key_padding_mask</span><span class="o">=</span><span class="n">src_pad_mask</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">memory</span><span class="p">,</span> <span class="n">src_pad_mask</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tgt_in</span><span class="p">,</span> <span class="n">memory</span><span class="p">,</span> <span class="n">src_pad_mask</span><span class="p">):</span>
+        <span class="n">T_tgt</span> <span class="o">=</span> <span class="n">tgt_in</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">tgt_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">triu</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">T_tgt</span><span class="p">,</span> <span class="n">T_tgt</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">tgt_in</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">),</span> <span class="n">diagonal</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">tgt_pad_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">tgt_in</span> <span class="o">==</span> <span class="n">PAD_ID</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_encoder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">tgt_in</span><span class="p">)</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_model</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dec_layers</span><span class="p">:</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span>
+                <span class="n">h</span><span class="p">,</span> <span class="n">memory</span><span class="p">,</span>
+                <span class="n">tgt_mask</span><span class="o">=</span><span class="n">tgt_mask</span><span class="p">,</span>
+                <span class="n">tgt_key_padding_mask</span><span class="o">=</span><span class="n">tgt_pad_mask</span><span class="p">,</span>
+                <span class="n">memory_key_padding_mask</span><span class="o">=</span><span class="n">src_pad_mask</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_out</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">tgt_in</span><span class="p">):</span>
+        <span class="n">memory</span><span class="p">,</span> <span class="n">src_pad_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">tgt_in</span><span class="p">,</span> <span class="n">memory</span><span class="p">,</span> <span class="n">src_pad_mask</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>下面我们加载预训练好的 <code>suzuki_transformer.pt</code> 权重（如果本地尚未生成或你想亲手观察从头训练的过程，只需将 <code>TRAIN_FROM_SCRATCH = True</code>，在 CPU 上训练 15 个 Epoch 约需 40 秒），并实现批量贪心解码函数 <code>greedy_translate_batch</code> 来预测产物序列。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">ReactionTransformer</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">),</span> <span class="n">d_model</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">nhead</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim_ff</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">ckpt_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;suzuki_transformer.pt&quot;</span><span class="p">)</span>
+<span class="n">TRAIN_FROM_SCRATCH</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ckpt_path</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">TRAIN_FROM_SCRATCH</span><span class="p">:</span>
+    <span class="n">ckpt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">ckpt_path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">ckpt</span><span class="p">[</span><span class="s2">&quot;model_state_dict&quot;</span><span class="p">])</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="n">ckpt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;history&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded pretrained ReactionTransformer from </span><span class="si">{</span><span class="n">ckpt_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Training ReactionTransformer from scratch...&quot;</span><span class="p">)</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1.5e-3</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">train_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">TensorDataset</span><span class="p">(</span><span class="n">train_src</span><span class="p">,</span> <span class="n">train_tgt</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;train_loss&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;val_loss&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">16</span><span class="p">):</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">total_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">b_src</span><span class="p">,</span> <span class="n">b_tgt</span> <span class="ow">in</span> <span class="n">train_loader</span><span class="p">:</span>
+            <span class="n">b_src</span><span class="p">,</span> <span class="n">b_tgt</span> <span class="o">=</span> <span class="n">b_src</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">),</span> <span class="n">b_tgt</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">b_src</span><span class="p">,</span> <span class="n">b_tgt</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">cross_entropy</span><span class="p">(</span><span class="n">logits</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">)),</span> <span class="n">b_tgt</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">ignore_index</span><span class="o">=</span><span class="n">PAD_ID</span><span class="p">)</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="mf">1.0</span><span class="p">)</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">total_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="n">b_src</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">tr_loss</span> <span class="o">=</span> <span class="n">total_loss</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_src</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">v_logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">val_src</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">),</span> <span class="n">val_tgt</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+            <span class="n">v_loss</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">cross_entropy</span><span class="p">(</span><span class="n">v_logits</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">)),</span> <span class="n">val_tgt</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">ignore_index</span><span class="o">=</span><span class="n">PAD_ID</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="n">history</span><span class="p">[</span><span class="s2">&quot;train_loss&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr_loss</span><span class="p">)</span>
+        <span class="n">history</span><span class="p">[</span><span class="s2">&quot;val_loss&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v_loss</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">epoch</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">epoch</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2"> | train_loss=</span><span class="si">{</span><span class="n">tr_loss</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> | val_loss=</span><span class="si">{</span><span class="n">v_loss</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">greedy_translate_batch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">src_tensor</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="n">MAX_TGT_LEN</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;对一批反应物序列执行自回归贪心解码（T -&gt; 0）。&quot;&quot;&quot;</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="n">src_tensor</span> <span class="o">=</span> <span class="n">src_tensor</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">src_tensor</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">memory</span><span class="p">,</span> <span class="n">src_pad_mask</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">src_tensor</span><span class="p">)</span>
+
+    <span class="n">ys</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">B</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">BOS_ID</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">finished</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">memory</span><span class="p">,</span> <span class="n">src_pad_mask</span><span class="p">)</span>
+        <span class="n">next_tok</span> <span class="o">=</span> <span class="n">logits</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">next_tok</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">finished</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">PAD_ID</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">next_tok</span><span class="p">)</span>
+        <span class="n">ys</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">ys</span><span class="p">,</span> <span class="n">next_tok</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">finished</span> <span class="o">=</span> <span class="n">finished</span> <span class="o">|</span> <span class="p">(</span><span class="n">next_tok</span> <span class="o">==</span> <span class="n">EOS_ID</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">finished</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">break</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">decode_ids</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">ys</span><span class="o">.</span><span class="n">cpu</span><span class="p">()]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">canon_smiles</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolToSmiles</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">canonical</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">if</span> <span class="n">mol</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_reaction_predictions</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">src_tensor</span><span class="p">,</span> <span class="n">gold_smiles_list</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">):</span>
+    <span class="n">preds</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">src_tensor</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+        <span class="n">preds</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">greedy_translate_batch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">src_tensor</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]))</span>
+
+    <span class="n">n_valid</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_exact_str</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_exact_canon</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">pred_s</span><span class="p">,</span> <span class="n">gold_s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">gold_smiles_list</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">pred_s</span> <span class="o">==</span> <span class="n">gold_s</span><span class="p">:</span>
+            <span class="n">n_exact_str</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">c_pred</span> <span class="o">=</span> <span class="n">canon_smiles</span><span class="p">(</span><span class="n">pred_s</span><span class="p">)</span>
+        <span class="n">c_gold</span> <span class="o">=</span> <span class="n">canon_smiles</span><span class="p">(</span><span class="n">gold_s</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c_pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n_valid</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">c_pred</span> <span class="o">==</span> <span class="n">c_gold</span><span class="p">:</span>
+                <span class="n">n_exact_canon</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gold_smiles_list</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;Validity (%)&quot;</span><span class="p">:</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="n">n_valid</span> <span class="o">/</span> <span class="n">N</span><span class="p">,</span>
+        <span class="s2">&quot;Exact String Match (%)&quot;</span><span class="p">:</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="n">n_exact_str</span> <span class="o">/</span> <span class="n">N</span><span class="p">,</span>
+        <span class="s2">&quot;Canonical Top-1 Acc (%)&quot;</span><span class="p">:</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="n">n_exact_canon</span> <span class="o">/</span> <span class="n">N</span><span class="p">,</span>
+        <span class="s2">&quot;predictions&quot;</span><span class="p">:</span> <span class="n">preds</span><span class="p">,</span>
+    <span class="p">}</span>
+
+<span class="n">val_res</span> <span class="o">=</span> <span class="n">evaluate_reaction_predictions</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">val_src</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">val_df</span><span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">]))</span>
+<span class="n">test_res</span> <span class="o">=</span> <span class="n">evaluate_reaction_predictions</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_src</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">test_aryl_df</span><span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">]))</span>
+
+<span class="n">summary_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
+    <span class="p">{</span><span class="s2">&quot;Split&quot;</span><span class="p">:</span> <span class="s2">&quot;val (In-Distribution New Combinations)&quot;</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">val_res</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">&quot;predictions&quot;</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">&quot;Split&quot;</span><span class="p">:</span> <span class="s2">&quot;test_new_aryl (OOD Unseen Aryl Halides)&quot;</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">test_res</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">&quot;predictions&quot;</span><span class="p">}},</span>
+<span class="p">])</span>
+<span class="n">summary_df</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>对比 <code>val</code>（分布内新组合）与 <code>test_new_aryl</code>（分布外全新芳基卤代物骨架）的评估结果，我们可以清楚地看到序列模型在化学反应预测中的核心特性：</p>
+<ol>
+<li><strong>分布内组合泛化能力极强</strong>：在 <code>val</code> 上，尽管具体的卤代物+硼酸配对从未在训练集中同时出现过，模型依然能以极高的语法有效率和 Top-1 准确率拼出正确的偶联产物并完成环编号重排；</li>
+<li><strong>分布外新骨架外推退化（OOD Degradation）</strong>：当面对 <code>test_new_aryl</code> 中训练阶段未见过的全新芳环骨架时，无模板序列模型在复制陌生骨架或重排多环闭合数字时更容易出错，导致精确匹配率明显下降。这与我们在 <code>02c</code> 中看到的属性预测模型在 Scaffold Split 下性能回落是同一本质：纯数据驱动的序列模型并不内置化学价态守恒定律，遇到未见过的子结构词段组合时可能产生局部拼写偏离。</li>
+</ol>
+<h3 id="练习-08c-2-区域选择性冲突与无模板模型的预测行为分析">练习 08c-2：区域选择性冲突与无模板模型的预测行为分析</h3>
+<p>当芳基卤代物上同时带有溴原子（<code>-Br</code>）和氯原子（<code>-Cl</code>）时（例如 <code>Brc1ccc(Cl)s1</code>，2-溴-5-氯噻吩），实验上钯催化的 Suzuki 偶联会优先在活性更高的 <code>C–Br</code> 键处发生反应，保留 <code>C–Cl</code> 键。</p>
+<p>请在下方编写代码：</p>
+<ol>
+<li>将双卤代底物 <code>Brc1ccc(Cl)s1</code> 与硼酸 <code>CC(C)(C)c1csc(B(O)O)c1</code> 分别输入第 1 节的 **SMARTS 模板（<code>rxn_rule</code>）**与我们训练好的 <strong><code>ReactionTransformer</code></strong>；</li>
+<li>观察 SMARTS 模板给出了几个候选产物（为什么？），以及 <code>ReactionTransformer</code> 给出的 Top-1 预测产物保留了哪个卤素原子；</li>
+<li>从 <code>test_new_aryl</code> 中找出 3 个 <code>ReactionTransformer</code> 预测失败（<code>Canonical Top-1</code> 不匹配）的样本，打印其反应物、真实产物与模型预测产物，分析模型错在了哪个环节（是语法无效、卤素位点找错，还是陌生芳环骨架复制变形？）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 08c-2：在此对比双卤代底物的区域选择性预测，并诊断 test_new_aryl 上的失败样本</span>
+<span class="n">competing_rxn</span> <span class="o">=</span> <span class="s2">&quot;Brc1ccc(Cl)s1.CC(C)(C)c1csc(B(O)O)c1&quot;</span>
+
+<span class="c1"># TODO:</span>
+<span class="c1"># 1. 用 rxn_rule.RunReactants 预测 competing_rxn 的所有匹配产物</span>
+<span class="c1"># 2. 用 greedy_translate_batch 预测 competing_rxn 的 Top-1 产物</span>
+<span class="c1"># 3. 检查 test_aryl_df 与 test_res[&quot;predictions&quot;] 中不匹配的 3 个样本</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-交叉注意力可视化与真实专利反应-uspto-初探">4. 交叉注意力可视化与真实专利反应（USPTO）初探</h2>
+<h3 id="4-1-交叉注意力热力图-cross-attention-map-模型在看哪里">4.1 交叉注意力热力图（Cross-Attention Map）：模型在看哪里？</h3>
+<p>在 <code>DecoderLayer</code> 的第 2 个子层中，解码器每生成一个产物 token（纵轴 Query），都会对编码器输出的全部反应物 token（横轴 Key）计算一组归一化注意力分布。我们取出最后一层解码器在预测一条验证集反应时的 <code>last_cross_attn</code> 张量，绘制其跨头平均注意力热力图。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 选取一条验证集反应，执行单步教师强制前向传播并提取最后一层 Cross-Attention</span>
+<span class="n">sample_idx</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">src_str</span> <span class="o">=</span> <span class="n">val_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">sample_idx</span><span class="p">,</span> <span class="s2">&quot;reactants&quot;</span><span class="p">]</span>
+<span class="n">tgt_str</span> <span class="o">=</span> <span class="n">val_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">sample_idx</span><span class="p">,</span> <span class="s2">&quot;product&quot;</span><span class="p">]</span>
+
+<span class="n">src_tokens</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;^&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">tokenize_smiles</span><span class="p">(</span><span class="n">src_str</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;$&quot;</span><span class="p">]</span>
+<span class="n">tgt_tokens_in</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;^&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">tokenize_smiles</span><span class="p">(</span><span class="n">tgt_str</span><span class="p">)</span>
+<span class="n">tgt_tokens_out</span> <span class="o">=</span> <span class="n">tokenize_smiles</span><span class="p">(</span><span class="n">tgt_str</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;$&quot;</span><span class="p">]</span>
+
+<span class="n">src_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="n">tok2idx</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">src_tokens</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="n">tgt_in_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="n">tok2idx</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tgt_tokens_in</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+    <span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">src_ids</span><span class="p">,</span> <span class="n">tgt_in_ids</span><span class="p">)</span>
+    <span class="c1"># shape: (1, nhead, T_tgt, T_src)</span>
+    <span class="n">cross_attn</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">dec_layers</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">last_cross_attn</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+<span class="n">mean_cross_attn</span> <span class="o">=</span> <span class="n">cross_attn</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (T_tgt, T_src)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mf">7.5</span><span class="p">))</span>
+<span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">mean_cross_attn</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;YlGnBu&quot;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">src_tokens</span><span class="p">)))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">src_tokens</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mf">8.5</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tgt_tokens_out</span><span class="p">)))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">(</span><span class="n">tgt_tokens_out</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mf">8.5</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Encoder Reactant Tokens (Key / Value)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Decoder Predicted Product Tokens (Query)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Decoder Layer 2 Cross-Attention Map (Averaged Across Heads)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.035</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>观察上方的交叉注意力热力图，你会发现两条清晰的<strong>对角高亮轨迹</strong>：</p>
+<ol>
+<li>在解码前半段（生成硼酸侧的芳环骨架 <code>CC(C)(C)c1csc...</code>），注意力沿着反应物右侧（<code>.</code> 之后的硼酸分子）呈单调对角线移动，逐个复制未参与反应的取代基与杂环原子；</li>
+<li>当解码器遇到偶联位点（原来连接 <code>B(O)O</code> 的位置）准备写入分支 <code>(-c2cc3ccccc3s2)</code> 时，注意力焦点突然从反应物右侧<strong>跨越到反应物左侧的溴代苯并噻吩骨架</strong>（紧邻 <code>Br</code> 的芳香碳原子），并沿着左侧芳环完成第二条对角线复制！</li>
+</ol>
+<p>这直观印证了注意力机制如何克服 RNN 的单向量瓶颈：模型无需把整条反应物死记在单个向量里，而是把编码器输出当作可随时按位置索引的外部工作记忆，在复制骨架时顺着对应片段移动光标，在构建新化学键时跨分子跳转到活性位点。</p>
+<h3 id="4-2-从理想偶联到真实专利反应-探索-uspto-数据集">4.2 从理想偶联到真实专利反应：探索 USPTO 数据集</h3>
+<p>在 <code>suzuki_toy.csv</code> 中，每条输入只包含两个干净的底物分子。但在真实的实验文献与美国专利局（USPTO）化学反应数据库中，反应记录往往混合了<strong>底物（Reactants）</strong>、<strong>催化剂（Catalysts，如钯配合物）</strong>、<strong>无机碱（Bases，如碳酸钾、叔丁醇钠）<strong>以及</strong>有机溶剂（Solvents，如 DMF、THF、二氧六环）</strong>。</p>
+<p>我们加载 <code>data/uspto_test_sample.csv</code>（包含 300 条从 USPTO 真实专利中抽样的有机反应），观察真实世界反应序列的复杂性。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">uspto_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;uspto_test_sample.csv&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;USPTO sample count: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">uspto_df</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- Reaction #</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> ---&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Precursors : </span><span class="si">{</span><span class="n">uspto_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;precursors&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Product    : </span><span class="si">{</span><span class="n">uspto_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;product&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>可以看到，在真实 USPTO 数据中：</p>
+<ol>
+<li><code>precursors</code> 往往由 3~6 个用 <code>.</code> 分隔的分子组成（例如第 0 条包含有机锡试剂 <code>CCCC[Sn](CCCC)(CCCC)c1cscn1</code>、溶剂 <code>CN(C)C=O</code> 即 DMF、底物二氯代杂环以及吗啉）；</li>
+<li>大量溶剂与催化剂的原子完全不会进入最终产物（即所谓“旁观物种” Spectator Species），但它们决定了反应条件与选择性；</li>
+<li>词表中还会出现 <code>[Sn]</code>、<code>[Pd]</code>、<code>[Cs+]</code>、<code>[K+]</code> 等金属与离子方括号 token。</li>
+</ol>
+<p>工业界主流的 Molecular Transformer（Schwaller et al., <em>ACS Central Science</em>, 2019）正是基于我们上面编写的完全相同的编码器-解码器架构，只是将词表扩展到覆盖全部元素符号，并在百万级 USPTO 反应上训练了更深的层数（4~6 层，8 头注意力），从而无需显式区分反应物与试剂就能直接实现约 90% 的正向反应 Top-1 准确率。</p>
+<h3 id="练习-08c-3-解析-uspto-真实反应的旁观试剂与原子守恒比例">练习 08c-3：解析 USPTO 真实反应的旁观试剂与原子守恒比例</h3>
+<p>在处理真实反应数据时，衡量一条反应记录中“有多少重原子真正进入了产物”的指标称为<strong>重原子转化率（Heavy Atom Utilization / Conservation Ratio）</strong>。</p>
+<p>请在下方编写代码统计 <code>uspto_df</code> 的 300 条专利反应：</p>
+<ol>
+<li>对每条反应，按 <code>.</code> 拆分 <code>precursors</code>，统计每条反应包含的前驱体组分分子个数（Component Count）分布；</li>
+<li>利用 RDKit 计算每条反应中 <code>product</code> 的重原子总数（<code>mol.GetNumHeavyAtoms()</code>）除以 <code>precursors</code> 的重原子总数，绘制该比值的直方图；</li>
+<li>找出 <code>uspto_df</code> 中最常出现的 Top-10 前驱体分子（提示：先对每个由 <code>.</code> 分隔的分子做 Canonical SMILES 标准化，再统计出现频次），看看排在前列的分子在有机合成中分别扮演什么角色（溶剂、酸碱还是常见试剂？）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 08c-3：在此统计 USPTO 反应的组分个数、重原子转化率与高频试剂/溶剂</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+
+<span class="c1"># TODO:</span>
+<span class="c1"># 1. 统计每条 precursors 按 &#39;.&#39; 拆分的分子个数与重原子利用率 (Product Heavy Atoms / Precursors Heavy Atoms)</span>
+<span class="c1"># 2. 统计所有拆分出的子分子（标准化后）的出现频次 Top-10</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-本节小结与模块衔接">5. 本节小结与模块衔接</h2>
+<p>回顾整个第 08 讲（<code>08a</code> <span class="math-inline" data-tex="\to">\(\to\)</span> <code>08b</code> <span class="math-inline" data-tex="\to">\(\to\)</span> <code>08c</code>），我们完成了一条从无条件序列建模到有条件序列转换的完整脉络：</p>
+<ol>
+<li><strong>序列表示与自回归生成（<code>08a</code>）</strong>：通过化学正则分词将分子映射为离散 token 序列，对比了马尔可夫 Bigram 与 LSTM 语言模型，揭示了隐状态在跨越数十个字符追踪括号配对与环闭合编号时的核心作用，并掌握了采样温度 <span class="math-inline" data-tex="T">\(T\)</span> 对有效率与多样性的调控；</li>
+<li><strong>数据增强、似然探针与迁移微调（<code>08b</code>）</strong>：在真实异构数据库 <code>AqSolDB</code> 上引入 <strong>SMILES 枚举数据增强</strong>，使模型摆脱对单一标准遍历起点的依赖；利用每 token 平均负对数似然（<code>NLL per token</code>）度量分子在学习分布中的“自然度”，并通过两阶段<strong>迁移学习</strong>在仅百余条有机半导体样本上实现了定向化学空间聚焦；</li>
+<li><strong>注意力机制与条件反应翻译（<code>08c</code>）</strong>：从反应模板（SMARTS）的局限出发，亲手构建了缩放点积注意力、正弦位置编码与编码器-解码器 <code>ReactionTransformer</code>，对比了分布内新组合与分布外新骨架的泛化差异，并通过交叉注意力热力图验证了模型对反应位点的自动对齐能力。</li>
+</ol>
+<p>在下一讲（<strong>09 · 生成模型与材料逆向设计</strong>）中，我们将跳出纯自回归或反应翻译的框架，进一步探索如何把离散的分子与晶体结构映射进<strong>连续光滑的潜空间（Latent Space）</strong>——借助变分自编码器（VAE）、生成对抗网络（GAN）与扩散模型（Diffusion Models），在潜空间中沿目标性质梯度直接搜索并解码出全新的候选材料。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/08-sequence-models-and-transformers.html">返回模块 08</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">08b · 进阶序列建模：数据清洗、SMILES 增强、似然评估与跨领域迁移微调</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/08-sequence-models-and-transformers/08d_exercises.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">08d · 基础习题集：化学序列分词、语言模型与注意力机制</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#1-化学反应预测的两种范式-反应模板-vs-序列到序列翻译">1. 化学反应预测的两种范式：反应模板 vs. 序列到序列翻译</a></li>      <li class="toc-l2"><a href="#2-拆解-transformer-核心组件-缩放点积注意力与位置编码">2. 拆解 Transformer 核心组件：缩放点积注意力与位置编码</a></li>      <li class="toc-l3"><a href="#2-1-缩放点积注意力-scaled-dot-product-attention">2.1 缩放点积注意力（Scaled Dot-Product Attention）</a></li>      <li class="toc-l3"><a href="#2-2-正弦位置编码-sinusoidal-positional-encoding">2.2 正弦位置编码（Sinusoidal Positional Encoding）</a></li>      <li class="toc-l3"><a href="#练习-08c-1-验证解码器因果掩码防止未来信息泄露">练习 08c-1：验证解码器因果掩码防止未来信息泄露</a></li>      <li class="toc-l2"><a href="#3-构建与训练-reactiontransformer-分布内组合-vs-新芳环骨架外推">3. 构建与训练 ReactionTransformer：分布内组合 vs. 新芳环骨架外推</a></li>      <li class="toc-l3"><a href="#练习-08c-2-区域选择性冲突与无模板模型的预测行为分析">练习 08c-2：区域选择性冲突与无模板模型的预测行为分析</a></li>      <li class="toc-l2"><a href="#4-交叉注意力可视化与真实专利反应-uspto-初探">4. 交叉注意力可视化与真实专利反应（USPTO）初探</a></li>      <li class="toc-l3"><a href="#4-1-交叉注意力热力图-cross-attention-map-模型在看哪里">4.1 交叉注意力热力图（Cross-Attention Map）：模型在看哪里？</a></li>      <li class="toc-l3"><a href="#4-2-从理想偶联到真实专利反应-探索-uspto-数据集">4.2 从理想偶联到真实专利反应：探索 USPTO 数据集</a></li>      <li class="toc-l3"><a href="#练习-08c-3-解析-uspto-真实反应的旁观试剂与原子守恒比例">练习 08c-3：解析 USPTO 真实反应的旁观试剂与原子守恒比例</a></li>      <li class="toc-l2"><a href="#5-本节小结与模块衔接">5. 本节小结与模块衔接</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

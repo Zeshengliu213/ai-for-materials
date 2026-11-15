@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 01d · 用 RDKit 处理分子结构与特征表示 在前三节里，我们处理的都是现成的数字和表格。但化学与材料研究真正面对的对象是 分子 ——由原子和化学键连成的三维图结构。机器学习算法只认数字，不认识烧瓶里的粉末，也不直接认识化学结构式。因此，把 AI 用于分子与材料科学的第一步，永远是回" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="01d · 用 RDKit 处理分子结构与特征表示 | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 01d · 用 RDKit 处理分子结构与特征表示 在前三节里，我们处理的都是现成的数字和表格。但化学与材料研究真正面对的对象是 分子 ——由原子和化学键连成的三维图结构。机器学习算法只认数字，不认识烧瓶里的粉末，也不直接认识化学结构式。因此，把 AI 用于分子与材料科学的第一步，永远是回" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/01-basics/01d_rdkit_basics.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/01-basics/01d_rdkit_basics.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>01d · 用 RDKit 处理分子结构与特征表示 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01a_python_crash_course.html"
+           data-progress-mark="notebooks/01-basics/01a_python_crash_course.html"
+>📓 01a_python_crash_course.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01b_pandas.html"
+           data-progress-mark="notebooks/01-basics/01b_pandas.html"
+>📓 01b_pandas.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01c_plotting.html"
+           data-progress-mark="notebooks/01-basics/01c_plotting.html"
+>📓 01c_plotting.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01d_rdkit_basics.html"
+           data-progress-mark="notebooks/01-basics/01d_rdkit_basics.html"
+class="active">📓 01d_rdkit_basics.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01e_exercises.html"
+           data-progress-mark="notebooks/01-basics/01e_exercises.html"
+>🏋️ 01e_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/01-basics.html">模块 01：Python 与化学/材料数据基础</a> /  <span>01d_rdkit_basics.ipynb</span>
+</div>
+<h1>01d · 用 RDKit 处理分子结构与特征表示</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>01d_rdkit_basics.ipynb</code>（37.3 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/01%20-%20Basics/01d_rdkit_basics.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/0b9d0edb9175-01d_rdkit_basics.ipynb" download="01d_rdkit_basics.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/01-basics/01_basics_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/01-basics/01d_rdkit_basics.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/01%20-%20Basics/01d_rdkit_basics.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>01d · 用 RDKit 处理分子结构与特征表示</h1>
+<p>在前三节里，我们处理的都是现成的数字和表格。但化学与材料研究真正面对的对象是<strong>分子</strong>——由原子和化学键连成的三维图结构。机器学习算法只认数字，不认识烧瓶里的粉末，也不直接认识化学结构式。因此，把 AI 用于分子与材料科学的第一步，永远是回答这个问题：<strong>怎样把一个分子变成计算机能读懂、能计算的数据？</strong></p>
+<p>这一节我们使用开源化学信息学标准工具包 <strong><a href="https://www.rdkit.org/">RDKit</a></strong>，从最基础的分子字符串表示出发，亲手完成分子的解析、绘制、结构拆解、特征提取与子结构检索。</p>
+<h3 id="本节内容">本节内容</h3>
+<ol>
+<li>SMILES 表示法、分子绘制与规范化（Canonical SMILES）</li>
+<li>拆解分子图：遍历原子、化学键、共轭体系与环</li>
+<li>把分子变成数字（一）：物理化学描述符（Descriptors）</li>
+<li>把分子变成数字（二）：Morgan 分子指纹、Tanimoto 相似度与 Murcko 骨架</li>
+<li>综合实战：用 RDKit + Pandas 清洗与检索 AqSolDB 数据库</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;01 - Basics&quot;</span><span class="p">))</span>
+    <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">run_line_magic</span><span class="p">(</span><span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install -q rdkit&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h2 id="0-环境检查与导入">0. 环境检查与导入</h2>
+<p>本地环境如果尚未安装 RDKit，可以在终端运行 <code>pip install rdkit</code>；在 Google Colab 上运行下面这格代码会自动完成安装：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">rdkit</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">rdkit</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">rdkit</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">DataStructs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Draw</span><span class="p">,</span> <span class="n">Descriptors</span><span class="p">,</span> <span class="n">rdFingerprintGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem.rdMolDescriptors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CalcMolFormula</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem.Scaffolds</span><span class="w"> </span><span class="kn">import</span> <span class="n">MurckoScaffold</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;RDKit 版本:&quot;</span><span class="p">,</span> <span class="n">rdkit</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-smiles-分子绘制与规范化">1. SMILES、分子绘制与规范化</h2>
+<h3 id="1-1-smiles-把二维结构式压成一行字符">1.1 SMILES：把二维结构式压成一行字符</h3>
+<p><strong>SMILES</strong>（Simplified Molecular Input Line Entry System）是目前化学数据库中最通用的线性分子表示法。只要记住下面几条简单规则，你就能直接读懂大多数常见有机分子的 SMILES：</p>
+<table>
+<thead>
+<tr>
+<th>语法规则</th>
+<th>含义</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>大写元素符号</strong></td>
+<td>普通（脂肪族）原子，相连的氢原子自动补齐</td>
+<td><code>CCO</code>（乙醇）、<code>CCCCCC</code>（正己烷）</td>
+</tr>
+<tr>
+<td><strong>小写元素符号</strong></td>
+<td><strong>芳香体系</strong>中的原子</td>
+<td><code>c1ccccc1</code>（苯）、<code>c1ccsc1</code>（噻吩）</td>
+</tr>
+<tr>
+<td><strong><code>=</code> 与 <code>#</code></strong></td>
+<td>双键、三键（单键和芳香键通常省略不写）</td>
+<td><code>C=C</code>（乙烯）、<code>C#N</code>（氰基）</td>
+</tr>
+<tr>
+<td><strong>配对数字 <code>1...1</code></strong></td>
+<td>成环标记：标有相同数字的两个原子首尾相连成环</td>
+<td><code>C1CCCCC1</code>（环己烷）</td>
+</tr>
+<tr>
+<td><strong>圆括号 <code>( )</code></strong></td>
+<td>支链结构</td>
+<td><code>CC(=O)O</code>（乙酸，羰基氧在支链上）</td>
+</tr>
+<tr>
+<td><strong>方括号 <code>[ ]</code></strong></td>
+<td>带电荷、指定同位素或显式带氢的特殊原子</td>
+<td><code>[nH]</code>（吡咯/咔唑氮）、<code>[Si]</code>、<code>[Br-]</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="1-2-从-smiles-到-rdkit-分子对象">1.2 从 SMILES 到 RDKit 分子对象</h3>
+<p>在 Python 里，<code>&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</code> 只是一个普通的文本字符串。调用 <code>Chem.MolFromSmiles(...)</code>，RDKit 就会按照化学价键规则把它解析成一个真正的<strong>分子图对象（<code>Mol</code>）</strong>。在 Jupyter Notebook 里，如果代码格最后一行是一个 <code>Mol</code> 对象，会自动渲染出它的化学结构式：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">pentacene</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="s2">&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</span><span class="p">)</span>
+<span class="n">pentacene</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>如果传进去的 SMILES 违背了基本化学规则（比如写成了五碳化合价，或者把 5 个芳香碳强行围成一个五元环 <code>&quot;c1cccc1&quot;</code>，没法画出交替单双键的凯库勒式），RDKit 会怎样处理？</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">bad_mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="s2">&quot;c1cccc1&quot;</span><span class="p">)</span>    <span class="c1"># 5 个芳香碳无法满足休克尔规则/凯库勒化</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;返回值:&quot;</span><span class="p">,</span> <span class="n">bad_mol</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>注意：遇到非法 SMILES 时，<code>Chem.MolFromSmiles</code> <strong>不会中断程序抛异常</strong>，而是打印一行红字警告并返回空值 <strong><code>None</code></strong>。因此，后面在批量处理几万个分子的数据集时，<strong>第一步永远是检查并剔除返回值为 <code>None</code> 的脏数据</strong>。</p>
+<p>下面我们把有机电子学里最常打交道的 16 个代表性分子（涵盖噻吩类导电高分子单体、并苯类、BTBT 类高迁移率小分子、苝酰亚胺受体以及咔唑/三苯胺空穴传输材料）放进一个字典里，用 <code>Draw.MolsToGridImage</code> 一次性画成一张分子图谱：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">osc_smiles</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;thiophene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccsc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;3-hexylthiophene&quot;</span><span class="p">:</span> <span class="s2">&quot;CCCCCCc1ccsc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;2,2&#39;-bithiophene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1csc(c1)-c1cccs1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;EDOT&quot;</span><span class="p">:</span> <span class="s2">&quot;C1COc2cscc2O1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;naphthalene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc2ccccc2c1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;anthracene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc2cc3ccccc3cc2c1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tetracene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc2cc3cc4ccccc4cc3cc2c1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pentacene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TIPS-pentacene&quot;</span><span class="p">:</span> <span class="s2">&quot;CC(C)[Si](C#Cc1c2cc3ccccc3cc2c(C#C[Si](C(C)C)(C(C)C)C(C)C)c2cc3ccccc3cc12)(C(C)C)C(C)C&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rubrene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc(cc1)-c1c2ccccc2c(-c2ccccc2)c2c(-c3ccccc3)c3ccccc3c(-c3ccccc3)c12&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BTBT&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc2c(c1)sc1c2sc2ccccc21&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;C8-BTBT&quot;</span><span class="p">:</span> <span class="s2">&quot;CCCCCCCCc1ccc2c(c1)sc1c3ccc(CCCCCCCC)cc3sc21&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;perylene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1cc2cccc3c4cccc5cccc(c(c1)c23)c54&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;PTCDA&quot;</span><span class="p">:</span> <span class="s2">&quot;O=C1OC(=O)c2ccc3c4ccc5C(=O)OC(=O)c6ccc(c7ccc1c2c37)c4c56&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;carbazole&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc2c(c1)[nH]c1ccccc12&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;triphenylamine&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc(cc1)N(c1ccccc1)c1ccccc1&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">osc_mols</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">osc_smiles</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+<span class="n">Draw</span><span class="o">.</span><span class="n">MolsToGridImage</span><span class="p">(</span>
+    <span class="nb">list</span><span class="p">(</span><span class="n">osc_mols</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+    <span class="n">legends</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">osc_mols</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+    <span class="n">molsPerRow</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">subImgSize</span><span class="o">=</span><span class="p">(</span><span class="mi">250</span><span class="p">,</span> <span class="mi">200</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-01d-1">🏋️ 练习 01d-1</h3>
+<p>从 <code>osc_mols</code> 中挑出并苯系列的 4 个分子（<code>&quot;naphthalene&quot;</code>, <code>&quot;anthracene&quot;</code>, <code>&quot;tetracene&quot;</code>, <code>&quot;pentacene&quot;</code>），用 <code>Draw.MolsToGridImage</code> 画成一行 4 列的图。要求每个分子下方的图例（<code>legends</code>）同时显示<strong>分子名</strong>和<strong>分子式</strong>（调用 <code>CalcMolFormula(mol)</code> 可以返回分子式字符串，中间用换行符 <code>\n</code> 连接，如 <code>&quot;pentacene\nC22H14&quot;</code>）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="1-3-规范化-smiles-canonical-smiles-解决-同物异名">1.3 规范化 SMILES（Canonical SMILES）：解决“同物异名”</h3>
+<p>细心的同学在看 SMILES 规则时可能会问：同一个噻吩环，从碳原子开始转圈写是 <code>&quot;c1ccsc1&quot;</code>，从硫原子开始写是 <code>&quot;s1cccc1&quot;</code>，写成单双键交替的凯库勒式则是 <code>&quot;C1=CSC=C1&quot;</code>。如果把这三个字符串直接按文本去比较，Python 会认为它们完全不同！</p>
+<p>为了解决这个问题，我们可以先把任意写法的 SMILES 用 <code>Chem.MolFromSmiles</code> 读成分子图，再调用 <strong><code>Chem.MolToSmiles(mol)</code></strong> 重新导出。RDKit 内部有一套严格的原子编号排序算法，保证<strong>只要是同一个拓扑结构的分子，导出的规范 SMILES 永远一模一样</strong>：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;c1ccsc1&quot;</span><span class="p">,</span> <span class="s2">&quot;s1cccc1&quot;</span><span class="p">,</span> <span class="s2">&quot;C1=CSC=C1&quot;</span><span class="p">]:</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="n">canon_s</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolToSmiles</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;原始写法: </span><span class="si">{</span><span class="n">s</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2">  --&gt;  规范 SMILES: </span><span class="si">{</span><span class="n">canon_s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><blockquote>
+<p><strong>为什么规范化 SMILES 在机器学习里至关重要？</strong>
+当我们从不同文献或数据库汇总实验数据时，同一个分子往往被写成了不同的 SMILES。如果不先做规范化就去重，同一个分子就会在数据集里出现两次——一旦其中一条分进了训练集、另一条分进了测试集，模型就等于“提前偷看了考题”（称为<strong>数据泄漏 Data Leakage</strong>），导致算出来的测试精度虚高（第 2 章会专门剖析这个问题）。</p>
+</blockquote>
+<h3 id="练习-01d-2">🏋️ 练习 01d-2</h3>
+<ol>
+<li>写一个函数 <code>canonicalize(smiles)</code>：输入一个 SMILES 字符串，返回它的规范 SMILES；如果输入的 SMILES 无效（解析结果为 <code>None</code>），则返回 <code>None</code>。</li>
+<li>对下面 <code>collected</code> 列表里的 8 个 SMILES 调用你的函数，看看这 8 条记录里<strong>实际上包含几个不同的分子</strong>？（提示：Python 的集合 <code>set(列表)</code> 会自动去除重复元素。）</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">collected</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;c1ccsc1&quot;</span><span class="p">,</span> <span class="s2">&quot;C1=CSC=C1&quot;</span><span class="p">,</span> <span class="s2">&quot;s1cccc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;c1ccc2ccccc2c1&quot;</span><span class="p">,</span> <span class="s2">&quot;C1=CC=C2C=CC=CC2=C1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CCCCCCc1ccsc1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1cc(CCCCCC)cs1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;c1csc(c1)-c1cccs1&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-拆解分子图-原子-化学键-共轭与环系">2. 拆解分子图：原子、化学键、共轭与环系</h2>
+<p>在 RDKit 内部，一个 <code>Mol</code> 对象其实是一张由**节点（原子 Atom）<strong>和</strong>边（化学键 Bond）**组成的数学图（这也是第 10 章图神经网络 GNN 的直接输入）。我们可以用 <code>mol.GetAtoms()</code> 和 <code>mol.GetBonds()</code> 遍历分子里的每一个原子和每一根键。</p>
+<p>我们拿 <strong>3-己基噻吩（<code>3-hexylthiophene</code>）</strong> 来做个切片检查：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">osc_mols</span><span class="p">[</span><span class="s2">&quot;3-hexylthiophene&quot;</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;重原子（非氢原子）总数:&quot;</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">GetNumAtoms</span><span class="p">())</span>
+
+<span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">GetAtoms</span><span class="p">():</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">GetIdx</span><span class="p">()</span>
+    <span class="n">sym</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">GetSymbol</span><span class="p">()</span>
+    <span class="n">arom</span> <span class="o">=</span> <span class="s2">&quot;芳香&quot;</span> <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">GetIsAromatic</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;脂肪&quot;</span>
+    <span class="n">deg</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">GetDegree</span><span class="p">()</span>          <span class="c1"># 与几个重原子相连</span>
+    <span class="n">n_h</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">GetTotalNumHs</span><span class="p">()</span>      <span class="c1"># 连着几个氢原子</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;原子 </span><span class="si">{</span><span class="n">idx</span><span class="si">:</span><span class="s2">2d</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">sym</span><span class="si">:</span><span class="s2">2s</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">arom</span><span class="si">}</span><span class="s2">) | 连接数=</span><span class="si">{</span><span class="n">deg</span><span class="si">}</span><span class="s2">, 氢原子数=</span><span class="si">{</span><span class="n">n_h</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>再来看看它内部的每一根化学键。对于有机半导体而言，我们最关心的是哪些键处于 <strong><span class="math-inline" data-tex="\pi">\(\pi\)</span> 共轭体系（<code>GetIsConjugated()</code>）</strong> 中：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">bond</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">GetBonds</span><span class="p">():</span>
+    <span class="n">a1</span> <span class="o">=</span> <span class="n">bond</span><span class="o">.</span><span class="n">GetBeginAtom</span><span class="p">()</span><span class="o">.</span><span class="n">GetSymbol</span><span class="p">()</span>
+    <span class="n">a2</span> <span class="o">=</span> <span class="n">bond</span><span class="o">.</span><span class="n">GetEndAtom</span><span class="p">()</span><span class="o">.</span><span class="n">GetSymbol</span><span class="p">()</span>
+    <span class="n">btype</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">bond</span><span class="o">.</span><span class="n">GetBondType</span><span class="p">())</span>
+    <span class="n">conj</span> <span class="o">=</span> <span class="s2">&quot;[共轭]&quot;</span> <span class="k">if</span> <span class="n">bond</span><span class="o">.</span><span class="n">GetIsConjugated</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;键 </span><span class="si">{</span><span class="n">bond</span><span class="o">.</span><span class="n">GetIdx</span><span class="p">()</span><span class="si">:</span><span class="s2">2d</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">a1</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">a2</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">btype</span><span class="si">:</span><span class="s2">8s</span><span class="si">}</span><span class="s2">) </span><span class="si">{</span><span class="n">conj</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>上面的输出把“3-己基噻吩”的结构分工展现得一清二楚：前 5 根 C-C 单键属于正己基侧链，完全不共轭（绝缘、柔性，专门用来改善有机溶剂中的溶解度）；后 5 根键组成噻吩环，全部处于共轭体系中（提供载流子传输通道）。</p>
+<p>我们还可以用 <code>mol.GetRingInfo()</code> 查询分子的环数与每个环的大小。另外要注意，RDKit 默认采用“隐式氢”（只把重原子作为图的节点）；如果需要计算包含氢原子在内的三维构象或量子化学输入，可以用 <code>Chem.AddHs(mol)</code> 把氢原子显式挂载上去：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;pentacene&quot;</span><span class="p">,</span> <span class="s2">&quot;rubrene&quot;</span><span class="p">,</span> <span class="s2">&quot;BTBT&quot;</span><span class="p">]:</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">osc_mols</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="n">ri</span> <span class="o">=</span> <span class="n">mol</span><span class="o">.</span><span class="n">GetRingInfo</span><span class="p">()</span>
+    <span class="n">ring_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ri</span><span class="o">.</span><span class="n">AtomRings</span><span class="p">()]</span>
+    <span class="n">n_conj</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">GetIsConjugated</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">mol</span><span class="o">.</span><span class="n">GetBonds</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">10s</span><span class="si">}</span><span class="s2"> | 总环数=</span><span class="si">{</span><span class="n">ri</span><span class="o">.</span><span class="n">NumRings</span><span class="p">()</span><span class="si">}</span><span class="s2">  各环大小=</span><span class="si">{</span><span class="n">ring_sizes</span><span class="si">}</span><span class="s2">  共轭键占比=</span><span class="si">{</span><span class="n">n_conj</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">mol</span><span class="o">.</span><span class="n">GetNumBonds</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">pentacene_with_h</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">AddHs</span><span class="p">(</span><span class="n">osc_mols</span><span class="p">[</span><span class="s2">&quot;pentacene&quot;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">并五苯默认重原子数:&quot;</span><span class="p">,</span> <span class="n">osc_mols</span><span class="p">[</span><span class="s2">&quot;pentacene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">GetNumAtoms</span><span class="p">(),</span>
+      <span class="s2">&quot;--&gt; 显式加氢后总原子数:&quot;</span><span class="p">,</span> <span class="n">pentacene_with_h</span><span class="o">.</span><span class="n">GetNumAtoms</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-把分子变成数字-一-物理化学描述符">3. 把分子变成数字（一）：物理化学描述符</h2>
+<p>看懂了分子图之后，我们要解决核心问题：怎么把分子交给机器学习模型？</p>
+<p>最直观的第一种办法是计算<strong>分子描述符（Molecular Descriptors）</strong>——也就是用确定性的经验公式或图算法，从分子结构直接算出一系列宏观或拓扑数值（如分子量 <code>MolWt</code>、脂水分配系数 <code>MolLogP</code>、极性表面积 <code>TPSA</code>、芳香环数 <code>NumAromaticRings</code>、可旋转键数 <code>NumRotatableBonds</code> 等）。</p>
+<p><code>01b</code> 和 <code>01c</code> 里 <code>solubility.csv</code> 的那 17 列特征，全都是用 <code>rdkit.Chem.Descriptors</code> 模块算出来的。下面我们亲手给刚才那 16 个有机半导体分子算一张描述符表：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">osc_mols</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+        <span class="s2">&quot;formula&quot;</span><span class="p">:</span> <span class="n">CalcMolFormula</span><span class="p">(</span><span class="n">mol</span><span class="p">),</span>
+        <span class="s2">&quot;MolWt&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">MolWt</span><span class="p">(</span><span class="n">mol</span><span class="p">),</span>
+        <span class="s2">&quot;MolLogP&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">MolLogP</span><span class="p">(</span><span class="n">mol</span><span class="p">),</span>
+        <span class="s2">&quot;TPSA&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">TPSA</span><span class="p">(</span><span class="n">mol</span><span class="p">),</span>
+        <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">NumAromaticRings</span><span class="p">(</span><span class="n">mol</span><span class="p">),</span>
+        <span class="s2">&quot;NumRotatableBonds&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">NumRotatableBonds</span><span class="p">(</span><span class="n">mol</span><span class="p">),</span>
+    <span class="p">})</span>
+
+<span class="n">osc_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+<span class="n">osc_df</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>对比一下表里的两组分子：</p>
+<ul>
+<li><strong><code>pentacene</code> vs <code>TIPS-pentacene</code></strong>：芳香环数同样是 5，极性表面积 <code>TPSA</code> 都是 0，但接上两个三异丙基硅乙炔基（TIPS）后，可旋转键数 <code>NumRotatableBonds</code> 从 0 变成了 8，<code>MolLogP</code> 从 6.03 猛增到 11.61；</li>
+<li><strong><code>BTBT</code> vs <code>C8-BTBT</code></strong>：接上两条辛基链后，可旋转键数从 0 变成 14，赋予了分子充分的构象柔性与亲油性，从而能够配成墨水进行大面积涂布。</li>
+</ul>
+<p>除了上面挑出来的这 5 个，RDKit 的 <code>Descriptors.descList</code> 里一共内置了 <strong>200 多个</strong>不同的描述符，一行循环就能全部算出来（第 5 章做特征工程时我们会用到）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RDKit 共内置了 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">Descriptors</span><span class="o">.</span><span class="n">descList</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个分子描述符，前 10 个的名称：&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">descList</span><span class="p">[:</span><span class="mi">10</span><span class="p">]])</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-把分子变成数字-二-分子指纹-相似度与骨架">4. 把分子变成数字（二）：分子指纹、相似度与骨架</h2>
+<h3 id="4-1-morgan-分子指纹-ecfp">4.1 Morgan 分子指纹（ECFP）</h3>
+<p>描述符的优点是每个数字都有明确的物理化学含义，缺点是它只记录了整体的统计量，丢掉了具体的局部官能团连接细节。</p>
+<p><strong>分子指纹（Molecular Fingerprint）</strong> 换了一种编码思路：不预设哪些宏观性质重要，而是站在分子的每一个原子上，向外看半径 <span class="math-inline" data-tex="r=1, 2, \dots">\(r=1, 2, \dots\)</span> 个化学键以内的<strong>局部子结构环境</strong>，然后通过哈希函数把每一种局部环境映射到一根长度为 2048 的二进制向量（0/1 数组）的某一位上。只要分子里出现过某个局部片段，对应的那一位就标为 <code>1</code>，否则为 <code>0</code>。</p>
+<p>最著名的这类环形指纹叫做 <strong>Morgan 指纹</strong>（在药物与材料化学文献中也常称为 <strong>ECFP</strong>，当半径 <code>radius=2</code> 时对应 <strong>ECFP4</strong>）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fpgen</span> <span class="o">=</span> <span class="n">rdFingerprintGenerator</span><span class="o">.</span><span class="n">GetMorganGenerator</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fpSize</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+
+<span class="n">fp_pentacene</span> <span class="o">=</span> <span class="n">fpgen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">osc_mols</span><span class="p">[</span><span class="s2">&quot;pentacene&quot;</span><span class="p">])</span>
+<span class="n">fp_tetracene</span> <span class="o">=</span> <span class="n">fpgen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">osc_mols</span><span class="p">[</span><span class="s2">&quot;tetracene&quot;</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;指纹向量总长度:&quot;</span><span class="p">,</span> <span class="n">fp_pentacene</span><span class="o">.</span><span class="n">GetNumBits</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;并五苯中被点亮为 1 的位数:&quot;</span><span class="p">,</span> <span class="n">fp_pentacene</span><span class="o">.</span><span class="n">GetNumOnBits</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;前 25 位的值:&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">fp_pentacene</span><span class="p">)[:</span><span class="mi">25</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="4-2-tanimoto-相似度与二值指纹的盲区">4.2 Tanimoto 相似度与二值指纹的盲区</h3>
+<p>有了两个分子的 0/1 指纹向量 <span class="math-inline" data-tex="A">\(A\)</span> 和 <span class="math-inline" data-tex="B">\(B\)</span>，怎样量化这两个分子在结构上有多像？化学信息学里最通用的指标是 <strong>Tanimoto 相似度（谷本系数，也即集合的 Jaccard 相似度）</strong>：</p>
+<div class="math-block" data-tex="T(A, B) = \frac{|A \cap B|}{|A \cup B|}">\[T(A, B) = \frac{|A \cap B|}{|A \cup B|}\]</div>
+<p>也就是“<strong>两个分子都为 1 的位数</strong>”除以“<strong>至少有一个分子为 1 的位数</strong>”。取值在 <span class="math-inline" data-tex="0">\(0\)</span>（完全没有共同片段）到 <span class="math-inline" data-tex="1">\(1\)</span>（指纹完全相同）之间。</p>
+<p>我们来算一下并五苯（<code>pentacene</code>）和噻吩（<code>thiophene</code>）、以及并五苯和并四苯（<code>tetracene</code>）的 Tanimoto 相似度：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fp_thiophene</span> <span class="o">=</span> <span class="n">fpgen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">osc_mols</span><span class="p">[</span><span class="s2">&quot;thiophene&quot;</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pentacene vs thiophene :&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">DataStructs</span><span class="o">.</span><span class="n">TanimotoSimilarity</span><span class="p">(</span><span class="n">fp_pentacene</span><span class="p">,</span> <span class="n">fp_thiophene</span><span class="p">),</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pentacene vs tetracene :&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">DataStructs</span><span class="o">.</span><span class="n">TanimotoSimilarity</span><span class="p">(</span><span class="n">fp_pentacene</span><span class="p">,</span> <span class="n">fp_tetracene</span><span class="p">),</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>看到第二行的结果了吗？<strong>并五苯和并四苯的 Tanimoto 相似度竟然等于 <code>1.0</code>！</strong></p>
+<p>它们明明一个是五环、一个是四环，能隙差了将近 <span class="math-inline" data-tex="0.5\text{ eV}">\(0.5\text{ eV}\)</span>，溶解度差了好几十倍，为什么在二值 Morgan 指纹（<code>radius=2</code>）眼里它们是“一模一样”的？</p>
+<p>原因在于：半径为 2 的局部环境只看得到每个原子周围两步以内的邻居。无论并四苯还是并五苯，它们包含的局部环境种类是完全相同的（无非是“端环外侧的 CH”、“中间稠环的 CH”、“稠合桥头的季碳 C”这几种），<strong>唯一的区别是中间稠环的片段在并五苯里多重复了一次</strong>！而普通的 0/1 指纹只记录“有没有出现过这种片段”，不记录“出现了几次”。</p>
+<blockquote>
+<p><strong>贯穿整门课的核心启示</strong>：
+<strong>你选用的分子表示方法，决定了机器学习模型能看到什么、不能看到什么。</strong>
+如果只把 0/1 Morgan 指纹喂给模型去预测齐聚物或并苯的能隙，任何算法（哪怕是最先进的深度网络）都无法区分并四苯和并五苯！</p>
+<p>要解决这个盲区，可以改用记录片段出现次数的<strong>计数指纹（<code>GetCountFingerprint</code>）</strong>，或者把反映全局尺寸的物理化学描述符（如 <code>MolWt</code>、<code>NumAromaticRings</code>）与指纹拼接在一起：</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [16] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">cfp_pentacene</span> <span class="o">=</span> <span class="n">fpgen</span><span class="o">.</span><span class="n">GetCountFingerprint</span><span class="p">(</span><span class="n">osc_mols</span><span class="p">[</span><span class="s2">&quot;pentacene&quot;</span><span class="p">])</span>
+<span class="n">cfp_tetracene</span> <span class="o">=</span> <span class="n">fpgen</span><span class="o">.</span><span class="n">GetCountFingerprint</span><span class="p">(</span><span class="n">osc_mols</span><span class="p">[</span><span class="s2">&quot;tetracene&quot;</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;改用计数指纹后 pentacene vs tetracene 相似度:&quot;</span><span class="p">,</span>
+      <span class="nb">round</span><span class="p">(</span><span class="n">DataStructs</span><span class="o">.</span><span class="n">TanimotoSimilarity</span><span class="p">(</span><span class="n">cfp_pentacene</span><span class="p">,</span> <span class="n">cfp_tetracene</span><span class="p">),</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>我们用 <code>DataStructs.BulkTanimotoSimilarity</code> 一次性算出那 16 个有机电子分子两两之间的相似度矩阵，并用 <code>seaborn.heatmap</code> 画出来看看：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [17] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
+
+<span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">osc_mols</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="n">fps</span> <span class="o">=</span> <span class="p">[</span><span class="n">fpgen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">osc_mols</span><span class="p">[</span><span class="n">n</span><span class="p">])</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">]</span>
+<span class="n">sim_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">DataStructs</span><span class="o">.</span><span class="n">BulkTanimotoSimilarity</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">fps</span><span class="p">)</span> <span class="k">for</span> <span class="n">fp</span> <span class="ow">in</span> <span class="n">fps</span><span class="p">],</span>
+    <span class="n">index</span><span class="o">=</span><span class="n">names</span><span class="p">,</span>
+    <span class="n">columns</span><span class="o">=</span><span class="n">names</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">8.5</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">sim_df</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">square</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Pairwise Tanimoto similarity (Morgan, r=2)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [18] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-01d-3">🏋️ 练习 01d-3</h3>
+<ol>
+<li>从上面的 <code>sim_df</code> 表格中，找出除了 <code>BTBT</code> 自身以外，与 <strong><code>BTBT</code> 相似度最高的前 5 个分子</strong>及其相似度数值（提示：<code>sim_df[&quot;BTBT&quot;].drop(&quot;BTBT&quot;).sort_values(ascending=False).head(5)</code>）。</li>
+<li>思考一下：<code>C8-BTBT</code> 和 <code>BTBT</code> 的共轭核心骨架一模一样，为什么它们俩的 Tanimoto 相似度却只有 0.30 左右？</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [19] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="4-3-提取分子核心-bemis-murcko-骨架">4.3 提取分子核心：Bemis–Murcko 骨架</h3>
+<p>在刚才的练习 01d-3 里你已经发现：当我们在共轭核上接上长长的烷基链或硅烷基链（比如 <code>C8-BTBT</code> 或 <code>TIPS-pentacene</code>）时，侧链会产生大量脂肪族局部片段，把全分子的 Tanimoto 相似度大幅拉低。</p>
+<p>如果我们想让计算机忽略外围的可溶性侧链，直接回答“<strong>这个分子的核心骨架是什么</strong>”，可以使用 RDKit 的 <strong><code>MurckoScaffold.GetScaffoldForMol(mol)</code></strong>。它会自动剪掉所有悬空的末端侧链，只保留环系以及连接环与环之间的主干通道——这恰好对应了有机光电材料中“<strong>共轭核 + 侧链</strong>”的分子设计逻辑：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [20] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">sample_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;3-hexylthiophene&quot;</span><span class="p">,</span> <span class="s2">&quot;TIPS-pentacene&quot;</span><span class="p">,</span> <span class="s2">&quot;C8-BTBT&quot;</span><span class="p">,</span> <span class="s2">&quot;rubrene&quot;</span><span class="p">,</span> <span class="s2">&quot;triphenylamine&quot;</span><span class="p">]</span>
+<span class="n">grid_mols</span><span class="p">,</span> <span class="n">grid_legends</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">sample_names</span><span class="p">:</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">osc_mols</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="n">core</span> <span class="o">=</span> <span class="n">MurckoScaffold</span><span class="o">.</span><span class="n">GetScaffoldForMol</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span>
+    <span class="n">grid_mols</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">mol</span><span class="p">,</span> <span class="n">core</span><span class="p">])</span>
+    <span class="n">grid_legends</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;Scaffold: &quot;</span> <span class="o">+</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolToSmiles</span><span class="p">(</span><span class="n">core</span><span class="p">)])</span>
+
+<span class="n">Draw</span><span class="o">.</span><span class="n">MolsToGridImage</span><span class="p">(</span><span class="n">grid_mols</span><span class="p">,</span> <span class="n">legends</span><span class="o">=</span><span class="n">grid_legends</span><span class="p">,</span> <span class="n">molsPerRow</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">subImgSize</span><span class="o">=</span><span class="p">(</span><span class="mi">320</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>你看，<code>3-hexylthiophene</code> 剃掉己基后还原成了噻吩，<code>TIPS-pentacene</code> 剃掉硅烷基后还原成了并五苯，<code>C8-BTBT</code> 则完美还原成了 <code>BTBT</code>。</p>
+<blockquote>
+<p><strong>伏笔（骨架划分 Scaffold Split）</strong>：在第 2 章评估机器学习模型时，如果随机划分训练集和测试集，<code>BTBT</code> 和 <code>C8-BTBT</code> 很容易分到两边，让模型靠死记硬背骨架拿高分。更严格的考法是按 <strong>Murcko 骨架</strong> 分组（把相同骨架的衍生物捆绑在同一侧），检验模型能不能真正推广到从未见过的新骨架上。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-综合实战-用-rdkit-pandas-清洗与检索-aqsoldb">5. 综合实战：用 RDKit + Pandas 清洗与检索 AqSolDB</h2>
+<h3 id="5-1-批量解析分子与脏数据排查">5.1 批量解析分子与脏数据排查</h3>
+<p>现在我们把 <code>01b</code> 学的 Pandas 和刚刚学的 RDKit 结合起来，对 <code>solubility.csv</code> 里的全部 9482 个化合物做一次真实的化学信息学清洗。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [21] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;data/solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">google.colab</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;请上传 solubility.csv&quot;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;找不到 solubility.csv，请确保它在 data/ 目录下&quot;</span><span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;读取成功！原始记录共 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> 条。&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>我们用 <code>df[&quot;SMILES&quot;].apply(Chem.MolFromSmiles)</code> 把每一行的 SMILES 字符串转换成 RDKit 分子对象，存进新的一列 <code>df[&quot;mol&quot;]</code>，并立刻检查有没有解析失败变成 <code>None</code>（在 Pandas 里表现为缺失值 <code>NaN</code>）的记录：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [22] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">RDLogger</span>
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.warning&quot;</span><span class="p">)</span>   <span class="c1"># 关闭无关紧要的警告刷屏，只保留错误提示</span>
+
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;SMILES&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;解析失败 (返回 None) 的条目数:&quot;</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+<span class="c1"># 看看是哪两个分子解析失败了：</span>
+<span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()][[</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;SMILES&quot;</span><span class="p">]]</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>果然抓出了两条无法解析的“脏数据”！仔细看它们的 SMILES，里面出现了 <code>[NH++]</code>、<code>[CH-]</code> 等不合理的形式电荷写法，导致 RDKit 无法确定芳环的电子数。在公开数据集里遇到这种格式瑕疵非常普遍。我们用 <code>.dropna(subset=[&quot;mol&quot;])</code> 把这两行剔除，防止后面调用分子方法时报错：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [23] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;剔除无效结构后，剩余 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个有效分子。&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>有了 <code>df[&quot;mol&quot;]</code> 这一列，我们就可以随时用 <code>.apply(...)</code> 算出任何想要的分子特征。比如我们自己用 <code>Descriptors.MolWt</code> 算一遍分子量，再调用分子对象的 <code>.GetNumAtoms()</code> 方法算一下重原子数，跟表里原有的列核对一下：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [24] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolWt_rdkit&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Descriptors</span><span class="o">.</span><span class="n">MolWt</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;n_heavy&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">GetNumAtoms</span><span class="p">())</span>
+
+<span class="n">df</span><span class="p">[[</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt_rdkit&quot;</span><span class="p">,</span> <span class="s2">&quot;HeavyAtomCount&quot;</span><span class="p">,</span> <span class="s2">&quot;n_heavy&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><blockquote>
+<p><strong>顺便认识一下 <code>lambda</code> 匿名函数</strong>：
+上面第二行里的 <code>lambda m: m.GetNumAtoms()</code> 是 Python 里写“一次性小函数”的简写形式，意思完全等价于：</p>
+<pre><code class="language-python"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">get_n_atoms</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">GetNumAtoms</span><span class="p">()</span>
+</pre></div>
+</code></pre>
+<p>在配合 Pandas 的 <code>.apply()</code> 做简单转换时，用 <code>lambda 输入参数: 返回表达式</code> 可以省去专门 <code>def</code> 起名字的麻烦。</p>
+</blockquote>
+<h3 id="练习-01d-4">🏋️ 练习 01d-4</h3>
+<ol>
+<li>验证我们刚算出来的 <code>MolWt_rdkit</code> 与原表中的 <code>MolWt</code> 是否一致：计算两列之差的绝对值的最大值 <code>(df[&quot;MolWt&quot;] - df[&quot;MolWt_rdkit&quot;]).abs().max()</code>。</li>
+<li>回头看 <code>solubility.csv</code> 的第一行，它的 SMILES 是 <code>&quot;[Br-].CCCCCCCCCCCCCCCCCC[N+](C)(C)C&quot;</code>（十六烷基三甲基溴化铵）。在 SMILES 语法里，圆点 <strong><code>.</code></strong> 代表<strong>互不以共价键相连的多个独立组分</strong>（比如有机盐的阴阳离子、结晶水合物或混合物）。请统计一下，在这 9480 个条目里，SMILES 中包含 <code>.</code> 的条目一共有多少个？如果我们要训练一个预测“中性有机分子水溶解度”的模型，这批含 <code>.</code> 的数据会带来什么影响？</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [25] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="5-2-子结构检索-substructure-search">5.2 子结构检索（Substructure Search）</h3>
+<p>在 <code>01b</code> 里，我们曾试着用名称字符串 <code>df[&quot;Name&quot;].str.contains(&quot;thiophene&quot;)</code> 去找含噻吩的分子。但很多化合物用的是俗名或商品名，名字里根本没有 <code>thiophene</code>；就算去搜 SMILES 字符串，同一个噻吩环在复杂稠环里的写法也千变万化。</p>
+<p>真正严谨的做法是<strong>基于分子图的子结构匹配</strong>：用 <code>Chem.MolFromSmarts(&quot;c1ccsc1&quot;)</code> 定义一个结构片段查询模式（SMARTS 是 SMILES 的查询扩展语法），然后用 <code>mol.HasSubstructMatch(模式)</code> 让 RDKit 在分子图里做子图同构搜索。不管噻吩环藏在哪个角落、怎么编号，都能一网打尽：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [26] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">thiophene_pattern</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmarts</span><span class="p">(</span><span class="s2">&quot;c1ccsc1&quot;</span><span class="p">)</span>
+
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;has_thiophene&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">HasSubstructMatch</span><span class="p">(</span><span class="n">thiophene_pattern</span><span class="p">))</span>
+<span class="n">hits</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;has_thiophene&quot;</span><span class="p">]]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;全库共检索到 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hits</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个含有噻吩环的化合物。前 12 个结构如下：&quot;</span><span class="p">)</span>
+
+<span class="n">Draw</span><span class="o">.</span><span class="n">MolsToGridImage</span><span class="p">(</span>
+    <span class="n">hits</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+    <span class="n">legends</span><span class="o">=</span><span class="n">hits</span><span class="p">[</span><span class="s2">&quot;Name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="p">[:</span><span class="mi">24</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+    <span class="n">molsPerRow</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">subImgSize</span><span class="o">=</span><span class="p">(</span><span class="mi">250</span><span class="p">,</span> <span class="mi">190</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>如果不仅想知道“含不含”，还想知道匹配到的子结构具体落在哪几个原子上，可以调用 <code>mol.GetSubstructMatches(模式)</code>，并在画图时把这些原子高亮出来：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [27] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">bithiophene</span> <span class="o">=</span> <span class="n">osc_mols</span><span class="p">[</span><span class="s2">&quot;2,2&#39;-bithiophene&quot;</span><span class="p">]</span>
+<span class="n">matches</span> <span class="o">=</span> <span class="n">bithiophene</span><span class="o">.</span><span class="n">GetSubstructMatches</span><span class="p">(</span><span class="n">thiophene_pattern</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;匹配到的噻吩环原子序号:&quot;</span><span class="p">,</span> <span class="n">matches</span><span class="p">)</span>
+
+<span class="c1"># 把匹配到的所有原子序号展平放进一个列表，传给 highlightAtoms</span>
+<span class="n">highlight_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span> <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">matches</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">match</span><span class="p">]</span>
+<span class="n">Draw</span><span class="o">.</span><span class="n">MolToImage</span><span class="p">(</span><span class="n">bithiophene</span><span class="p">,</span> <span class="n">highlightAtoms</span><span class="o">=</span><span class="n">highlight_ids</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">300</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-01d-5-本章主线验证">🏋️ 练习 01d-5（本章主线验证）</h3>
+<p>现在我们用子结构搜索，为第一部分“大 <span class="math-inline" data-tex="\pi">\(\pi\)</span> 共轭核难溶”的主线画上句号：</p>
+<ol>
+<li>用 SMARTS 字符串 <code>&quot;c1ccc2cc3ccccc3cc2c1&quot;</code> 构建一个<strong>蒽核</strong>（三个线性稠合苯环）的查询模式，找出 <code>df</code> 中所有含有蒽核子结构的化合物，看看一共有多少个？</li>
+<li>用 <code>df.groupby(...)[&quot;Solubility&quot;].mean()</code> 对比“含蒽核”和“不含蒽核”两组化合物的平均 <span class="math-inline" data-tex="\log S">\(\log S\)</span>。含蒽核的分子平均溶解度比普通分子低了多少个数量级？</li>
+<li>（选做）用 <code>sns.histplot(..., stat=&quot;density&quot;, common_norm=False, element=&quot;step&quot;)</code> 画出这两组分子的 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 概率密度分布对比图。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [28] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第一部分总结">第一部分总结</h2>
+<p>回顾 <code>01a</code> 到 <code>01d</code> 这四个 Notebook，你已经走完了材料与化学数据科学的完整基本功闭环：</p>
+<ol>
+<li><strong>Python 语法与数组运算（<code>01a</code>）</strong>：变量、容器、条件循环、函数封装与 NumPy 向量化计算；</li>
+<li><strong>表格数据清洗与聚合（<code>01b</code>）</strong>：用 Pandas 读入近万条真实溶解度数据，完成筛选、排序、分组统计与多表关联合并；</li>
+<li><strong>统计可视化与探索性分析（<code>01c</code>）</strong>：用 Matplotlib 与 Seaborn 绘制分布、散点、箱线图与相关性热图，识别出经验外推风险与特征共线性；</li>
+<li><strong>化学信息学与分子特征工程（<code>01d</code>）</strong>：用 RDKit 解析并规范化 SMILES，拆解共轭键与环系，提取 Murcko 骨架，计算物理化学描述符与 Morgan 指纹，并通过子结构检索证实了稠环共轭核对溶解度的显著压制。</li>
+</ol>
+<p><strong>下一章预告（<code>02 - Supervised Learning</code>）</strong>：
+既然我们已经能把每一个分子变成一行描述符或一串 2048 维的指纹向量，接下来就正式进入<strong>机器学习建模</strong>——我们将用线性回归、正则化模型、随机森林与梯度提升树来预测分子的溶解度，并深入探讨交叉验证、骨架划分（Scaffold Split）与模型适用域（Applicability Domain）。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/01-basics/01d_rdkit_basics.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/01-basics.html">返回模块 01</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/01-basics/01c_plotting.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">01c · 科研数据可视化：Matplotlib 与 Seaborn</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/01-basics/01e_exercises.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">01e — 第一讲基础习题：Python、Pandas、绘图与 RDKit 巩固练习</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l3"><a href="#本节内容">本节内容</a></li>      <li class="toc-l2"><a href="#0-环境检查与导入">0. 环境检查与导入</a></li>      <li class="toc-l2"><a href="#1-smiles-分子绘制与规范化">1. SMILES、分子绘制与规范化</a></li>      <li class="toc-l3"><a href="#1-1-smiles-把二维结构式压成一行字符">1.1 SMILES：把二维结构式压成一行字符</a></li>      <li class="toc-l3"><a href="#1-2-从-smiles-到-rdkit-分子对象">1.2 从 SMILES 到 RDKit 分子对象</a></li>      <li class="toc-l3"><a href="#练习-01d-1">🏋️ 练习 01d-1</a></li>      <li class="toc-l3"><a href="#1-3-规范化-smiles-canonical-smiles-解决-同物异名">1.3 规范化 SMILES（Canonical SMILES）：解决“同物异名”</a></li>      <li class="toc-l3"><a href="#练习-01d-2">🏋️ 练习 01d-2</a></li>      <li class="toc-l2"><a href="#2-拆解分子图-原子-化学键-共轭与环系">2. 拆解分子图：原子、化学键、共轭与环系</a></li>      <li class="toc-l2"><a href="#3-把分子变成数字-一-物理化学描述符">3. 把分子变成数字（一）：物理化学描述符</a></li>      <li class="toc-l2"><a href="#4-把分子变成数字-二-分子指纹-相似度与骨架">4. 把分子变成数字（二）：分子指纹、相似度与骨架</a></li>      <li class="toc-l3"><a href="#4-1-morgan-分子指纹-ecfp">4.1 Morgan 分子指纹（ECFP）</a></li>      <li class="toc-l3"><a href="#4-2-tanimoto-相似度与二值指纹的盲区">4.2 Tanimoto 相似度与二值指纹的盲区</a></li>      <li class="toc-l3"><a href="#练习-01d-3">🏋️ 练习 01d-3</a></li>      <li class="toc-l3"><a href="#4-3-提取分子核心-bemis-murcko-骨架">4.3 提取分子核心：Bemis–Murcko 骨架</a></li>      <li class="toc-l2"><a href="#5-综合实战-用-rdkit-pandas-清洗与检索-aqsoldb">5. 综合实战：用 RDKit + Pandas 清洗与检索 AqSolDB</a></li>      <li class="toc-l3"><a href="#5-1-批量解析分子与脏数据排查">5.1 批量解析分子与脏数据排查</a></li>      <li class="toc-l3"><a href="#练习-01d-4">🏋️ 练习 01d-4</a></li>      <li class="toc-l3"><a href="#5-2-子结构检索-substructure-search">5.2 子结构检索（Substructure Search）</a></li>      <li class="toc-l3"><a href="#练习-01d-5-本章主线验证">🏋️ 练习 01d-5（本章主线验证）</a></li>      <li class="toc-l2"><a href="#第一部分总结">第一部分总结</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

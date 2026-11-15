@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="课程全部模块的习题 Notebook 与参考答案汇总，支持按模块查看完成进度。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="全部习题与参考答案 | AI for Materials Science" />
+  <meta property="og:description" content="课程全部模块的习题 Notebook 与参考答案汇总，支持按模块查看完成进度。" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/exercises.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/exercises.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="assets/pygments.css" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <link rel="stylesheet" href="assets/components.css" />
+  <script>
+    window.AI4M_BASE = "";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="assets/vendor/katex/katex.min.js"></script>
+  <script defer src="assets/search-index.js"></script>
+  <script defer src="assets/app.js"></script>  <title>全部习题与参考答案 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="index.html">课程主页</a>
+      <a href="index.html#syllabus">课程大纲</a>
+      <a href="exercises.html" class="active">习题与答案</a>
+      <a href="index.html#legend">学习指南</a>
+      <a href="index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb"><a href="index.html">课程主页</a> / <span>全部习题</span></div>
+<h1>全部习题与参考答案</h1>
+<p class="lede">课程共上线 <strong>7</strong> 份习题 Notebook。
+  每份习题都配有参考答案（默认折叠），建议先独立完成再对照。</p><div class="progress-panel" data-progress-keys="notebooks/01-basics/01e_exercises.html,notebooks/02-supervised-learning/02d_exercises.html,notebooks/03-unsupervised-learning/03d_exercises.html,notebooks/04-bayesian-optimization/04c_exercises.html,notebooks/07-neural-networks-and-cnns/07c_exercises.html,notebooks/08-sequence-models-and-transformers/08d_exercises.html,notebooks/09-generative-models/09d_exercises.html">
+  <div class="progress-head">
+    <strong>习题总进度</strong>
+    <span class="progress-count" data-progress-count>0 / 7</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+  <p class="hint-inline">进度只保存在你当前浏览器（localStorage），清理浏览器数据会丢失。</p>
+</div><section class="exercise-group">
+  <h2 id="module-01">
+    <span class="module-num">Module 01</span> Python 与化学/材料数据基础
+  </h2>  <div class="markdown-body">
+    <table class="nb-table">
+      <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+      <tbody>        <tr>
+          <td class="nb-check-cell">
+            <input type="checkbox" class="progress-check" data-progress-key="notebooks/01-basics/01e_exercises.html"
+                   aria-label="把 01e_exercises.ipynb 标记为已完成" />
+          </td>
+          <td><a href="notebooks/01-basics/01e_exercises.html"><strong>01e — 第一讲基础习题：Python、Pandas、绘图与 RDKit 巩固练习</strong></a><br/>
+            <code>01e_exercises.ipynb</code></td>
+          <td>12.4 KB</td>
+          <td>
+            <a class="btn btn-secondary" href="notebooks/01-basics/01e_exercises.html">开始做题</a>
+            <a class="btn btn-secondary" href="files/_shared/e30059b5abd1-01e_exercises.ipynb"
+               download="01e_exercises.ipynb">下载</a>            <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/01%20-%20Basics/01e_exercises.ipynb" target="_blank" rel="noopener">▶ Colab</a>            <a class="btn btn-secondary" href="solutions/01-basics/01_exercises_solutions.html">参考答案</a>          </td>
+        </tr>      </tbody>
+    </table>
+  </div></section><section class="exercise-group">
+  <h2 id="module-02">
+    <span class="module-num">Module 02</span> 监督学习与模型评估防坑
+  </h2>  <div class="markdown-body">
+    <table class="nb-table">
+      <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+      <tbody>        <tr>
+          <td class="nb-check-cell">
+            <input type="checkbox" class="progress-check" data-progress-key="notebooks/02-supervised-learning/02d_exercises.html"
+                   aria-label="把 02d_exercises.ipynb 标记为已完成" />
+          </td>
+          <td><a href="notebooks/02-supervised-learning/02d_exercises.html"><strong>02d — 第二讲基础习题：回归、交叉验证与分类巩固练习</strong></a><br/>
+            <code>02d_exercises.ipynb</code></td>
+          <td>11.6 KB</td>
+          <td>
+            <a class="btn btn-secondary" href="notebooks/02-supervised-learning/02d_exercises.html">开始做题</a>
+            <a class="btn btn-secondary" href="files/_shared/7c357435cf21-02d_exercises.ipynb"
+               download="02d_exercises.ipynb">下载</a>            <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02d_exercises.ipynb" target="_blank" rel="noopener">▶ Colab</a>            <a class="btn btn-secondary" href="solutions/02-supervised-learning/02_exercises_solutions.html">参考答案</a>          </td>
+        </tr>      </tbody>
+    </table>
+  </div></section><section class="exercise-group">
+  <h2 id="module-03">
+    <span class="module-num">Module 03</span> 无监督学习：化学空间与发现
+  </h2>  <div class="markdown-body">
+    <table class="nb-table">
+      <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+      <tbody>        <tr>
+          <td class="nb-check-cell">
+            <input type="checkbox" class="progress-check" data-progress-key="notebooks/03-unsupervised-learning/03d_exercises.html"
+                   aria-label="把 03d_exercises.ipynb 标记为已完成" />
+          </td>
+          <td><a href="notebooks/03-unsupervised-learning/03d_exercises.html"><strong>03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习</strong></a><br/>
+            <code>03d_exercises.ipynb</code></td>
+          <td>12.6 KB</td>
+          <td>
+            <a class="btn btn-secondary" href="notebooks/03-unsupervised-learning/03d_exercises.html">开始做题</a>
+            <a class="btn btn-secondary" href="files/_shared/664d4a2c0de3-03d_exercises.ipynb"
+               download="03d_exercises.ipynb">下载</a>            <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03d_exercises.ipynb" target="_blank" rel="noopener">▶ Colab</a>            <a class="btn btn-secondary" href="solutions/03-unsupervised-learning/03_exercises_solutions.html">参考答案</a>          </td>
+        </tr>      </tbody>
+    </table>
+  </div></section><section class="exercise-group">
+  <h2 id="module-04">
+    <span class="module-num">Module 04</span> 贝叶斯优化与主动实验设计
+  </h2>  <div class="markdown-body">
+    <table class="nb-table">
+      <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+      <tbody>        <tr>
+          <td class="nb-check-cell">
+            <input type="checkbox" class="progress-check" data-progress-key="notebooks/04-bayesian-optimization/04c_exercises.html"
+                   aria-label="把 04c_exercises.ipynb 标记为已完成" />
+          </td>
+          <td><a href="notebooks/04-bayesian-optimization/04c_exercises.html"><strong>04c — 第四讲基础习题：高斯过程回归与贝叶斯优化巩固练习</strong></a><br/>
+            <code>04c_exercises.ipynb</code></td>
+          <td>11.9 KB</td>
+          <td>
+            <a class="btn btn-secondary" href="notebooks/04-bayesian-optimization/04c_exercises.html">开始做题</a>
+            <a class="btn btn-secondary" href="files/_shared/769ef8ec26f3-04c_exercises.ipynb"
+               download="04c_exercises.ipynb">下载</a>            <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/04%20-%20Bayesian%20Optimization/04c_exercises.ipynb" target="_blank" rel="noopener">▶ Colab</a>            <a class="btn btn-secondary" href="solutions/04-bayesian-optimization/04_exercises_solutions.html">参考答案</a>          </td>
+        </tr>      </tbody>
+    </table>
+  </div></section><section class="exercise-group">
+  <h2 id="module-05">
+    <span class="module-num">Module 05</span> 特征工程、SHAP 与 3D 分子
+  </h2>  <div class="academic-box">
+    <p class="hint-inline">      本模块课件尚在编写中，习题会随课件一起上线 —— 先看
+      <a href="modules/05-feature-engineering-and-molecular-informatics.html">编写计划</a>。    </p>
+  </div></section><section class="exercise-group">
+  <h2 id="module-06">
+    <span class="module-num">Module 06</span> 无机与晶体材料信息学
+  </h2>  <div class="academic-box">
+    <p class="hint-inline">      本模块课件尚在编写中，习题会随课件一起上线 —— 先看
+      <a href="modules/06-materials-informatics.html">编写计划</a>。    </p>
+  </div></section><section class="exercise-group">
+  <h2 id="module-07">
+    <span class="module-num">Module 07</span> 神经网络与材料显微视觉 CNN
+  </h2>  <div class="markdown-body">
+    <table class="nb-table">
+      <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+      <tbody>        <tr>
+          <td class="nb-check-cell">
+            <input type="checkbox" class="progress-check" data-progress-key="notebooks/07-neural-networks-and-cnns/07c_exercises.html"
+                   aria-label="把 07c_exercises.ipynb 标记为已完成" />
+          </td>
+          <td><a href="notebooks/07-neural-networks-and-cnns/07c_exercises.html"><strong>07c · 第七讲基础巩固习题：PyTorch 神经网络与显微图像卷积</strong></a><br/>
+            <code>07c_exercises.ipynb</code></td>
+          <td>13.1 KB</td>
+          <td>
+            <a class="btn btn-secondary" href="notebooks/07-neural-networks-and-cnns/07c_exercises.html">开始做题</a>
+            <a class="btn btn-secondary" href="files/_shared/15c4f3b820f2-07c_exercises.ipynb"
+               download="07c_exercises.ipynb">下载</a>            <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/07%20-%20Neural%20Networks%20and%20CNNs/07c_exercises.ipynb" target="_blank" rel="noopener">▶ Colab</a>            <a class="btn btn-secondary" href="solutions/07-neural-networks-and-cnns/07_exercises_solutions.html">参考答案</a>          </td>
+        </tr>      </tbody>
+    </table>
+  </div></section><section class="exercise-group">
+  <h2 id="module-08">
+    <span class="module-num">Module 08</span> 序列模型、Transformer 与反应预测
+  </h2>  <div class="markdown-body">
+    <table class="nb-table">
+      <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+      <tbody>        <tr>
+          <td class="nb-check-cell">
+            <input type="checkbox" class="progress-check" data-progress-key="notebooks/08-sequence-models-and-transformers/08d_exercises.html"
+                   aria-label="把 08d_exercises.ipynb 标记为已完成" />
+          </td>
+          <td><a href="notebooks/08-sequence-models-and-transformers/08d_exercises.html"><strong>08d · 基础习题集：化学序列分词、语言模型与注意力机制</strong></a><br/>
+            <code>08d_exercises.ipynb</code></td>
+          <td>13.8 KB</td>
+          <td>
+            <a class="btn btn-secondary" href="notebooks/08-sequence-models-and-transformers/08d_exercises.html">开始做题</a>
+            <a class="btn btn-secondary" href="files/_shared/7a7fcf8a6878-08d_exercises.ipynb"
+               download="08d_exercises.ipynb">下载</a>            <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/08%20-%20Sequence%20Models%20and%20Transformers/08d_exercises.ipynb" target="_blank" rel="noopener">▶ Colab</a>            <a class="btn btn-secondary" href="solutions/08-sequence-models-and-transformers/08_exercises_solutions.html">参考答案</a>          </td>
+        </tr>      </tbody>
+    </table>
+  </div></section><section class="exercise-group">
+  <h2 id="module-09">
+    <span class="module-num">Module 09</span> 生成模型：分子设计到电镜超分
+  </h2>  <div class="markdown-body">
+    <table class="nb-table">
+      <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+      <tbody>        <tr>
+          <td class="nb-check-cell">
+            <input type="checkbox" class="progress-check" data-progress-key="notebooks/09-generative-models/09d_exercises.html"
+                   aria-label="把 09d_exercises.ipynb 标记为已完成" />
+          </td>
+          <td><a href="notebooks/09-generative-models/09d_exercises.html"><strong>09d · 基础习题集：SELFIES、变分自编码器、代理模型防坑与扩散模型</strong></a><br/>
+            <code>09d_exercises.ipynb</code></td>
+          <td>13.1 KB</td>
+          <td>
+            <a class="btn btn-secondary" href="notebooks/09-generative-models/09d_exercises.html">开始做题</a>
+            <a class="btn btn-secondary" href="files/_shared/a88a37d096ed-09d_exercises.ipynb"
+               download="09d_exercises.ipynb">下载</a>            <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/09%20-%20Generative%20Models/09d_exercises.ipynb" target="_blank" rel="noopener">▶ Colab</a>            <a class="btn btn-secondary" href="solutions/09-generative-models/09_exercises_solutions.html">参考答案</a>          </td>
+        </tr>      </tbody>
+    </table>
+  </div></section><section class="exercise-group">
+  <h2 id="module-10">
+    <span class="module-num">Module 10</span> 图神经网络（GNN）与机器学习势函数
+  </h2>  <div class="academic-box">
+    <p class="hint-inline">      本模块习题 Notebook 编写中。课件内已有标注 <strong>🏋️ 练习</strong> 的随堂练习，
+      可从 <a href="modules/10-graph-neural-networks-and-mlips.html">模块页</a> 进入。    </p>
+  </div></section>  </main></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 09a · 分子的连续潜空间：SELFIES 表示与变分自编码器（VAE） 在第 08 讲（08a ~ 08c）中，我们构建了直接工作在离散 token 序列上的自回归语言模型与编码器 解码器 Transformer。无论是 SmilesRNN 还是 ReactionTransformer" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="09a · 分子的连续潜空间：SELFIES 表示与变分自编码器（VAE） | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 09a · 分子的连续潜空间：SELFIES 表示与变分自编码器（VAE） 在第 08 讲（08a ~ 08c）中，我们构建了直接工作在离散 token 序列上的自回归语言模型与编码器 解码器 Transformer。无论是 SmilesRNN 还是 ReactionTransformer" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/09-generative-models/09a_vae_selfies.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/09-generative-models/09a_vae_selfies.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>09a · 分子的连续潜空间：SELFIES 表示与变分自编码器（VAE） | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09a_vae_selfies.html"
+           data-progress-mark="notebooks/09-generative-models/09a_vae_selfies.html"
+class="active">📓 09a_vae_selfies.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09b_goal_directed_generation.html"
+           data-progress-mark="notebooks/09-generative-models/09b_goal_directed_generation.html"
+>📓 09b_goal_directed_generation.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+           data-progress-mark="notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+>📓 09c_microscopy_diffusion_sr.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09d_exercises.html"
+           data-progress-mark="notebooks/09-generative-models/09d_exercises.html"
+>🏋️ 09d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/09-generative-models.html">模块 09：生成模型：分子设计到电镜超分</a> /  <span>09a_vae_selfies.ipynb</span>
+</div>
+<h1>09a · 分子的连续潜空间：SELFIES 表示与变分自编码器（VAE）</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>09a_vae_selfies.ipynb</code>（46.7 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/09%20-%20Generative%20Models/09a_vae_selfies.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/75d0ea81fed7-09a_vae_selfies.ipynb" download="09a_vae_selfies.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/09-generative-models/09_generative_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/09-generative-models/09a_vae_selfies.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/09%20-%20Generative%20Models/09a_vae_selfies.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>09a · 分子的连续潜空间：SELFIES 表示与变分自编码器（VAE）</h1>
+<p>在第 08 讲（<code>08a</code> ~ <code>08c</code>）中，我们构建了直接工作在离散 token 序列上的自回归语言模型与编码器-解码器 Transformer。无论是 <code>SmilesRNN</code> 还是 <code>ReactionTransformer</code>，它们在生成分子时都是逐个字符推进的——网络内部并不存在一个能够概括整个分子全局结构的固定维度向量表示 <span class="math-inline" data-tex="\mathbf{z} \in \mathbb{R}^d">\(\mathbf{z} \in \mathbb{R}^d\)</span>。</p>
+<p>然而在材料逆向设计（Inverse Design）中，研究者常常希望把离散的分子或晶体映射到一个**连续光滑的欧氏潜空间（Continuous Latent Space）**中：</p>
+<ul>
+<li>如果每个分子都对应潜空间中的一个坐标点 <span class="math-inline" data-tex="\mathbf{z}">\(\mathbf{z}\)</span>，我们就可以在两个已知材料 <span class="math-inline" data-tex="\mathbf{z}_A">\(\mathbf{z}_A\)</span> 与 <span class="math-inline" data-tex="\mathbf{z}_B">\(\mathbf{z}_B\)</span> 之间连续插值，探索折中构型；</li>
+<li>更进一步，如果能在潜空间上建立“潜坐标 <span class="math-inline" data-tex="\mathbf{z} \to">\(\mathbf{z} \to\)</span> 材料性质 <span class="math-inline" data-tex="y">\(y\)</span>”的可微映射，我们就能直接沿着目标性质的梯度方向搜索新材料，再由解码器还原为具体的化学结构。</li>
+</ul>
+<p>实现这一构想的经典生成模型是<strong>变分自编码器（Variational Autoencoder, VAE；Kingma &amp; Welling, 2014；Gómez-Bombarelli et al., <em>ACS Central Science</em>, 2018）</strong>。本节我们将沿着以下脉络展开：</p>
+<ol>
+<li><strong>从 SMILES 到 SELFIES</strong>：为什么一次性并行解码的潜变量模型极易触发 SMILES 语法崩溃，以及 <strong>SELFIES</strong>（Krenn et al., 2020）如何从形式语法层面保证 100% 的化学价态合法性；</li>
+<li><strong>从确定性自编码器到变分自编码器</strong>：重参数化技巧（Reparameterization Trick）、证据下界（ELBO）与 <span class="math-inline" data-tex="\beta">\(\beta\)</span>-VAE 的重构—规整权衡；</li>
+<li><strong>训练分子 VAE 与重构误差剖析</strong>：检验模型对共轭骨架的记忆能力（内嵌 <strong>练习 09a-1</strong>）；</li>
+<li><strong>潜空间高维几何</strong>：为什么欧氏直线插值会在高维球壳内部发生“范数塌陷”，以及如何用球面线性插值（Slerp）修正（内嵌 <strong>练习 09a-2</strong>）；</li>
+<li><strong>先验空洞（Prior Hole）与生成指标盲区</strong>：为什么一个 <code>Valid / Unique / Novel</code> 三项指标接近满分的生成模型，采样出的分子在化学上可能毫无意义（内嵌 <strong>练习 09a-3</strong>）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;09 - Generative Models&quot;</span><span class="p">))</span>
+    <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">run_line_magic</span><span class="p">(</span><span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install -q rdkit selfies&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">selfies</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sf</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">selfies</span> <span class="n">rdkit</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">selfies</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sf</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.decomposition</span><span class="w"> </span><span class="kn">import</span> <span class="n">PCA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ridge</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Draw</span><span class="p">,</span> <span class="n">Descriptors</span>
+
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;selfies version:&quot;</span><span class="p">,</span> <span class="n">sf</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>课程统一绘图风格</strong>：下方单元加载 <code>ai4m.mplstyle</code>（无上右边框、柔和网格与统一科研配色 <code>C</code>）。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">DATA_DIR</span> <span class="o">=</span> <span class="s2">&quot;data&quot;</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;data/cep.csv&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;course/09 - Generative Models/data&quot;</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;cep.csv&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded CEP dataset: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> organic photovoltaic molecules&quot;</span><span class="p">)</span>
+<span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-为什么在-vae-中使用-selfies-从脆弱语法到-100-合法的形式语法">1. 为什么在 VAE 中使用 SELFIES：从脆弱语法到 100% 合法的形式语法</h2>
+<p>在 <code>08a</code> 中，训练充分的 LSTM 语言模型每一步都以前面已生成的全部历史为条件逐字符预测，即便如此仍有约 3%~8% 的生成序列因为括号未闭合、环编号落单或凯库勒化失败而被 RDKit 判定为无效。而在变分自编码器（VAE）中，如果我们用一个前馈解码器从连续潜向量 <span class="math-inline" data-tex="\mathbf{z}">\(\mathbf{z}\)</span> 一次性并行输出所有位置的 token 概率，位置之间缺乏自回归协调，直接输出 SMILES 时的语法崩溃率往往高达 50% 以上。</p>
+<p>为了从表示源头消除语法错误，Krenn 等人（<em>Machine Learning: Science and Technology</em>, 2020）提出了 <strong>SELFIES（SELF-referencIng Embedded Strings）</strong>。它是一套基于有穷状态自动机的形式化学语法，核心设计包含三点：</p>
+<ol>
+<li><strong>显式键级与价态上限跟踪</strong>：每个原子符号明确携带成键方式（如 <code>[C]</code>、<code>[=C]</code>、<code>[#N]</code>），解码器在读取序列时实时维护当前原子的剩余可用化合价；</li>
+<li><strong>无配对符号的相对长度索引</strong>：支链和成环不再依赖必须成对出现的括号 <code>()</code> 或环号 <code>1..9</code>，而是改用指令符 <code>[Branch1]</code>、<code>[Ring1]</code>，后面紧跟一个代表“支链包含几个原子”或“向前回溯几个原子成环”的长度数值 token；</li>
+<li><strong>价态溢出自动截断/降级</strong>：当后续指令试图建立超过当前原子剩余化合价的化学键时，状态机自动将双键降为单键或忽略多余分支，从而在数学上保证<strong>任意 SELFIES 符号序列都能唯一解码为一个符合化合价规则的合法分子图</strong>。</li>
+</ol>
+<p>我们先看几个有机半导体分子在 SMILES 与 SELFIES 之间的双向无损转换，随后通过一个随机单点突变实验直观对比两者的语法鲁棒性。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">examples</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;c1ccsc1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1ccc2c(c1)sc1c3ccccc3sc21&quot;</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">examples</span><span class="p">:</span>
+    <span class="n">encoded</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="n">decoded</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="n">encoded</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original SMILES : </span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SELFIES         : </span><span class="si">{</span><span class="n">encoded</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Decoded SMILES  : </span><span class="si">{</span><span class="n">decoded</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 随机突变实验：将一个合法有机半导体分子（BTBT）中的随机 1 个 token 替换为随机符号</span>
+<span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">btbt_smiles</span> <span class="o">=</span> <span class="s2">&quot;c1ccc2c(c1)sc1c3ccccc3sc21&quot;</span>
+<span class="n">btbt_selfies</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="n">btbt_smiles</span><span class="p">)</span>
+<span class="n">sf_tokens</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">split_selfies</span><span class="p">(</span><span class="n">btbt_selfies</span><span class="p">))</span>
+<span class="n">alphabet_demo</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">get_semantic_robust_alphabet</span><span class="p">())</span>
+
+<span class="n">n_trials</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">smiles_ok</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">selfies_ok</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_trials</span><span class="p">):</span>
+    <span class="c1"># 1. 随机修改 SMILES 的一个字符</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">btbt_smiles</span><span class="p">))</span>
+    <span class="n">mut_smi</span> <span class="o">=</span> <span class="n">btbt_smiles</span><span class="p">[:</span><span class="n">pos</span><span class="p">]</span> <span class="o">+</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="s2">&quot;CcNnos12()=&quot;</span><span class="p">))</span> <span class="o">+</span> <span class="n">btbt_smiles</span><span class="p">[</span><span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span>
+    <span class="k">if</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">mut_smi</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">smiles_ok</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># 2. 随机修改 SELFIES 的一个 token</span>
+    <span class="n">toks</span> <span class="o">=</span> <span class="n">sf_tokens</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">toks</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">toks</span><span class="p">))]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">alphabet_demo</span><span class="p">)</span>
+    <span class="n">dec_smi</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">toks</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">dec_smi</span> <span class="ow">and</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">dec_smi</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">selfies_ok</span> <span class="o">+=</span> <span class="mi">1</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Validity after 1 random token mutation (</span><span class="si">{</span><span class="n">n_trials</span><span class="si">}</span><span class="s2"> trials):&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  SMILES  : </span><span class="si">{</span><span class="n">smiles_ok</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n_trials</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  SELFIES : </span><span class="si">{</span><span class="n">selfies_ok</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n_trials</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>实验结果非常直观：对 SMILES 随机改动一个字符后，仅剩不到 20% 还能被 RDKit 解析；而对 SELFIES 随机替换任意 token，解码后的分子 <strong>100.0% 依然是化合价合法的分子</strong>。</p>
+<p>不过需要提前树立一个贯穿本节的核心警惕：<strong>语法与化合价“合法（Valid）”绝不等于材料化学意义上的“合理（Realistic）”</strong>。我们在第 5 节将会看到，过分迷信 100% 的有效率指标会掩盖多么严重的分布失真。</p>
+<p>下面我们将整个 CEP 数据集转换为 SELFIES token 序列，并建立词表（以 <code>[nop]</code> 作为长度填充符，索引为 <code>0</code>）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">selfies_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">sf</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]]</span>
+<span class="n">token_lists</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">split_selfies</span><span class="p">(</span><span class="n">s</span><span class="p">))</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">selfies_list</span><span class="p">]</span>
+
+<span class="n">alphabet</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;[nop]&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">t</span> <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="n">token_lists</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ts</span><span class="p">})</span>
+<span class="n">stoi</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)}</span>
+<span class="n">max_len</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span> <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="n">token_lists</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SELFIES alphabet size : </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Max sequence length   : </span><span class="si">{</span><span class="n">max_len</span><span class="si">}</span><span class="s2"> (mean = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">ts</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">token_lists</span><span class="p">])</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Alphabet tokens       : </span><span class="si">{</span><span class="n">alphabet</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-从确定性自编码器到变分自编码器-vae">2. 从确定性自编码器到变分自编码器（VAE）</h2>
+<h3 id="2-1-为什么普通自编码器不能直接用来生成新分子">2.1 为什么普通自编码器不能直接用来生成新分子？</h3>
+<p>一个**确定性自编码器（Deterministic Autoencoder）**由编码器 <span class="math-inline" data-tex="E_\phi(\mathbf{x})">\(E_\phi(\mathbf{x})\)</span> 与解码器 <span class="math-inline" data-tex="D_\theta(\mathbf{z})">\(D_\theta(\mathbf{z})\)</span> 串联而成：编码器将高维离散分子表示 <span class="math-inline" data-tex="\mathbf{x}">\(\mathbf{x}\)</span> 压缩为低维瓶颈向量 <span class="math-inline" data-tex="\mathbf{z} \in \mathbb{R}^d">\(\mathbf{z} \in \mathbb{R}^d\)</span>，解码器再将其还原为 <span class="math-inline" data-tex="\hat{\mathbf{x}}">\(\hat{\mathbf{x}}\)</span>。这相当于我们在 <code>03a</code> 学过的主成分分析（PCA）的非线性神经网络推广。</p>
+<p>然而，只最小化重构误差的自编码器在潜空间中会把训练样本映射成一座座孤立的“小岛”——编码器为了方便解码器区分不同分子，倾向于把各个样本推得很远。当我们在训练完成后随机从潜空间的空白地带抽样一个 <span class="math-inline" data-tex="\mathbf{z}">\(\mathbf{z}\)</span>，或者在两座孤岛之间取中点时，解码器从未在这些空白区域受过训练，解码结果往往是结构破碎的无意义产物。</p>
+<h3 id="2-2-变分自编码器-vae-的两大核心机制">2.2 变分自编码器（VAE）的两大核心机制</h3>
+<p>为了让潜空间变得连续、紧凑且可采样，**变分自编码器（VAE）**引入了两项改造：</p>
+<ol>
+<li><strong>概率化编码与局部邻域平滑</strong>：编码器对每个输入分子 <span class="math-inline" data-tex="\mathbf{x}">\(\mathbf{x}\)</span> 不再输出单个确定性的点，而是输出一个对角高斯后验分布 <span class="math-inline" data-tex="q_\phi(\mathbf{z} \mid \mathbf{x}) = \mathcal{N}\big(\boldsymbol{\mu}(\mathbf{x}),\, \text{diag}(\boldsymbol{\sigma}^2(\mathbf{x}))\big)">\(q_\phi(\mathbf{z} \mid \mathbf{x}) = \mathcal{N}\big(\boldsymbol{\mu}(\mathbf{x}),\, \text{diag}(\boldsymbol{\sigma}^2(\mathbf{x}))\big)\)</span> 的均值向量 <span class="math-inline" data-tex="\boldsymbol{\mu}">\(\boldsymbol{\mu}\)</span> 与对数方差 <span class="math-inline" data-tex="\log \boldsymbol{\sigma}^2">\(\log \boldsymbol{\sigma}^2\)</span>。训练时从该分布中随机采样 <span class="math-inline" data-tex="\mathbf{z}">\(\mathbf{z}\)</span> 送入解码器，迫使解码器把 <span class="math-inline" data-tex="\boldsymbol{\mu}(\mathbf{x})">\(\boldsymbol{\mu}(\mathbf{x})\)</span> 周围整个邻域内的点都重构为同一个（或高度相似的）分子；</li>
+<li><strong>KL 散度先验正则化</strong>：在损失函数中加入后验分布 <span class="math-inline" data-tex="q_\phi(\mathbf{z} \mid \mathbf{x})">\(q_\phi(\mathbf{z} \mid \mathbf{x})\)</span> 与标准正态先验 <span class="math-inline" data-tex="p(\mathbf{z}) = \mathcal{N}(\mathbf{0}, \mathbf{I})">\(p(\mathbf{z}) = \mathcal{N}(\mathbf{0}, \mathbf{I})\)</span> 之间的 Kullback-Leibler（KL）散度惩罚，阻止编码器把不同分子推向无穷远，也不能把方差 <span class="math-inline" data-tex="\boldsymbol{\sigma}^2">\(\boldsymbol{\sigma}^2\)</span> 缩成零。</li>
+</ol>
+<p>因此，<span class="math-inline" data-tex="\beta">\(\beta\)</span>-VAE 的单样本总损失函数（即负证据下界 Negative ELBO 的加权形式）由<strong>重构项</strong>与 <strong>KL 正则项</strong>组成：</p>
+<div class="math-block" data-tex="\mathcal{L}_{\beta\text{-VAE}}(\mathbf{x}) = \underbrace{\mathcal{L}_{\text{recon}}(\mathbf{x}, \hat{\mathbf{x}})}_{\text{交叉熵重构误差（记得准）}} + \beta \cdot \underbrace{D_{\text{KL}}\!\left(q_\phi(\mathbf{z} \mid \mathbf{x}) \,\|\, \mathcal{N}(\mathbf{0}, \mathbf{I})\right)}_{\text{潜空间向标准正态靠拢（排得密）}}">\[\mathcal{L}_{\beta\text{-VAE}}(\mathbf{x}) = \underbrace{\mathcal{L}_{\text{recon}}(\mathbf{x}, \hat{\mathbf{x}})}_{\text{交叉熵重构误差（记得准）}} + \beta \cdot \underbrace{D_{\text{KL}}\!\left(q_\phi(\mathbf{z} \mid \mathbf{x}) \,\|\, \mathcal{N}(\mathbf{0}, \mathbf{I})\right)}_{\text{潜空间向标准正态靠拢（排得密）}}\]</div>
+<p>对于 <span class="math-inline" data-tex="d">\(d\)</span> 维对角高斯分布，KL 散度有闭合解析解：</p>
+<div class="math-block" data-tex="D_{\text{KL}}\!\left(\mathcal{N}(\boldsymbol{\mu}, \text{diag}(\boldsymbol{\sigma}^2)) \,\|\, \mathcal{N}(\mathbf{0}, \mathbf{I})\right) = -\frac{1}{2}\sum_{j=1}^{d} \left(1 + \log \sigma_j^2 - \mu_j^2 - \sigma_j^2\right)">\[D_{\text{KL}}\!\left(\mathcal{N}(\boldsymbol{\mu}, \text{diag}(\boldsymbol{\sigma}^2)) \,\|\, \mathcal{N}(\mathbf{0}, \mathbf{I})\right) = -\frac{1}{2}\sum_{j=1}^{d} \left(1 + \log \sigma_j^2 - \mu_j^2 - \sigma_j^2\right)\]</div>
+<p><strong>重参数化技巧（Reparameterization Trick）</strong>：直接调用随机采样算子 <span class="math-inline" data-tex="\mathbf{z} \sim \mathcal{N}(\boldsymbol{\mu}, \text{diag}(\boldsymbol{\sigma}^2))">\(\mathbf{z} \sim \mathcal{N}(\boldsymbol{\mu}, \text{diag}(\boldsymbol{\sigma}^2))\)</span> 是不可导的，反向传播梯度无法穿过随机采样节点。为此，我们先从无参数的固定标准正态分布采样 <span class="math-inline" data-tex="\boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})">\(\boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})\)</span>，再通过确定性的仿射变换构造潜向量：</p>
+<div class="math-block" data-tex="\mathbf{z} = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\epsilon} = \boldsymbol{\mu} + \exp\!\left(\tfrac{1}{2}\log \boldsymbol{\sigma}^2\right) \odot \boldsymbol{\epsilon}">\[\mathbf{z} = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\epsilon} = \boldsymbol{\mu} + \exp\!\left(\tfrac{1}{2}\log \boldsymbol{\sigma}^2\right) \odot \boldsymbol{\epsilon}\]</div>
+<p>这样随机性完全隔离在外生变量 <span class="math-inline" data-tex="\boldsymbol{\epsilon}">\(\boldsymbol{\epsilon}\)</span> 中，损失函数对 <span class="math-inline" data-tex="\boldsymbol{\mu}">\(\boldsymbol{\mu}\)</span> 和 <span class="math-inline" data-tex="\log \boldsymbol{\sigma}^2">\(\log \boldsymbol{\sigma}^2\)</span> 的偏导数便可顺畅回传。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-构建与训练-molecularvae">3. 构建与训练 <code>MolecularVAE</code></h2>
+<p>我们将每条长度为 <code>max_len</code> 的 SELFIES 序列做 One-Hot 编码并展平为维度 <code>INPUT_DIM = max_len * len(alphabet)</code> 的向量，留出 3,000 个分子作为独立测试集，其余约 27,000 个分子作为训练集。</p>
+<p>编码器与解码器均采用三层感知机（MLP），潜空间维度设为 <code>LATENT_DIM = 128</code>。为了避免训练初期解码器尚未成型时就被过强的 KL 惩罚压垮（即发生<strong>后验坍缩 Posterior Collapse</strong>，编码器直接令 <span class="math-inline" data-tex="\boldsymbol{\mu}=\mathbf{0}, \boldsymbol{\sigma}=\mathbf{1}">\(\boldsymbol{\mu}=\mathbf{0}, \boldsymbol{\sigma}=\mathbf{1}\)</span> 放弃传递分子信息），我们在前 13 个 Epoch 采用线性 <strong>KL Warm-up（退火）</strong> 策略，将权重从 <span class="math-inline" data-tex="0">\(0\)</span> 逐步升至目标值 <span class="math-inline" data-tex="\beta = 0.05">\(\beta = 0.05\)</span>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="n">stoi</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ts</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_len</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">ts</span><span class="p">))</span> <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="n">token_lists</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">one_hot</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">alphabet</span><span class="p">))</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Input matrix shape: </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">max_len</span><span class="si">}</span><span class="s2"> positions x </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span><span class="si">}</span><span class="s2"> tokens)&quot;</span><span class="p">)</span>
+
+<span class="n">perm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+<span class="n">test_idx</span><span class="p">,</span> <span class="n">train_idx</span> <span class="o">=</span> <span class="n">perm</span><span class="p">[:</span><span class="mi">3000</span><span class="p">],</span> <span class="n">perm</span><span class="p">[</span><span class="mi">3000</span><span class="p">:]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Train samples: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">train_idx</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> | Test samples: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">test_idx</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">LATENT_DIM</span> <span class="o">=</span> <span class="mi">128</span>
+<span class="n">INPUT_DIM</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MolecularVAE</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">latent_dim</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="mi">512</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_mu</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">latent_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_logvar</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">latent_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">latent_dim</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_mu</span><span class="p">(</span><span class="n">h</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_logvar</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="c1"># 重参数化技巧：z = mu + sigma * eps</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">logvar</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="n">z</span><span class="p">),</span> <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span>
+
+<span class="n">vae</span> <span class="o">=</span> <span class="n">MolecularVAE</span><span class="p">(</span><span class="n">INPUT_DIM</span><span class="p">,</span> <span class="n">LATENT_DIM</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MolecularVAE total parameters: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">vae</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">decode_latent</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">vae</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;将一批潜向量 z 解码为 SMILES 字符串列表。&quot;&quot;&quot;</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+    <span class="n">token_ids</span> <span class="o">=</span> <span class="n">logits</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">z</span><span class="p">),</span> <span class="n">max_len</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">alphabet</span><span class="p">))</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">token_ids</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">alphabet</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">row</span> <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># 跳过 [nop] 填充符</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">canonical</span><span class="p">(</span><span class="n">smiles</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;若能被 RDKit 合法解析则返回 Canonical SMILES，否则返回 None。&quot;&quot;&quot;</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span> <span class="k">if</span> <span class="n">smiles</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolToSmiles</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">canonical</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">if</span> <span class="n">mol</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">mol</span><span class="o">.</span><span class="n">GetNumAtoms</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>为节省课堂等待时间，下方单元默认直接加载已在相同训练集上完成 40 轮训练的权重 <code>data/cep_vae.pt</code>（含完整损失历史）；如果你想亲手观察从头训练的过程，只需将 <code>TRAIN_FROM_SCRATCH</code> 设为 <code>True</code>（CPU 上约需 3 分钟）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">BETA</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">TRAIN_FROM_SCRATCH</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">vae_ckpt_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;cep_vae.pt&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">vae_ckpt_path</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">TRAIN_FROM_SCRATCH</span><span class="p">:</span>
+    <span class="n">ckpt_vae</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">vae_ckpt_path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+    <span class="n">vae</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">ckpt_vae</span><span class="p">[</span><span class="s2">&quot;model_state_dict&quot;</span><span class="p">])</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="n">ckpt_vae</span><span class="p">[</span><span class="s2">&quot;history&quot;</span><span class="p">]</span>
+    <span class="n">vae</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded pretrained MolecularVAE from </span><span class="si">{</span><span class="n">vae_ckpt_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">vae</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">vae</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">40</span><span class="p">):</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">train_idx</span><span class="p">)</span>
+        <span class="n">rec_total</span> <span class="o">=</span> <span class="n">kl_total</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">BETA</span> <span class="o">*</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mf">13.0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">order</span><span class="p">),</span> <span class="mi">256</span><span class="p">):</span>
+            <span class="n">xb</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">256</span><span class="p">]]</span>
+            <span class="n">out</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span> <span class="o">=</span> <span class="n">vae</span><span class="p">(</span><span class="n">xb</span><span class="p">)</span>
+            <span class="n">rec</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">cross_entropy</span><span class="p">(</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)),</span>
+                <span class="n">xb</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">alphabet</span><span class="p">))</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                <span class="n">reduction</span><span class="o">=</span><span class="s2">&quot;sum&quot;</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">xb</span><span class="p">)</span>
+            <span class="n">kl</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">logvar</span> <span class="o">-</span> <span class="n">mu</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">logvar</span><span class="o">.</span><span class="n">exp</span><span class="p">())</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">xb</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">rec</span> <span class="o">+</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">kl</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">rec_total</span> <span class="o">+=</span> <span class="n">rec</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">kl_total</span> <span class="o">+=</span> <span class="n">kl</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="n">n_batches</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="o">/</span> <span class="mf">256.0</span>
+        <span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;epoch&quot;</span><span class="p">:</span> <span class="n">epoch</span><span class="p">,</span> <span class="s2">&quot;reconstruction&quot;</span><span class="p">:</span> <span class="n">rec_total</span> <span class="o">/</span> <span class="n">n_batches</span><span class="p">,</span> <span class="s2">&quot;KL&quot;</span><span class="p">:</span> <span class="n">kl_total</span> <span class="o">/</span> <span class="n">n_batches</span><span class="p">})</span>
+        <span class="k">if</span> <span class="n">epoch</span> <span class="o">%</span> <span class="mi">5</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">or</span> <span class="n">epoch</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2"> | Recon = </span><span class="si">{</span><span class="n">rec_total</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n_batches</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}</span><span class="s2"> | KL = </span><span class="si">{</span><span class="n">kl_total</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n_batches</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">vae</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">hist</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">history</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;epoch&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">3.3</span><span class="p">))</span>
+<span class="n">hist</span><span class="p">[</span><span class="s2">&quot;reconstruction&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Cross-Entropy Reconstruction Loss&quot;</span><span class="p">)</span>
+<span class="n">hist</span><span class="p">[</span><span class="s2">&quot;KL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;KL Divergence D_KL(q(z|x) || N(0,I))&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axes</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Epoch&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>观察上方的训练曲线可以看到两项损失的博弈过程：前几个 Epoch 由于 KL Warm-up 权重很小，编码器全力降低重构误差，将不同分子尽量分开，因此 KL 散度快速上升；随着 <span class="math-inline" data-tex="\beta">\(\beta\)</span> 逐步增大并稳定在 <code>0.05</code>，KL 正则项开始把分散的后验分布往原点附近拉拢，同时重构误差继续稳步收敛。</p>
+<h3 id="3-1-重构保真度检验-模型记住了分子的哪些特征">3.1 重构保真度检验：模型记住了分子的哪些特征？</h3>
+<p>我们取测试集前 1,000 个未见过的分子，将其编码为后验均值 <span class="math-inline" data-tex="\boldsymbol{\mu}_{\text{test}}">\(\boldsymbol{\mu}_{\text{test}}\)</span> 后直接解码还原，统计其有效率与 Canonical SMILES 完全一致率（Exact Reconstruction Rate）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+    <span class="n">mu_test</span><span class="p">,</span> <span class="n">logvar_test</span> <span class="o">=</span> <span class="n">vae</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">test_idx</span><span class="p">])</span>
+
+<span class="n">reconstructed</span> <span class="o">=</span> <span class="n">decode_latent</span><span class="p">(</span><span class="n">mu_test</span><span class="p">[:</span><span class="mi">1000</span><span class="p">])</span>
+<span class="n">originals</span> <span class="o">=</span> <span class="p">[</span><span class="n">canonical</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">test_idx</span><span class="p">[:</span><span class="mi">1000</span><span class="p">]]]</span>
+<span class="n">recon_canonical</span> <span class="o">=</span> <span class="p">[</span><span class="n">canonical</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">reconstructed</span><span class="p">]</span>
+
+<span class="n">exact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">recon_canonical</span><span class="p">,</span> <span class="n">originals</span><span class="p">)])</span>
+<span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">recon_canonical</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Test Reconstruction Validity   : </span><span class="si">{</span><span class="n">valid</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Exact Canonical Match Rate     : </span><span class="si">{</span><span class="n">exact</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
+    <span class="p">{</span><span class="s2">&quot;Original SMILES&quot;</span><span class="p">:</span> <span class="n">o</span><span class="p">,</span> <span class="s2">&quot;Reconstructed SMILES&quot;</span><span class="p">:</span> <span class="n">r</span><span class="p">,</span> <span class="s2">&quot;Exact Match&quot;</span><span class="p">:</span> <span class="n">o</span> <span class="o">==</span> <span class="n">r</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">originals</span><span class="p">[:</span><span class="mi">6</span><span class="p">],</span> <span class="n">recon_canonical</span><span class="p">[:</span><span class="mi">6</span><span class="p">])</span>
+<span class="p">])</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">pairs</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">o</span><span class="p">),</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">originals</span><span class="p">,</span> <span class="n">recon_canonical</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">and</span> <span class="n">r</span> <span class="ow">and</span> <span class="n">o</span> <span class="o">!=</span> <span class="n">r</span>
+<span class="p">][:</span><span class="mi">4</span><span class="p">]</span>
+<span class="n">Draw</span><span class="o">.</span><span class="n">MolsToGridImage</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">pairs</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">pair</span><span class="p">],</span>
+    <span class="n">molsPerRow</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">subImgSize</span><span class="o">=</span><span class="p">(</span><span class="mi">280</span><span class="p">,</span> <span class="mi">200</span><span class="p">),</span>
+    <span class="n">legends</span><span class="o">=</span><span class="p">[</span><span class="n">lbl</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pairs</span><span class="p">))</span> <span class="k">for</span> <span class="n">lbl</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;Original&quot;</span><span class="p">,</span> <span class="s2">&quot;Reconstructed&quot;</span><span class="p">)],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>得益于 SELFIES 的形式语法保障，重构分子的有效率接近 100%；而完全一字不差还原出原分子的比例约为 18%。对照上方画出的分子对可以看出：模型对于未完全还原的样本并非胡乱猜测，而是<strong>准确还原了稠环共轭主骨架的尺寸与连接方式，仅在局部杂原子类型（例如把噻吩环 <code>s</code> 替换为呋喃环 <code>o</code> 或吡咯环 <code>[nH]</code>）或环位置上出现了细微偏差</strong>。</p>
+<p>造成这种局部替换的原因在于我们使用了最简单的单步 MLP 解码器——所有位置的 token 是在同一时刻独立取 <code>argmax</code> 输出的，位置 <span class="math-inline" data-tex="t">\(t\)</span> 并不知道位置 <span class="math-inline" data-tex="t-1">\(t-1\)</span> 刚刚选了什么符号。工业界更高精度的分子 VAE（如 Gómez-Bombarelli et al. 或 JT-VAE）通常采用自回归 GRU/Transformer 解码器或基于分子图树分解的解码器，以换取更高的逐原子还原率。</p>
+<h3 id="练习-09a-1-验证重构精度与潜空间规整度的权衡-beta-0-05-vs-beta-0-5">练习 09a-1：验证重构精度与潜空间规整度的权衡（<span class="math-inline" data-tex="\beta = 0.05">\(\beta = 0.05\)</span> vs. <span class="math-inline" data-tex="\beta = 0.5">\(\beta = 0.5\)</span>）</h3>
+<p>在 <span class="math-inline" data-tex="\beta">\(\beta\)</span>-VAE 的损失函数中，超参数 <span class="math-inline" data-tex="\beta">\(\beta\)</span> 直接控制着“解码器还原得准”与“潜空间分布接近标准正态先验 <span class="math-inline" data-tex="\mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathcal{N}(\mathbf{0}, \mathbf{I})\)</span>”之间的拉锯。</p>
+<p>请在下方编写代码，在训练集的 5,000 个子样本上分别以 <span class="math-inline" data-tex="\beta = 0.05">\(\beta = 0.05\)</span> 和 <span class="math-inline" data-tex="\beta = 0.5">\(\beta = 0.5\)</span>（增大 10 倍）各训练一个 <code>MolecularVAE</code> 15 个 Epoch，对比两者的：</p>
+<ol>
+<li>训练结束时的重构误差（<code>Reconstruction Loss</code>）与 KL 散度（<code>KL Divergence</code>）；</li>
+<li>测试集前 500 个样本的完全还原率（<code>Exact Match Rate</code>）；</li>
+<li>测试集编码均值 <span class="math-inline" data-tex="\boldsymbol{\mu}_{\text{test}}">\(\boldsymbol{\mu}_{\text{test}}\)</span> 每一维的标准差均值 <code>mu_test.std(dim=0).mean()</code>（越接近 <code>1.0</code> 说明全局分布越贴合先验，越接近 <code>0.0</code> 说明发生了后验坍缩）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 09a-1：在此对比 beta = 0.05 与 beta = 0.5 的重构—规整权衡</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare_beta_vae</span><span class="p">(</span><span class="n">beta_values</span><span class="o">=</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
+    <span class="c1"># TODO:</span>
+    <span class="c1"># 1. 对每个 beta 初始化新的 MolecularVAE(INPUT_DIM, LATENT_DIM)</span>
+    <span class="c1"># 2. 在 train_idx[:5000] 上训练 n_epochs 轮</span>
+    <span class="c1"># 3. 统计测试集 mu_test 的重构率与 mu_test.std(0).mean()</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-潜空间高维几何-为什么欧氏直线插值会发生-范数塌陷">4. 潜空间高维几何：为什么欧氏直线插值会发生“范数塌陷”？</h2>
+<h3 id="4-1-两个分子之间的潜空间插值">4.1 两个分子之间的潜空间插值</h3>
+<p>获得了连续潜向量表示后，最直观的操作是在两个测试集分子 <span class="math-inline" data-tex="\mathbf{z}_A = \boldsymbol{\mu}_A">\(\mathbf{z}_A = \boldsymbol{\mu}_A\)</span> 与 <span class="math-inline" data-tex="\mathbf{z}_B = \boldsymbol{\mu}_B">\(\mathbf{z}_B = \boldsymbol{\mu}_B\)</span> 之间做线性插值（Linear Interpolation, Lerp）：</p>
+<div class="math-block" data-tex="\mathbf{z}_{\text{lerp}}(t) = (1 - t)\,\mathbf{z}_A + t\,\mathbf{z}_B, \qquad t \in [0, 1]">\[\mathbf{z}_{\text{lerp}}(t) = (1 - t)\,\mathbf{z}_A + t\,\mathbf{z}_B, \qquad t \in [0, 1]\]</div>
+<p>我们取出两个测试集分子，沿直线均匀采样 8 个点并解码画图，观察中间过渡分子的形态。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [16] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">idx_a</span><span class="p">,</span> <span class="n">idx_b</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">7</span>
+<span class="n">z_a</span><span class="p">,</span> <span class="n">z_b</span> <span class="o">=</span> <span class="n">mu_test</span><span class="p">[</span><span class="n">idx_a</span><span class="p">],</span> <span class="n">mu_test</span><span class="p">[</span><span class="n">idx_b</span><span class="p">]</span>
+
+<span class="n">steps</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">z_path</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">steps</span><span class="p">)</span> <span class="o">*</span> <span class="n">z_a</span> <span class="o">+</span> <span class="n">steps</span> <span class="o">*</span> <span class="n">z_b</span>
+<span class="n">path_smiles</span> <span class="o">=</span> <span class="n">decode_latent</span><span class="p">(</span><span class="n">z_path</span><span class="p">)</span>
+
+<span class="n">path_mols</span><span class="p">,</span> <span class="n">legends</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">t_val</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">steps</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">path_smiles</span><span class="p">):</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">canonical</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+        <span class="n">path_mols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+        <span class="n">legends</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;t = </span><span class="si">{</span><span class="n">t_val</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">Draw</span><span class="o">.</span><span class="n">MolsToGridImage</span><span class="p">(</span><span class="n">path_mols</span><span class="p">,</span> <span class="n">molsPerRow</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">subImgSize</span><span class="o">=</span><span class="p">(</span><span class="mi">250</span><span class="p">,</span> <span class="mi">190</span><span class="p">),</span> <span class="n">legends</span><span class="o">=</span><span class="n">legends</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [17] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 检查直线插值路径上每一步潜向量的欧氏范数 ||z(t)||_2</span>
+<span class="n">norms</span> <span class="o">=</span> <span class="n">z_path</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">t_val</span><span class="p">,</span> <span class="n">n_val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">steps</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">norms</span><span class="o">.</span><span class="n">tolist</span><span class="p">()):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;t = </span><span class="si">{</span><span class="n">t_val</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> | ||z(t)||_2 = </span><span class="si">{</span><span class="n">n_val</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Median ||mu||_2 of encoded CEP test molecules: </span><span class="si">{</span><span class="n">mu_test</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">median</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>观察上方的插值图与范数打印结果，一个反直觉的现象浮现出来：两端（<span class="math-inline" data-tex="t=0">\(t=0\)</span> 与 <span class="math-inline" data-tex="t=1">\(t=1\)</span>）都是规整的稠环芳香体系，但中间过渡点（<span class="math-inline" data-tex="t \in [0.29, 0.71]">\(t \in [0.29, 0.71]\)</span>）却突然崩解成了开链或怪异的大环结构！</p>
+<p>为什么直线插值在中间会失真？答案藏在<strong>高维欧氏空间的几何性质</strong>中：
+在 <span class="math-inline" data-tex="d = 128">\(d = 128\)</span> 维空间里，两个独立编码的向量 <span class="math-inline" data-tex="\mathbf{z}_A">\(\mathbf{z}_A\)</span> 与 <span class="math-inline" data-tex="\mathbf{z}_B">\(\mathbf{z}_B\)</span> 几乎总是近似正交的（夹角接近 <span class="math-inline" data-tex="90^\circ">\(90^\circ\)</span>）。假设两者的模长均为 <span class="math-inline" data-tex="\|\mathbf{z}_A\|_2 \approx \|\mathbf{z}_B\|_2 = r">\(\|\mathbf{z}_A\|_2 \approx \|\mathbf{z}_B\|_2 = r\)</span> 且相互正交，那么它们直线中点 <span class="math-inline" data-tex="\mathbf{z}_{\text{lerp}}(0.5) = \frac{1}{2}(\mathbf{z}_A + \mathbf{z}_B)">\(\mathbf{z}_{\text{lerp}}(0.5) = \frac{1}{2}(\mathbf{z}_A + \mathbf{z}_B)\)</span> 的模长为：</p>
+<div class="math-block" data-tex="\left\|\frac{\mathbf{z}_A + \mathbf{z}_B}{2}\right\|_2 = \frac{\sqrt{\|\mathbf{z}_A\|_2^2 + \|\mathbf{z}_B\|_2^2}}{2} = \frac{r}{\sqrt{2}} \approx 0.707\,r">\[\left\|\frac{\mathbf{z}_A + \mathbf{z}_B}{2}\right\|_2 = \frac{\sqrt{\|\mathbf{z}_A\|_2^2 + \|\mathbf{z}_B\|_2^2}}{2} = \frac{r}{\sqrt{2}} \approx 0.707\,r\]</div>
+<p>正如上方打印所示，两端真实分子的模长在 <code>8.5</code> 左右，而直线中点的模长塌陷到了 <code>6.1</code> 左右！高维高斯型分布的样本绝大部分集中在一层薄薄的超球壳（Hyperspherical Shell）上，球壳内部靠近原点的区域实际上是没有训练样本分布的“空腔”。直线插值相当于直接切过超球体内部的空腔，解码器在从未见过的空腔区域自然无法输出合理的共轭分子。</p>
+<p>要让插值路径始终贴合高密度球壳表面，标准做法是改用<strong>球面线性插值（Spherical Linear Interpolation, Slerp）</strong>，按夹角 <span class="math-inline" data-tex="\omega = \arccos(\hat{\mathbf{z}}_A \cdot \hat{\mathbf{z}}_B)">\(\omega = \arccos(\hat{\mathbf{z}}_A \cdot \hat{\mathbf{z}}_B)\)</span> 在大圆弧上匀速旋转。</p>
+<h3 id="4-2-潜空间的宏观组织结构-按结构聚类还是按性能聚类">4.2 潜空间的宏观组织结构：按结构聚类还是按性能聚类？</h3>
+<p>我们复用 <code>03a</code> 的主成分分析（PCA），将测试集 3,000 个分子的 128 维潜向量 <span class="math-inline" data-tex="\boldsymbol{\mu}_{\text{test}}">\(\boldsymbol{\mu}_{\text{test}}\)</span> 投影到二维平面，分别按光电转换效率（<code>PCE</code>）和分子尺寸（重原子数 <code>Heavy Atoms</code>）着色。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [18] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">coords</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">mu_test</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+<span class="n">pce_test</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;PCE&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">test_idx</span><span class="p">]</span>
+<span class="n">heavy_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">GetNumHeavyAtoms</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">test_idx</span><span class="p">]])</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
+<span class="n">sc0</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">coords</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">coords</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">pce_test</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">sc0</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;DFT PCE (%)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;VAE Latent Space (PCA) Colored by PCE&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;PC1&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;PC2&quot;</span><span class="p">)</span>
+
+<span class="n">sc1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">coords</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">coords</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">heavy_test</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;plasma&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">sc1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Heavy Atom Count&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;VAE Latent Space (PCA) Colored by Molecular Size&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;PC1&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;PC2&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Variance explained by PC1 &amp; PC2:&quot;</span><span class="p">,</span> <span class="n">pca</span><span class="o">.</span><span class="n">explained_variance_ratio_</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>可以看到：右图中按重原子数着色的潜空间呈现出极其清晰的梯度分层（小分子与大分子各居一侧），而左图中按 <code>PCE</code> 着色的分布则混杂在一起。原因在于：<strong>无监督 VAE 在训练阶段从未见过 <code>PCE</code> 标签</strong>，它的目标函数纯粹是重建 SELFIES 序列，因此潜空间完全按照“拓扑结构与序列相似性”组织；若想让潜空间沿某条轴线直接对齐目标性质，需要在训练 VAE 时并联一个从 <span class="math-inline" data-tex="\mathbf{z}">\(\mathbf{z}\)</span> 预测性质的回归头进行联合训练（Joint Property-VAE）。</p>
+<h3 id="练习-09a-2-球面线性插值-slerp-修正范数塌陷与潜空间梯度外推实验">练习 09a-2：球面线性插值（Slerp）修正范数塌陷与潜空间梯度外推实验</h3>
+<p>本练习包含两个紧密相连的小实验：</p>
+<p><strong>(a) 实现球面线性插值 <code>slerp(z_a, z_b, t)</code></strong>：
+给定两个潜向量 <span class="math-inline" data-tex="\mathbf{z}_A, \mathbf{z}_B">\(\mathbf{z}_A, \mathbf{z}_B\)</span>，先将它们归一化为单位向量 <span class="math-inline" data-tex="\hat{\mathbf{z}}_A = \mathbf{z}_A / \|\mathbf{z}_A\|_2">\(\hat{\mathbf{z}}_A = \mathbf{z}_A / \|\mathbf{z}_A\|_2\)</span>、<span class="math-inline" data-tex="\hat{\mathbf{z}}_B = \mathbf{z}_B / \|\mathbf{z}_B\|_2">\(\hat{\mathbf{z}}_B = \mathbf{z}_B / \|\mathbf{z}_B\|_2\)</span>，计算夹角 <span class="math-inline" data-tex="\omega = \arccos(\text{clamp}(\hat{\mathbf{z}}_A \cdot \hat{\mathbf{z}}_B, -1, 1))">\(\omega = \arccos(\text{clamp}(\hat{\mathbf{z}}_A \cdot \hat{\mathbf{z}}_B, -1, 1))\)</span>，再结合线性过渡的半径 <span class="math-inline" data-tex="r(t) = (1-t)\|\mathbf{z}_A\|_2 + t\|\mathbf{z}_B\|_2">\(r(t) = (1-t)\|\mathbf{z}_A\|_2 + t\|\mathbf{z}_B\|_2\)</span> 计算：
+<div class="math-block" data-tex="\mathbf{z}_{\text{slerp}}(t) = r(t) \cdot \frac{\sin((1-t)\omega)\,\hat{\mathbf{z}}_A + \sin(t\omega)\,\hat{\mathbf{z}}_B}{\sin(\omega)}">\[\mathbf{z}_{\text{slerp}}(t) = r(t) \cdot \frac{\sin((1-t)\omega)\,\hat{\mathbf{z}}_A + \sin(t\omega)\,\hat{\mathbf{z}}_B}{\sin(\omega)}\]</div>
+打印 <span class="math-inline" data-tex="t \in [0, 1]">\(t \in [0, 1]\)</span> 上 8 个插值点的范数 <span class="math-inline" data-tex="\|\mathbf{z}_{\text{slerp}}(t)\|_2">\(\|\mathbf{z}_{\text{slerp}}(t)\|_2\)</span>，验证范数塌陷已被彻底消除，并统计解码分子的平均芳香环个数相比直线插值是否有改善。</p>
+<p><strong>(b) 潜空间线性回归梯度外推（预演 <code>09b</code> 的代理模型欺骗）</strong>：
+用 <code>mu_test</code>（128 维）和 <code>pce_test</code> 训练一个岭回归器 <code>Ridge(alpha=1.0)</code>。接着从测试集中 PCE 最高的那个分子潜向量 <span class="math-inline" data-tex="\mathbf{z}_0">\(\mathbf{z}_0\)</span> 出发，沿着岭回归权重方向 <span class="math-inline" data-tex="\hat{\mathbf{w}} = \mathbf{w} / \|\mathbf{w}\|_2">\(\hat{\mathbf{w}} = \mathbf{w} / \|\mathbf{w}\|_2\)</span> 走出步长 <span class="math-inline" data-tex="\alpha \in \{0, 2, 5, 10, 20\}">\(\alpha \in \{0, 2, 5, 10, 20\}\)</span>：
+<div class="math-block" data-tex="\mathbf{z}(\alpha) = \mathbf{z}_0 + \alpha\,\hat{\mathbf{w}}">\[\mathbf{z}(\alpha) = \mathbf{z}_0 + \alpha\,\hat{\mathbf{w}}\]</div>
+观察每一步岭回归预测的 PCE 如何飙升，而解码出的实际分子结构（如芳香环数、重原子数）发生了什么畸变？</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [19] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 09a-2：在此实现 (a) slerp 球面插值 与 (b) 潜空间 Ridge 梯度上升外推</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">slerp</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="c1"># TODO: 实现球面线性插值</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-从先验分布采样-vs-局部邻域扰动-为什么-100-合法-不等于-合理材料">5. 从先验分布采样 vs. 局部邻域扰动：为什么“100% 合法”不等于“合理材料”？</h2>
+<h3 id="5-1-先验采样的假象-满分三项指标背后的分布崩塌">5.1 先验采样的假象：满分三项指标背后的分布崩塌</h3>
+<p>按照 VAE 的理论设计，训练完成后我们可以丢掉编码器，直接从标准正态先验 <span class="math-inline" data-tex="\mathbf{z} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathbf{z} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})\)</span> 中随机抽取潜向量并解码生成新分子。我们抽取 1,000 个先验样本，先看生成模型论文中最常汇报的三个标准字符串指标：<strong>有效性（Validity）</strong>、<strong>唯一性（Uniqueness）<strong>与</strong>新颖性（Novelty）</strong>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [20] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">z_prior</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">LATENT_DIM</span><span class="p">)</span>
+<span class="n">prior_smiles</span> <span class="o">=</span> <span class="n">decode_latent</span><span class="p">(</span><span class="n">z_prior</span><span class="p">)</span>
+<span class="n">prior_canonical</span> <span class="o">=</span> <span class="p">[</span><span class="n">canonical</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">prior_smiles</span><span class="p">]</span>
+<span class="n">prior_valid</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">prior_canonical</span> <span class="k">if</span> <span class="n">c</span><span class="p">]</span>
+
+<span class="n">canonical_train</span> <span class="o">=</span> <span class="p">{</span><span class="n">Chem</span><span class="o">.</span><span class="n">CanonSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]}</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Prior Sampling Validity   : </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">prior_valid</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Prior Sampling Uniqueness : </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">prior_valid</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">prior_valid</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Prior Sampling Novelty    : </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">prior_valid</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">canonical_train</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">prior_valid</span><span class="p">)),</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>如果只看这三行数字——有效率 &gt;90%、唯一性与新颖性接近 100%——这似乎是一个无可挑剔的分子生成模型。但别忘了第 1 节的结论：SELFIES 哪怕面对纯随机乱码也能保证极高的语法有效率！</p>
+<p>让我们把先验采样解码出的前 12 个分子画出来，并与 CEP 训练数据对比三个核心化学结构描述符：<strong>重原子数（Heavy Atoms）</strong>、**芳香环数（Aromatic Rings）**与 <strong><span class="math-inline" data-tex="sp^3">\(sp^3\)</span> 杂化碳比例（FractionCSP3）</strong>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [21] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">Draw</span><span class="o">.</span><span class="n">MolsToGridImage</span><span class="p">([</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">prior_valid</span><span class="p">[:</span><span class="mi">12</span><span class="p">]],</span> <span class="n">molsPerRow</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">subImgSize</span><span class="o">=</span><span class="p">(</span><span class="mi">260</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [22] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">train_sample</span> <span class="o">=</span> <span class="p">[</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)]</span>
+<span class="n">prior_mols</span> <span class="o">=</span> <span class="p">[</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">prior_valid</span><span class="p">]</span>
+
+<span class="n">comparison</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;CEP Training Data&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">GetNumHeavyAtoms</span><span class="p">()</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">train_sample</span><span class="p">]),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">Descriptors</span><span class="o">.</span><span class="n">NumAromaticRings</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">train_sample</span><span class="p">]),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">Descriptors</span><span class="o">.</span><span class="n">FractionCSP3</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">train_sample</span><span class="p">]),</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;VAE Prior Samples z ~ N(0,I)&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">GetNumHeavyAtoms</span><span class="p">()</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">prior_mols</span><span class="p">]),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">Descriptors</span><span class="o">.</span><span class="n">NumAromaticRings</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">prior_mols</span><span class="p">]),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">Descriptors</span><span class="o">.</span><span class="n">FractionCSP3</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">prior_mols</span><span class="p">]),</span>
+    <span class="p">],</span>
+<span class="p">},</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Heavy Atoms&quot;</span><span class="p">,</span> <span class="s2">&quot;Aromatic Rings&quot;</span><span class="p">,</span> <span class="s2">&quot;Fraction sp3 C&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">comparison</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>分子网格图与定量对比表揭示了惊人的反差：</p>
+<ul>
+<li>CEP 训练数据是典型的有机光伏稠环共轭体系，平均每个分子含有 <strong>5.73 个芳香环</strong>，<span class="math-inline" data-tex="sp^3">\(sp^3\)</span> 饱和碳比例仅为 <strong>0.02</strong>；</li>
+<li>从 VAE 先验 <span class="math-inline" data-tex="\mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathcal{N}(\mathbf{0}, \mathbf{I})\)</span> 采样出的分子，平均芳香环数暴跌至 <strong>不到 0.5 个</strong>，到处是破碎的脂肪链、三元/四元张力环与孤立杂原子！虽然它们的化合价在 SELFIES 状态机强制修正下没有报错，但作为有机光伏材料毫无物理意义。</li>
+</ul>
+<h3 id="5-2-诊断根源-先验空洞-prior-hole-aggregated-posterior-mismatch">5.2 诊断根源：先验空洞（Prior Hole / Aggregated Posterior Mismatch）</h3>
+<p>为什么从标准正态先验 <span class="math-inline" data-tex="\mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathcal{N}(\mathbf{0}, \mathbf{I})\)</span> 采样会彻底偏离训练数据？这是变分自编码器中最著名的问题——<strong>先验空洞（Prior Hole）</strong>：</p>
+<p>KL 正则项只是软性地拉近每个样本的后验分布与 <span class="math-inline" data-tex="\mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathcal{N}(\mathbf{0}, \mathbf{I})\)</span>，在有限权重 <span class="math-inline" data-tex="\beta = 0.05">\(\beta = 0.05\)</span> 下，所有训练样本后验分布叠加而成的<strong>聚合后验（Aggregated Posterior）</strong> <span class="math-inline" data-tex="q_\phi(\mathbf{z}) = \frac{1}{N}\sum_{i=1}^N q_\phi(\mathbf{z} \mid \mathbf{x}_i)">\(q_\phi(\mathbf{z}) = \frac{1}{N}\sum_{i=1}^N q_\phi(\mathbf{z} \mid \mathbf{x}_i)\)</span> 并未铺满整个 <span class="math-inline" data-tex="\mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathcal{N}(\mathbf{0}, \mathbf{I})\)</span>。我们在高维空间中直接测量两者的半径分布即可一目了然：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [23] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean per-dimension std of encoded mu_test : </span><span class="si">{</span><span class="n">mu_test</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">  (Standard Normal prior expects 1.000)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Median norm ||mu_test||_2 of real molecules: </span><span class="si">{</span><span class="n">mu_test</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">median</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Median norm ||z_prior||_2 of N(0,I) samples: </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3000</span><span class="p">,</span><span class="w"> </span><span class="n">LATENT_DIM</span><span class="p">)</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">median</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">  ( approx sqrt(128) = </span><span class="si">{</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> )&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>在 128 维空间中，标准正态分布 <span class="math-inline" data-tex="\mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathcal{N}(\mathbf{0}, \mathbf{I})\)</span> 的样本几乎全部集中在半径 <span class="math-inline" data-tex="\sqrt{128} \approx 11.3">\(\sqrt{128} \approx 11.3\)</span> 的外层球壳上；而真实 CEP 分子的编码均值 <span class="math-inline" data-tex="\boldsymbol{\mu}_{\text{test}}">\(\boldsymbol{\mu}_{\text{test}}\)</span> 每一维标准差仅为 <code>0.55</code>，实际居住在半径 <code>8.5</code> 左右的内层球壳上！
+换言之：</p>
+<ul>
+<li>直线插值的中点掉进了半径 <span class="math-inline" data-tex="\approx 6.1">\(\approx 6.1\)</span> 的<strong>球壳内部空腔</strong>；</li>
+<li>标准正态先验采样全部落在了半径 <span class="math-inline" data-tex="\approx 11.3">\(\approx 11.3\)</span> 的<strong>球壳外部荒原</strong>；</li>
+<li>真正的有机光伏分子只居住在半径 <span class="math-inline" data-tex="\approx 8.5">\(\approx 8.5\)</span> 的那层薄壳上！</li>
+</ul>
+<h3 id="5-3-实用解决方案-以已知种子分子为中心的局部邻域采样">5.3 实用解决方案：以已知种子分子为中心的局部邻域采样</h3>
+<p>既然真实分子只居住在特定流形薄壳上，在工程实践中用 VAE 生成候选分子时，我们不应盲目从全局先验 <span class="math-inline" data-tex="\mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathcal{N}(\mathbf{0}, \mathbf{I})\)</span> 抽样，而应<strong>以已知真实分子的潜坐标 <span class="math-inline" data-tex="\boldsymbol{\mu}_i">\(\boldsymbol{\mu}_i\)</span> 为中心，叠加适度的高斯扰动 <span class="math-inline" data-tex="\sigma">\(\sigma\)</span> 进行局部探索</strong>：</p>
+<div class="math-block" data-tex="\mathbf{z} = \boldsymbol{\mu}_i + \sigma \cdot \boldsymbol{\epsilon}, \qquad \boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})">\[\mathbf{z} = \boldsymbol{\mu}_i + \sigma \cdot \boldsymbol{\epsilon}, \qquad \boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})\]</div>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [24] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">rows_local</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">base_mu</span> <span class="o">=</span> <span class="n">mu_test</span><span class="p">[:</span><span class="mi">300</span><span class="p">]</span>
+<span class="n">originals_300</span> <span class="o">=</span> <span class="p">[</span><span class="n">canonical</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">test_idx</span><span class="p">[:</span><span class="mi">300</span><span class="p">]]]</span>
+
+<span class="k">for</span> <span class="n">sigma</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">]:</span>
+    <span class="n">z_pert</span> <span class="o">=</span> <span class="n">base_mu</span> <span class="o">+</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">base_mu</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="n">canonical</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">decode_latent</span><span class="p">(</span><span class="n">z_pert</span><span class="p">)]</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">out</span> <span class="k">if</span> <span class="n">c</span><span class="p">]</span>
+    <span class="n">mols_ok</span> <span class="o">=</span> <span class="p">[</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ok</span><span class="p">]</span>
+    <span class="n">rows_local</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s2">&quot;Noise Std (sigma)&quot;</span><span class="p">:</span> <span class="n">sigma</span><span class="p">,</span>
+        <span class="s2">&quot;Validity&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ok</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">base_mu</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="s2">&quot;Identical to Seed&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">a</span> <span class="o">==</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">originals_300</span><span class="p">)])),</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="s2">&quot;Mean Aromatic Rings&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">Descriptors</span><span class="o">.</span><span class="n">NumAromaticRings</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mols_ok</span><span class="p">])),</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="s2">&quot;Mean Heavy Atoms&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">GetNumHeavyAtoms</span><span class="p">()</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mols_ok</span><span class="p">])),</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="p">})</span>
+
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows_local</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;Noise Std (sigma)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>当局部扰动幅度取 <span class="math-inline" data-tex="\sigma = 0.3">\(\sigma = 0.3\)</span> 时，超过 90% 的解码分子是不同于种子分子的<strong>全新分子</strong>，同时平均芳香环数（约 4 个）与重原子数（约 26 个）依然保持了稠环共轭有机半导体的合理结构特征；而当 <span class="math-inline" data-tex="\sigma">\(\sigma\)</span> 增大到 <code>3.0</code> 时，采样点再次飞出有效流形薄壳，退化为与先验采样相同的非共轭碎片。</p>
+<h3 id="练习-09a-3-完美背诵模型-vs-vae-先验采样的生成指标盲区诊断">练习 09a-3：“完美背诵模型” vs. VAE 先验采样的生成指标盲区诊断</h3>
+<p>为了深刻体会为什么评估生成模型时绝不能只看 <code>Validity / Uniqueness / Novelty</code>，请设计一个对比实验：</p>
+<ol>
+<li>从训练集 <code>df[&quot;smiles&quot;].iloc[train_idx]</code> 中随机抽出 1,000 个真实分子，将其视为一个“只会照抄训练集的假生成模型（Memorization Baseline）”；</li>
+<li>计算这个“照抄模型”与 <code>z_prior</code>（VAE 先验采样）在六个维度上的得分并汇总为一张 DataFrame：
+<ul>
+<li>字符串三指标：<code>Validity</code>、<code>Uniqueness</code>、<code>Novelty</code>（相对于 <code>canonical_train</code>）；</li>
+<li>结构分布三指标：<code>Mean Heavy Atoms</code>、<code>Mean Aromatic Rings</code>、<code>Mean FractionCSP3</code>。</li>
+</ul>
+</li>
+<li>思考：为什么在 <code>09c</code> 即将介绍的**去噪扩散概率模型（DDPM）**中，先验空洞问题能够从根源上得到解决？</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [25] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 09a-3：在此对比“训练集照抄基线”与 VAE 先验采样的六项指标</span>
+<span class="c1"># TODO: 构造包含 Validity, Uniqueness, Novelty, Heavy Atoms, Aromatic Rings, FractionCSP3 的对比表</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="6-本节小结-自回归语言模型-vs-变分自编码器">6. 本节小结：自回归语言模型 vs. 变分自编码器</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">维度</th>
+<th style="text-align:left">SMILES 自回归语言模型（<code>08a</code>/<code>08b</code>）</th>
+<th style="text-align:left">SELFIES 变分自编码器（<code>09a</code>）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>生成方式与语法保障</strong></td>
+<td style="text-align:left">逐 token 条件自回归；靠学习长程依赖维持约 95% 有效率</td>
+<td style="text-align:left">潜向量并行解码；借助 SELFIES 形式语法强制保证 ~100% 化合价合法</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>分布保真度（先验采样）</strong></td>
+<td style="text-align:left"><strong>极高</strong>（描述符与构筑单元频率与训练集高度重合）</td>
+<td style="text-align:left"><strong>易受先验空洞影响</strong>（全局先验采样偏离训练流形，需在种子分子邻域 <span class="math-inline" data-tex="\sigma \approx 0.3">\(\sigma \approx 0.3\)</span> 采样）</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>显式连续潜坐标 <span class="math-inline" data-tex="\mathbf{z}">\(\mathbf{z}\)</span></strong></td>
+<td style="text-align:left">无（隐状态随序列长度动态变化）</td>
+<td style="text-align:left"><strong>有</strong>（固定维度欧氏向量，支持球面插值 Slerp 与局部邻域搜索）</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>核心评估铁律</strong></td>
+<td style="text-align:left"><code>Validity / Uniqueness / Novelty</code> 只是底线门槛，<strong>必须结合结构描述符分布、构筑单元频率与可视化分子图</strong>检验化学合理性</td>
+<td style="text-align:left"></td>
+</tr>
+</tbody>
+</table>
+<p>无论是 <code>08a</code> 的语言模型还是本节的 <code>09a</code> 变分自编码器，它们目前学习的都只是“如何生成像训练数据的分子”。如果我们不满足于复制现有分布，而是希望定向生成<strong>光电转换效率（PCE）显著高于现有数据库平均水平</strong>的全新分子，该如何把生成模型与性质预测模型结合起来？请进入下一节 <strong><code>09b · 目标导向的分子逆向设计</code></strong>。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/09-generative-models/09a_vae_selfies.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/09-generative-models.html">返回模块 09</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../modules/09-generative-models.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">模块 09 · 生成模型：分子设计到电镜超分</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/09-generative-models/09b_goal_directed_generation.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">09b · 目标导向的分子逆向设计：迁移微调、代理模型欺骗与可合成性评估</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#1-为什么在-vae-中使用-selfies-从脆弱语法到-100-合法的形式语法">1. 为什么在 VAE 中使用 SELFIES：从脆弱语法到 100% 合法的形式语法</a></li>      <li class="toc-l2"><a href="#2-从确定性自编码器到变分自编码器-vae">2. 从确定性自编码器到变分自编码器（VAE）</a></li>      <li class="toc-l3"><a href="#2-1-为什么普通自编码器不能直接用来生成新分子">2.1 为什么普通自编码器不能直接用来生成新分子？</a></li>      <li class="toc-l3"><a href="#2-2-变分自编码器-vae-的两大核心机制">2.2 变分自编码器（VAE）的两大核心机制</a></li>      <li class="toc-l2"><a href="#3-构建与训练-molecularvae">3. 构建与训练 MolecularVAE</a></li>      <li class="toc-l3"><a href="#3-1-重构保真度检验-模型记住了分子的哪些特征">3.1 重构保真度检验：模型记住了分子的哪些特征？</a></li>      <li class="toc-l3"><a href="#练习-09a-1-验证重构精度与潜空间规整度的权衡-beta-0-05-vs-beta-0-5">练习 09a-1：验证重构精度与潜空间规整度的权衡（\(\beta = 0.05\) vs. \(\beta = 0.5\)）</a></li>      <li class="toc-l2"><a href="#4-潜空间高维几何-为什么欧氏直线插值会发生-范数塌陷">4. 潜空间高维几何：为什么欧氏直线插值会发生“范数塌陷”？</a></li>      <li class="toc-l3"><a href="#4-1-两个分子之间的潜空间插值">4.1 两个分子之间的潜空间插值</a></li>      <li class="toc-l3"><a href="#4-2-潜空间的宏观组织结构-按结构聚类还是按性能聚类">4.2 潜空间的宏观组织结构：按结构聚类还是按性能聚类？</a></li>      <li class="toc-l3"><a href="#练习-09a-2-球面线性插值-slerp-修正范数塌陷与潜空间梯度外推实验">练习 09a-2：球面线性插值（Slerp）修正范数塌陷与潜空间梯度外推实验</a></li>      <li class="toc-l2"><a href="#5-从先验分布采样-vs-局部邻域扰动-为什么-100-合法-不等于-合理材料">5. 从先验分布采样 vs. 局部邻域扰动：为什么“100% 合法”不等于“合理材料”？</a></li>      <li class="toc-l3"><a href="#5-1-先验采样的假象-满分三项指标背后的分布崩塌">5.1 先验采样的假象：满分三项指标背后的分布崩塌</a></li>      <li class="toc-l3"><a href="#5-2-诊断根源-先验空洞-prior-hole-aggregated-posterior-mismatch">5.2 诊断根源：先验空洞（Prior Hole / Aggregated Posterior Mismatch）</a></li>      <li class="toc-l3"><a href="#5-3-实用解决方案-以已知种子分子为中心的局部邻域采样">5.3 实用解决方案：以已知种子分子为中心的局部邻域采样</a></li>      <li class="toc-l3"><a href="#练习-09a-3-完美背诵模型-vs-vae-先验采样的生成指标盲区诊断">练习 09a-3：“完美背诵模型” vs. VAE 先验采样的生成指标盲区诊断</a></li>      <li class="toc-l2"><a href="#6-本节小结-自回归语言模型-vs-变分自编码器">6. 本节小结：自回归语言模型 vs. 变分自编码器</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

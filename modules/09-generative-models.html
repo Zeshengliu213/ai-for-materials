@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="SELFIES 分子 VAE、定向生成与代理模型欺骗、电镜超分辨率与扩散模型。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="模块 09：生成模型：分子设计到电镜超分 | AI for Materials Science" />
+  <meta property="og:description" content="SELFIES 分子 VAE、定向生成与代理模型欺骗、电镜超分辨率与扩散模型。" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/modules/09-generative-models.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/modules/09-generative-models.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../assets/pygments.css" />
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../assets/search-index.js"></script>
+  <script defer src="../assets/app.js"></script>  <title>模块 09：生成模型：分子设计到电镜超分 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../index.html">课程主页</a>
+      <a href="../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../exercises.html">习题与答案</a>
+      <a href="../index.html#legend">学习指南</a>
+      <a href="../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../modules/09-generative-models.html"
+class="active">
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/09-generative-models/09a_vae_selfies.html"
+           data-progress-mark="notebooks/09-generative-models/09a_vae_selfies.html"
+>📓 09a_vae_selfies.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/09-generative-models/09b_goal_directed_generation.html"
+           data-progress-mark="notebooks/09-generative-models/09b_goal_directed_generation.html"
+>📓 09b_goal_directed_generation.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+           data-progress-mark="notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+>📓 09c_microscopy_diffusion_sr.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/09-generative-models/09d_exercises.html"
+           data-progress-mark="notebooks/09-generative-models/09d_exercises.html"
+>🏋️ 09d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb"><a href="../index.html">课程主页</a> / <span>模块 09</span></div>
+<div class="module-head">
+  <span class="module-num">Module 09</span>
+  <span class="status-badge status-partial">09a/09b 就绪</span>
+  <span class="module-head-en">Generative Models</span>
+</div>
+<h1>生成模型：分子设计到电镜超分</h1><div class="progress-panel" data-progress-keys="notebooks/09-generative-models/09a_vae_selfies.html,notebooks/09-generative-models/09b_goal_directed_generation.html,notebooks/09-generative-models/09c_microscopy_diffusion_sr.html,notebooks/09-generative-models/09d_exercises.html">
+  <div class="progress-head">
+    <strong>本模块学习进度</strong>
+    <span class="progress-count" data-progress-count>0 / 4</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+  <p class="hint-inline">进度只保存在你当前浏览器（localStorage），不会上传到任何服务器。</p>
+</div><h2 id="lectures">互动实战课件（Notebooks）</h2>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>课件名称</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/09-generative-models/09a_vae_selfies.html"
+                 aria-label="把 09a_vae_selfies.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/09-generative-models/09a_vae_selfies.html"><strong>09a · 分子的连续潜空间：SELFIES 表示与变分自编码器（VAE）</strong></a><br/>
+          <code>09a_vae_selfies.ipynb</code></td>
+        <td>46.7 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/09-generative-models/09a_vae_selfies.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/75d0ea81fed7-09a_vae_selfies.ipynb" download="09a_vae_selfies.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/09%20-%20Generative%20Models/09a_vae_selfies.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/09-generative-models/09b_goal_directed_generation.html"
+                 aria-label="把 09b_goal_directed_generation.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/09-generative-models/09b_goal_directed_generation.html"><strong>09b · 目标导向的分子逆向设计：迁移微调、代理模型欺骗与可合成性评估</strong></a><br/>
+          <code>09b_goal_directed_generation.ipynb</code></td>
+        <td>37.7 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/09-generative-models/09b_goal_directed_generation.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/b2eec0760cf8-09b_goal_directed_generation.ipynb" download="09b_goal_directed_generation.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/09%20-%20Generative%20Models/09b_goal_directed_generation.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+                 aria-label="把 09c_microscopy_diffusion_sr.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"><strong>09c · 材料显微图像超分辨率与去噪扩散概率模型（DDPM）入门</strong></a><br/>
+          <code>09c_microscopy_diffusion_sr.ipynb</code></td>
+        <td>36.7 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/09-generative-models/09c_microscopy_diffusion_sr.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/833b1afb110a-09c_microscopy_diffusion_sr.ipynb" download="09c_microscopy_diffusion_sr.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/09%20-%20Generative%20Models/09c_microscopy_diffusion_sr.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="exercises">课后习题（Exercises）<span class="kind-badge kind-exercise">习题</span></h2>
+<p class="hint-inline">建议在完成本模块全部课件后再做习题；参考答案默认折叠，请先独立完成。
+  也可以在<a href="../exercises.html">全部习题汇总页</a>统一查看各模块习题。</p>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/09-generative-models/09d_exercises.html"
+                 aria-label="把 09d_exercises.ipynb 标记为已完成" />
+        </td>
+        <td><a href="../notebooks/09-generative-models/09d_exercises.html"><strong>09d · 基础习题集：SELFIES、变分自编码器、代理模型防坑与扩散模型</strong></a><br/>
+          <code>09d_exercises.ipynb</code></td>
+        <td>13.1 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/09-generative-models/09d_exercises.html">开始做题</a>
+          <a class="btn btn-secondary" href="../files/_shared/a88a37d096ed-09d_exercises.ipynb" download="09d_exercises.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/09%20-%20Generative%20Models/09d_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>          <a class="btn btn-secondary" href="../solutions/09-generative-models/09_exercises_solutions.html">参考答案</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="solutions">参考答案（Solutions）</h2>
+<p class="hint-inline">答案页默认折叠，请先独立完成练习再展开。</p>
+<ul class="solution-list">  <li><span class="kind-badge kind-exercise">习题答案</span>
+    <a href="../solutions/09-generative-models/09_exercises_solutions.html">✅ 09d · 基础习题集参考解答：SELFIES、变分自编码器、代理模型防坑与扩散模型</a>
+    (<code>09_exercises_solutions.ipynb</code> · 9.7 KB) —
+    <a href="../files/_shared/1d9cc41a286e-09_exercises_solutions.ipynb" download="09_exercises_solutions.ipynb">下载 .ipynb</a></li>  <li><span class="kind-badge kind-lecture">课件答案</span>
+    <a href="../solutions/09-generative-models/09_generative_solutions.html">✅ 09 · 生成模型与材料逆向设计 — 课堂练习参考解答</a>
+    (<code>09_generative_solutions.ipynb</code> · 33.5 KB) —
+    <a href="../files/_shared/aaf632e9805c-09_generative_solutions.ipynb" download="09_generative_solutions.ipynb">下载 .ipynb</a></li></ul><h2>配套数据集（Datasets）</h2>
+<ul>  <li><code>cep.csv</code> (1.8 MB) —
+    <a href="../files/_shared/d287f0809a6a-cep.csv" download="cep.csv">下载数据集</a></li>  <li><code>cep_rnn.pt</code> (3.6 MB) —
+    <a href="../files/_shared/cfa261a70294-cep_rnn.pt" download="cep_rnn.pt">下载数据集</a></li>  <li><code>cep_vae.pt</code> (7.2 MB) —
+    <a href="../files/_shared/0ccb79147f35-cep_vae.pt" download="cep_vae.pt">下载数据集</a></li>  <li><code>micro_sr_ddpm.pt</code> (712.1 KB) —
+    <a href="../files/_shared/b03c740522e9-micro_sr_ddpm.pt" download="micro_sr_ddpm.pt">下载数据集</a></li></ul><h2>后续补充计划</h2>
+<div class="academic-box">
+  <ul class="outline-list">    <li><code>09c</code>（编写中）电镜图像超分辨率与扩散模型入门。</li>  </ul>
+  <p class="hint-inline">内容正在编写中，欢迎先浏览已上线的其他模块。</p>
+</div>
+<h2>模块导读与教学设计</h2><div class="markdown-body"><h1>09 · 生成模型与材料逆向设计（Generative Models: From Molecular Design to Microscopy Diffusion）</h1>
+<p>本模块从连续潜空间建模出发，系统讲解分子变分自编码器（SELFIES VAE）、面向目标性质的分子逆向设计、代理模型欺骗（Reward Hacking）与适用域防御，以及面向材料显微图像（SEM/TEM）的残差超分辨率网络与条件去噪扩散概率模型（DDPM）。</p>
+<h2>课程文件结构</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">文件</th>
+<th style="text-align:left">内容定位</th>
+<th style="text-align:left">核心知识点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>09a_vae_selfies.ipynb</code></td>
+<td style="text-align:left">分子的连续潜空间：SELFIES 与变分自编码器</td>
+<td style="text-align:left">SELFIES 形式语法与 100% 价态合法性实验、重参数化技巧与 <span class="math-inline" data-tex="\beta">\(\beta\)</span>-VAE 损失、重构误差剖析、高维球壳直线插值范数塌陷与球面插值（Slerp）、先验空洞（Prior Hole）与局部邻域采样</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>09b_goal_directed_generation.ipynb</code></td>
+<td style="text-align:left">目标导向逆向设计：微调、代理模型欺骗与可合成性</td>
+<td style="text-align:left">随机森林 PCE 代理模型构建、Top-10% 精英子集迁移微调、吸电子受体单元（噻二唑）的自主富集、代理模型欺骗探针实验（水分子假阳性与二值指纹比特饱和）、适用域约束爬山搜索与 SA Score 评估</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>09c_microscopy_diffusion_sr.ipynb</code></td>
+<td style="text-align:left">电镜图像超分辨率与去噪扩散概率模型（DDPM）</td>
+<td style="text-align:left">低剂量快扫电镜物理退化模型、峰值信噪比（PSNR）、残差超分辨率卷积网络（<code>MicrostructureSRNet</code>）、DDPM 前向闭合加噪公式与无先验空洞证明、条件去噪 U-Net（<code>ConditionalMicroUNet</code>）按目标相体积分数 <span class="math-inline" data-tex="\phi">\(\phi\)</span> 定向生成双相微结构</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>09d_exercises.ipynb</code></td>
+<td style="text-align:left">第 09 讲基础习题集（8 道自包含练习）</td>
+<td style="text-align:left">SELFIES 单点突变、重参数化与对角高斯 KL、Lerp vs. Slerp 范数、先验空洞高维球壳半径、二值指纹比特饱和、适用域 + LCB 筛选、PSNR 计算、DDPM 前向加噪与信噪比</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>solutions/09_generative_solutions.ipynb</code></td>
+<td style="text-align:left">课堂练习参考解答（<code>09a</code> + <code>09b</code> + <code>09c</code>）</td>
+<td style="text-align:left">主讲 Notebook 中全部课堂练习（<code>09a-1</code>~<code>09a-3</code>、<code>09b-1</code>~<code>09b-3</code>、<code>09c-1</code>~<code>09c-3</code>）的完整参考代码与结果讨论</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>solutions/09_exercises_solutions.ipynb</code></td>
+<td style="text-align:left">基础习题集参考解答（<code>09d</code>）</td>
+<td style="text-align:left"><code>09d_exercises.ipynb</code> 中 8 道基础编程练习的参考解答</td>
+</tr>
+</tbody>
+</table>
+<h2>建议学习顺序</h2>
+<ol>
+<li>依次阅读并运行 <code>09a</code> <span class="math-inline" data-tex="\to">\(\to\)</span> <code>09b</code> <span class="math-inline" data-tex="\to">\(\to\)</span> <code>09c</code>，动手完成内嵌于各小节后的课堂练习，再对照 <code>solutions/09_generative_solutions.ipynb</code> 检查；</li>
+<li>完成 <code>09d_exercises.ipynb</code> 中的 8 道基础编程题，巩固连续潜空间几何、代理模型安全边界与扩散模型的核心数学实现。</li>
+</ol>
+</div><nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../notebooks/08-sequence-models-and-transformers/08d_exercises.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">08d · 基础习题集：化学序列分词、语言模型与注意力机制</span>
+  </a>  <a class="pager-link pager-next" href="../notebooks/09-generative-models/09a_vae_selfies.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">09a · 分子的连续潜空间：SELFIES 表示与变分自编码器（VAE）</span>
+  </a></nav>  </main></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="SMILES 语言模型、SMILES 增强与 NLL 异常检测、手写迷你 Transformer 与化学反应产物预测。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="模块 08：序列模型、Transformer 与反应预测 | AI for Materials Science" />
+  <meta property="og:description" content="SMILES 语言模型、SMILES 增强与 NLL 异常检测、手写迷你 Transformer 与化学反应产物预测。" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/modules/08-sequence-models-and-transformers.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/modules/08-sequence-models-and-transformers.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../assets/pygments.css" />
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../assets/search-index.js"></script>
+  <script defer src="../assets/app.js"></script>  <title>模块 08：序列模型、Transformer 与反应预测 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../index.html">课程主页</a>
+      <a href="../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../exercises.html">习题与答案</a>
+      <a href="../index.html#legend">学习指南</a>
+      <a href="../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../modules/08-sequence-models-and-transformers.html"
+class="active">
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html"
+           data-progress-mark="notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html"
+>📓 08a_smiles_language_model.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html"
+           data-progress-mark="notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html"
+>📓 08b_smiles_lstm_aqsoldb.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html"
+           data-progress-mark="notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html"
+>📓 08c_reaction_transformer.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/08-sequence-models-and-transformers/08d_exercises.html"
+           data-progress-mark="notebooks/08-sequence-models-and-transformers/08d_exercises.html"
+>🏋️ 08d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb"><a href="../index.html">课程主页</a> / <span>模块 08</span></div>
+<div class="module-head">
+  <span class="module-num">Module 08</span>
+  <span class="status-badge status-done">已完成</span>
+  <span class="module-head-en">Sequence Models &amp; Transformers</span>
+</div>
+<h1>序列模型、Transformer 与反应预测</h1><div class="progress-panel" data-progress-keys="notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html,notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html,notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html,notebooks/08-sequence-models-and-transformers/08d_exercises.html">
+  <div class="progress-head">
+    <strong>本模块学习进度</strong>
+    <span class="progress-count" data-progress-count>0 / 4</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+  <p class="hint-inline">进度只保存在你当前浏览器（localStorage），不会上传到任何服务器。</p>
+</div><h2 id="lectures">互动实战课件（Notebooks）</h2>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>课件名称</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html"
+                 aria-label="把 08a_smiles_language_model.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html"><strong>08a · 让模型写分子：SMILES 序列语言模型与基线对比</strong></a><br/>
+          <code>08a_smiles_language_model.ipynb</code></td>
+        <td>39.5 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/2a367c74c654-08a_smiles_language_model.ipynb" download="08a_smiles_language_model.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/08%20-%20Sequence%20Models%20and%20Transformers/08a_smiles_language_model.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html"
+                 aria-label="把 08b_smiles_lstm_aqsoldb.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html"><strong>08b · 进阶序列建模：数据清洗、SMILES 增强、似然评估与跨领域迁移微调</strong></a><br/>
+          <code>08b_smiles_lstm_aqsoldb.ipynb</code></td>
+        <td>45.2 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/e27b3c54c043-08b_smiles_lstm_aqsoldb.ipynb" download="08b_smiles_lstm_aqsoldb.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/08%20-%20Sequence%20Models%20and%20Transformers/08b_smiles_lstm_aqsoldb.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html"
+                 aria-label="把 08c_reaction_transformer.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html"><strong>08c · 注意力机制与手写迷你 Transformer：化学反应产物预测</strong></a><br/>
+          <code>08c_reaction_transformer.ipynb</code></td>
+        <td>45.2 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/147dbd83433b-08c_reaction_transformer.ipynb" download="08c_reaction_transformer.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/08%20-%20Sequence%20Models%20and%20Transformers/08c_reaction_transformer.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="exercises">课后习题（Exercises）<span class="kind-badge kind-exercise">习题</span></h2>
+<p class="hint-inline">建议在完成本模块全部课件后再做习题；参考答案默认折叠，请先独立完成。
+  也可以在<a href="../exercises.html">全部习题汇总页</a>统一查看各模块习题。</p>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/08-sequence-models-and-transformers/08d_exercises.html"
+                 aria-label="把 08d_exercises.ipynb 标记为已完成" />
+        </td>
+        <td><a href="../notebooks/08-sequence-models-and-transformers/08d_exercises.html"><strong>08d · 基础习题集：化学序列分词、语言模型与注意力机制</strong></a><br/>
+          <code>08d_exercises.ipynb</code></td>
+        <td>13.8 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/08-sequence-models-and-transformers/08d_exercises.html">开始做题</a>
+          <a class="btn btn-secondary" href="../files/_shared/7a7fcf8a6878-08d_exercises.ipynb" download="08d_exercises.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/08%20-%20Sequence%20Models%20and%20Transformers/08d_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>          <a class="btn btn-secondary" href="../solutions/08-sequence-models-and-transformers/08_exercises_solutions.html">参考答案</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="solutions">参考答案（Solutions）</h2>
+<p class="hint-inline">答案页默认折叠，请先独立完成练习再展开。</p>
+<ul class="solution-list">  <li><span class="kind-badge kind-exercise">习题答案</span>
+    <a href="../solutions/08-sequence-models-and-transformers/08_exercises_solutions.html">✅ 08d · 基础习题集参考解答：化学序列分词、语言模型与注意力机制</a>
+    (<code>08_exercises_solutions.ipynb</code> · 10.9 KB) —
+    <a href="../files/_shared/ba9332d2d97a-08_exercises_solutions.ipynb" download="08_exercises_solutions.ipynb">下载 .ipynb</a></li>  <li><span class="kind-badge kind-lecture">课件答案</span>
+    <a href="../solutions/08-sequence-models-and-transformers/08_sequence_solutions.html">✅ 08 · 序列模型与化学反应预测 — 课堂练习参考解答</a>
+    (<code>08_sequence_solutions.ipynb</code> · 37.9 KB) —
+    <a href="../files/_shared/8d817f8dcb73-08_sequence_solutions.ipynb" download="08_sequence_solutions.ipynb">下载 .ipynb</a></li></ul><h2>配套数据集（Datasets）</h2>
+<ul>  <li><code>cep.csv</code> (1.8 MB) —
+    <a href="../files/_shared/d287f0809a6a-cep.csv" download="cep.csv">下载数据集</a></li>  <li><code>cep_rnn.pt</code> (3.6 MB) —
+    <a href="../files/_shared/cfa261a70294-cep_rnn.pt" download="cep_rnn.pt">下载数据集</a></li>  <li><code>osc_finetune.csv</code> (12.4 KB) —
+    <a href="../files/_shared/5b65b5404705-osc_finetune.csv" download="osc_finetune.csv">下载数据集</a></li>  <li><code>smiles_lstm_pretrained.pt</code> (3.3 MB) —
+    <a href="../files/_shared/e146fee9c4c2-smiles_lstm_pretrained.pt" download="smiles_lstm_pretrained.pt">下载数据集</a></li>  <li><code>solubility.csv</code> (2.1 MB) —
+    <a href="../files/_shared/f274636a3ed2-solubility.csv" download="solubility.csv">下载数据集</a></li>  <li><code>suzuki_toy.csv</code> (688.0 KB) —
+    <a href="../files/_shared/96d1fe049610-suzuki_toy.csv" download="suzuki_toy.csv">下载数据集</a></li>  <li><code>suzuki_transformer.pt</code> (2.6 MB) —
+    <a href="../files/_shared/1bff9b0dfac9-suzuki_transformer.pt" download="suzuki_transformer.pt">下载数据集</a></li>  <li><code>uspto_test_sample.csv</code> (33.9 KB) —
+    <a href="../files/_shared/6bbbbb14fd97-uspto_test_sample.csv" download="uspto_test_sample.csv">下载数据集</a></li></ul>
+<h2>模块导读与教学设计</h2><div class="markdown-body"><h1>08 · 序列模型与化学语言模型（Sequence Models and Transformers）</h1>
+<p>本模块从一维化学字符串（SMILES）的表示特性出发，系统讲解自回归分子语言模型（RNN / LSTM）、SMILES 枚举数据增强、基于负对数似然的分布外探针、小样本领域迁移微调，以及编码器-解码器 Transformer 在化学反应产物预测中的应用。</p>
+<h2>课程文件结构</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">文件</th>
+<th style="text-align:left">内容定位</th>
+<th style="text-align:left">核心知识点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>08a_smiles_language_model.ipynb</code></td>
+<td style="text-align:left">有机光电分子的自回归序列生成</td>
+<td style="text-align:left">化学感知正则分词、马尔可夫 Bigram 基线与远程语法约束、<code>SmilesRNN</code>（Embedding + LSTM + Linear）、教师强制训练与梯度裁剪、采样温度调控与构造单元保持</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>08b_smiles_lstm_aqsoldb.ipynb</code></td>
+<td style="text-align:left">真实数据库的枚举增强、似然探针与迁移微调</td>
+<td style="text-align:left">异构数据库 <code>AqSolDB</code> 清洗与 <code>Vocab</code> 封装、SMILES 枚举增强的原理与指标权衡、<code>NLL per token</code> 分布外探针、面向有机半导体的小样本迁移微调与灾难性遗忘</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>08c_reaction_transformer.ipynb</code></td>
+<td style="text-align:left">注意力机制与手写迷你 Transformer 反应预测</td>
+<td style="text-align:left">专家反应模板（SMARTS）vs. 无模板 Seq2Seq 翻译、缩放点积注意力与因果/填充掩码、正弦位置编码、<code>ReactionTransformer</code> 架构、交叉注意力热力图与 USPTO 真实专利反应解析</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>08d_exercises.ipynb</code></td>
+<td style="text-align:left">第 08 讲基础习题集（8 道自包含练习）</td>
+<td style="text-align:left">正则分词还原、教师强制切片、Bigram 矩阵、LSTM 张量维度追踪、温度与信息熵、掩码交叉熵 NLL、因果自注意力、Suzuki 模板与 Canonical 精确匹配</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>solutions/08_sequence_solutions.ipynb</code></td>
+<td style="text-align:left">课堂练习参考解答（<code>08a</code> + <code>08b</code> + <code>08c</code>）</td>
+<td style="text-align:left">主讲 Notebook 中全部课堂练习（<code>08a-1</code>~<code>08a-3</code>、<code>08b-1</code>~<code>08b-4</code>、<code>08c-1</code>~<code>08c-3</code>）的完整实现与化学讨论</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>solutions/08_exercises_solutions.ipynb</code></td>
+<td style="text-align:left">基础习题集参考解答（<code>08d</code>）</td>
+<td style="text-align:left"><code>08d_exercises.ipynb</code> 中 8 道基础编程练习的参考解答</td>
+</tr>
+</tbody>
+</table>
+<h2>建议学习顺序</h2>
+<ol>
+<li>先按顺序阅读并运行 <code>08a</code> <span class="math-inline" data-tex="\to">\(\to\)</span> <code>08b</code> <span class="math-inline" data-tex="\to">\(\to\)</span> <code>08c</code>，动手尝试每节内嵌的课堂练习，再对照 <code>solutions/08_sequence_solutions.ipynb</code> 检验思路；</li>
+<li>完成 <code>08d_exercises.ipynb</code> 中的 8 道基础练习，巩固分词、张量切片、掩码损失与注意力机制的代码细节。</li>
+</ol>
+</div><nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../notebooks/07-neural-networks-and-cnns/07c_exercises.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">07c · 第七讲基础巩固习题：PyTorch 神经网络与显微图像卷积</span>
+  </a>  <a class="pager-link pager-next" href="../notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">08a · 让模型写分子：SMILES 序列语言模型与基线对比</span>
+  </a></nav>  </main></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 07b · 卷积神经网络与材料显微图像（SEM/金相）智能分析 在 07a 中我们看到，当输入是预先算好的 17 个分子描述符时，多层感知机（MLP）受限于手工特征的信息瓶颈，表现与随机森林相差无几。然而在材料科学实验室中，大量核心表征数据并非表格数字，而是 二维高维空间场 ——例如扫描电" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="07b · 卷积神经网络与材料显微图像（SEM/金相）智能分析 | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 07b · 卷积神经网络与材料显微图像（SEM/金相）智能分析 在 07a 中我们看到，当输入是预先算好的 17 个分子描述符时，多层感知机（MLP）受限于手工特征的信息瓶颈，表现与随机森林相差无几。然而在材料科学实验室中，大量核心表征数据并非表格数字，而是 二维高维空间场 ——例如扫描电" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>07b · 卷积神经网络与材料显微图像（SEM/金相）智能分析 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/07-neural-networks-and-cnns/07a_neural_networks.html"
+           data-progress-mark="notebooks/07-neural-networks-and-cnns/07a_neural_networks.html"
+>📓 07a_neural_networks.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html"
+           data-progress-mark="notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html"
+class="active">📓 07b_cnn_microstructure.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/07-neural-networks-and-cnns/07c_exercises.html"
+           data-progress-mark="notebooks/07-neural-networks-and-cnns/07c_exercises.html"
+>🏋️ 07c_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/07-neural-networks-and-cnns.html">模块 07：神经网络与材料显微视觉 CNN</a> /  <span>07b_cnn_microstructure.ipynb</span>
+</div>
+<h1>07b · 卷积神经网络与材料显微图像（SEM/金相）智能分析</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>07b_cnn_microstructure.ipynb</code>（32.9 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/07%20-%20Neural%20Networks%20and%20CNNs/07b_cnn_microstructure.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/e1f38bc536c0-07b_cnn_microstructure.ipynb" download="07b_cnn_microstructure.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/07-neural-networks-and-cnns/07_nn_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/course/07%20-%20Neural%20Networks%20and%20CNNs/07b_cnn_microstructure.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>07b · 卷积神经网络与材料显微图像（SEM/金相）智能分析</h1>
+<p>在 <code>07a</code> 中我们看到，当输入是预先算好的 17 个分子描述符时，多层感知机（MLP）受限于手工特征的信息瓶颈，表现与随机森林相差无几。然而在材料科学实验室中，大量核心表征数据并非表格数字，而是<strong>二维高维空间场</strong>——例如扫描电镜（SEM）、透射电镜（TEM）、光学金相显微镜以及原子力显微镜（AFM）拍摄的显微组织图像。</p>
+<p>材料的“工艺—微结构—性能”关系决定了显微组织形貌（如球状碳化物析出、层片状珠光体、凝固树枝晶或晶界网络）直接控制着合金的屈服强度、断裂韧性与耐蚀性。传统金相分析依赖人工截线法或手工设计纹理统计量，不仅耗时费力，而且极易受光照不均与成像噪声干扰。</p>
+<p>本节我们将引入专为网格拓扑数据设计的<strong>卷积神经网络（Convolutional Neural Networks, CNN）</strong>，展示它如何利用<strong>局部连接</strong>、<strong>权重共享</strong>与<strong>空间池化</strong>三大机制，直接从原始像素矩阵中自动学习多尺度微结构特征，完成金相组织分类与析出相定量分析。</p>
+<h3 id="本节大纲">本节大纲</h3>
+<ol>
+<li>为什么普通 MLP 不适合处理材料显微图像？（参数爆炸与平移敏感性）</li>
+<li>二维卷积运算的物理直觉：平滑滤波与 Sobel 相界边缘检测</li>
+<li>PyTorch CNN 核心组件：<code>nn.Conv2d</code>、填充、步幅、池化与特征图尺寸推导</li>
+<li>四类典型材料显微组织分类实战：CNN vs. 展平 MLP 与旋转不变性增强</li>
+<li>打开 CNN 黑箱：中间层特征图可视化与析出相面积分数（Area Fraction）定量统计</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_filter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">confusion_matrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">TensorDataset</span>
+
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">set_seed</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">):</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">use_deterministic_algorithms</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PyTorch version:&quot;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-为什么普通-mlp-不适合处理材料显微图像">1. 为什么普通 MLP 不适合处理材料显微图像？</h2>
+<p>一张单通道灰度电镜图像在计算机中表示为一个二维矩阵 <span class="math-inline" data-tex="\mathbf{I} \in \mathbb{R}^{H \times W}">\(\mathbf{I} \in \mathbb{R}^{H \times W}\)</span>，每个元素对应像素点的背散射或二次电子强度（通常归一化到 <span class="math-inline" data-tex="[0, 1]">\([0, 1]\)</span>）。</p>
+<p>如果照搬 <code>07a</code> 的多层感知机，必须先把二维图像按行展平（Flatten）为一维长向量：</p>
+<ol>
+<li><strong>参数量灾难</strong>：即便是一张中等分辨率的 <span class="math-inline" data-tex="256 \times 256">\(256 \times 256\)</span> 电镜图，展平后也有 <span class="math-inline" data-tex="65,536">\(65,536\)</span> 维。若第一个隐藏层有 512 个神经元，仅第一层权重矩阵就有 <span class="math-inline" data-tex="65,536 \times 512 \approx 3.35 \times 10^7">\(65,536 \times 512 \approx 3.35 \times 10^7\)</span>（三千三百多万）个参数，在几百张电镜照片的小样本上瞬间过拟合。</li>
+<li><strong>破坏二维空间拓扑与平移不变性（Translation Invariance）</strong>：在展平向量中，原本上下相邻的像素被拆散到相距 <span class="math-inline" data-tex="W">\(W\)</span> 个元素的位置。更重要的是，金相视场中同一颗析出相颗粒无论出现在左上角还是右下角，其物相属性完全相同；但对全连接层而言，平移几个像素就意味着激活了完全不同的一组输入权重，模型不得不为每个位置重新学习一遍识别规则。</li>
+</ol>
+<p>为了解决这两个根本缺陷，我们需要一种<strong>只在局部邻域内提取模式，并将同一套检测算子在整个视场平面上滑动复用</strong>的运算——这就是二维卷积。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-二维卷积运算-从经典滤波到相界边缘提取">2. 二维卷积运算：从经典滤波到相界边缘提取</h2>
+<p>给定输入图像 <span class="math-inline" data-tex="I(i, j)">\(I(i, j)\)</span> 与一个尺寸为 <span class="math-inline" data-tex="k_h \times k_w">\(k_h \times k_w\)</span> 的小矩阵 <span class="math-inline" data-tex="K">\(K\)</span>（称为<strong>卷积核 Kernel</strong> 或<strong>滤波器 Filter</strong>），二维离散互相关（深度学习中通称二维卷积）定义为卷积核在图像上逐像素滑动时的局部内积：</p>
+<div class="math-block" data-tex="(I * K)(i, j) = \sum_{u=0}^{k_h-1} \sum_{v=0}^{k_w-1} I(i + u, j + v) \cdot K(u, v)">\[(I * K)(i, j) = \sum_{u=0}^{k_h-1} \sum_{v=0}^{k_w-1} I(i + u, j + v) \cdot K(u, v)\]</div>
+<p>不同的卷积核权重对应着截然不同的物理特征提取器：</p>
+<ul>
+<li><strong>平滑均值核（Box Blur）</strong>：邻域权重全部为 <span class="math-inline" data-tex="1/9">\(1/9\)</span>，抑制电子束散粒噪声；</li>
+<li><strong>水平/垂直 Sobel 核</strong>：通过一阶差分近似局部灰度梯度 <span class="math-inline" data-tex="\partial I / \partial x">\(\partial I / \partial x\)</span> 与 <span class="math-inline" data-tex="\partial I / \partial y">\(\partial I / \partial y\)</span>，高亮出基体与第二相之间的<strong>相界（Phase Boundary）</strong>；</li>
+<li><strong>拉普拉斯核（Laplacian）</strong>：中心为 <span class="math-inline" data-tex="+4">\(+4\)</span>、四邻域为 <span class="math-inline" data-tex="-1">\(-1\)</span>，对应二阶算子 <span class="math-inline" data-tex="\nabla^2 I">\(\nabla^2 I\)</span>，对细小析出相颗粒边缘高度敏感。</li>
+</ul>
+<p>下面我们生成一张含球状析出相与成像噪声的合成 SEM 微结构图，并用 PyTorch 的函数式接口 <code>F.conv2d</code> 演示这三种经典卷积核的响应效果。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 生成一张 64x64 的合成双相显微图像（暗色基体 + 亮色球状析出相 + 成像噪声）</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">yy</span><span class="p">,</span> <span class="n">xx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">64</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">64</span><span class="p">]</span>
+<span class="n">sample_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">centers</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="p">(</span><span class="mi">44</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="p">(</span><span class="mi">28</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span> <span class="p">(</span><span class="mi">49</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">5</span><span class="p">)]</span>
+<span class="k">for</span> <span class="n">cy</span><span class="p">,</span> <span class="n">cx</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">centers</span><span class="p">:</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">yy</span> <span class="o">-</span> <span class="n">cy</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">xx</span> <span class="o">-</span> <span class="n">cx</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">&lt;=</span> <span class="n">r</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">sample_img</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.85</span>
+<span class="n">sample_img</span> <span class="o">=</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">sample_img</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span> <span class="o">+</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">sample_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">sample_img</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+<span class="c1"># PyTorch 图像张量形状约定为 (Batch, Channels, Height, Width)</span>
+<span class="n">img_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">sample_img</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (1, 1, 64, 64)</span>
+
+<span class="n">k_blur</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span> <span class="o">/</span> <span class="mf">9.0</span>
+<span class="n">k_sobel_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[[[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+                            <span class="p">[</span><span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
+                            <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]]]])</span>
+<span class="n">k_laplace</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[[[</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">],</span>
+                            <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>  <span class="mf">4.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">],</span>
+                            <span class="p">[</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">]]]])</span>
+
+<span class="n">out_blur</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">img_t</span><span class="p">,</span> <span class="n">k_blur</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+<span class="n">out_sobel</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">img_t</span><span class="p">,</span> <span class="n">k_sobel_x</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+<span class="n">out_laplace</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">img_t</span><span class="p">,</span> <span class="n">k_laplace</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mf">3.2</span><span class="p">))</span>
+<span class="n">titles</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Original SEM (Noisy)&quot;</span><span class="p">,</span> <span class="s2">&quot;3x3 Box Blur&quot;</span><span class="p">,</span> <span class="s2">&quot;Sobel Vertical Edge&quot;</span><span class="p">,</span> <span class="s2">&quot;Laplacian Boundary&quot;</span><span class="p">]</span>
+<span class="n">cmaps</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="s2">&quot;coolwarm&quot;</span><span class="p">,</span> <span class="s2">&quot;coolwarm&quot;</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">arr</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">cm</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="p">[</span><span class="n">sample_img</span><span class="p">,</span> <span class="n">out_blur</span><span class="p">,</span> <span class="n">out_sobel</span><span class="p">,</span> <span class="n">out_laplace</span><span class="p">],</span> <span class="n">titles</span><span class="p">,</span> <span class="n">cmaps</span><span class="p">):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>在传统数字图像处理中，Sobel 或 Laplacian 核里面的 9 个数字是工程师手工指定的；而在<strong>卷积神经网络（CNN）<strong>中，卷积核的权重全部设为 <code>requires_grad=True</code> 的可学习参数，由反向传播算法根据下游分类或回归任务的目标函数</strong>自动学习出最适合当前材料体系的滤波器组</strong>。</p>
+<hr />
+<h2 id="3-pytorch-cnn-核心组件与特征图尺寸推导">3. PyTorch CNN 核心组件与特征图尺寸推导</h2>
+<p>一个标准的二维卷积神经网络由以下几类层交替堆叠而成：</p>
+<ol>
+<li><strong>二维卷积层 <code>nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0)</code></strong>：
+<ul>
+<li><code>in_channels</code> (<span class="math-inline" data-tex="C_{\text{in}}">\(C_{\text{in}}\)</span>)：输入通道数（单通道电镜灰度图为 1，RGB 彩色金相图为 3，中间层则为上一层输出的特征图数目）；</li>
+<li><code>out_channels</code> (<span class="math-inline" data-tex="C_{\text{out}}">\(C_{\text{out}}\)</span>)：并行学习的卷积核个数，每个卷积核生成一张二维<strong>特征图（Feature Map）</strong>；</li>
+<li><code>padding</code> (<span class="math-inline" data-tex="p">\(p\)</span>)：在图像四周补零的圈数。当 <code>kernel_size=3, stride=1, padding=1</code> 时，卷积前后特征图的高宽保持不变（称为 <em>same padding</em>）；</li>
+<li>通用输出高宽公式：
+<div class="math-block" data-tex="H_{\text{out}} = \left\lfloor \frac{H_{\text{in}} + 2p - k}{s} \right\rfloor + 1">\[H_{\text{out}} = \left\lfloor \frac{H_{\text{in}} + 2p - k}{s} \right\rfloor + 1\]</div></li>
+</ul>
+</li>
+<li><strong>空间下采样层 <code>nn.MaxPool2d(kernel_size=2, stride=2)</code></strong>：
+<ul>
+<li>在每个 <span class="math-inline" data-tex="2\times 2">\(2\times 2\)</span> 局部窗口内取最大值，将特征图高宽减半（<span class="math-inline" data-tex="64\times 64 \to 32\times 32">\(64\times 64 \to 32\times 32\)</span>）。这既降低了计算量，又使后续卷积层在同样的 <span class="math-inline" data-tex="3\times 3">\(3\times 3\)</span> 窗口下能够覆盖更大物理尺度的微结构区域（扩大<strong>感受野 Receptive Field</strong>），并对微小局部形变保持鲁棒。</li>
+</ul>
+</li>
+<li><strong>全局自适应平均池化 <code>nn.AdaptiveAvgPool2d((1, 1))</code></strong>：
+<ul>
+<li>对最后一层每个通道的整张特征图求空间平均值，将形状从 <span class="math-inline" data-tex="(B, C, H&#x27;, W&#x27;)">\((B, C, H&#x27;, W&#x27;)\)</span> 直接浓缩为 <span class="math-inline" data-tex="(B, C, 1, 1)">\((B, C, 1, 1)\)</span>。由于空间求和/求平均对微结构特征出现的位置不敏感，这一步赋予了整个网络天然的<strong>全局平移不变性</strong>，同时省去了庞大的全连接展平层。</li>
+</ul>
+</li>
+</ol>
+<p>下面我们在一个张量上追踪各层输出的形状变化：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">x_demo</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>  <span class="c1"># Batch=4, Channel=1, 64x64 image</span>
+
+<span class="n">conv1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">pool1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">conv2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">gap</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">AdaptiveAvgPool2d</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+<span class="n">h1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">conv1</span><span class="p">(</span><span class="n">x_demo</span><span class="p">))</span>
+<span class="n">h1_pool</span> <span class="o">=</span> <span class="n">pool1</span><span class="p">(</span><span class="n">h1</span><span class="p">)</span>
+<span class="n">h2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">conv2</span><span class="p">(</span><span class="n">h1_pool</span><span class="p">))</span>
+<span class="n">h_gap</span> <span class="o">=</span> <span class="n">gap</span><span class="p">(</span><span class="n">h2</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Input shape:          &quot;</span><span class="p">,</span> <span class="n">x_demo</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;After Conv1 (3x3, p=1):&quot;</span><span class="p">,</span> <span class="n">h1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;After MaxPool (2x2):   &quot;</span><span class="p">,</span> <span class="n">h1_pool</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;After Conv2 (3x3, p=1):&quot;</span><span class="p">,</span> <span class="n">h2</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;After GlobalAvgPool:   &quot;</span><span class="p">,</span> <span class="n">h_gap</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-07b-1-计算卷积层参数量与输出空间尺寸">练习 07b-1：计算卷积层参数量与输出空间尺寸</h3>
+<p>假设输入为一批单通道 <span class="math-inline" data-tex="64\times 64">\(64\times 64\)</span> 显微图像张量，形状为 <code>(8, 1, 64, 64)</code>：</p>
+<ol>
+<li>创建一个卷积层 <code>nn.Conv2d(in_channels=1, out_channels=24, kernel_size=5, stride=2, padding=0)</code>；</li>
+<li>先根据公式手算该层输出张量的空间高宽 <span class="math-inline" data-tex="H_{\text{out}} \times W_{\text{out}}">\(H_{\text{out}} \times W_{\text{out}}\)</span> 以及可训练参数总数（每个卷积核有 <span class="math-inline" data-tex="C_{\text{in}} \times k_h \times k_w">\(C_{\text{in}} \times k_h \times k_w\)</span> 个权重加 1 个偏置），然后编写代码验证你的手算结果。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 07b-1：在此编写代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-四类典型材料金相-显微组织分类实战">4. 四类典型材料金相/显微组织分类实战</h2>
+<h3 id="4-1-构建合成材料微结构图像数据集">4.1 构建合成材料微结构图像数据集</h3>
+<p>为了让实验在本地与 Colab CPU 上都能在数秒内完成，我们基于物理数学模型合成一个包含 4 类典型材料微结构的基准数据集（共 600 张 <span class="math-inline" data-tex="48\times 48">\(48\times 48\)</span> 灰度显微图，每类 150 张，均带有随机取向、相位偏移与高斯电子噪声）：</p>
+<ol start="0">
+<li><strong>Spherical Precipitates（球状析出相）</strong>：模拟时效强化合金中的球形第二相颗粒（如 <span class="math-inline" data-tex="\gamma&#x27;">\(\gamma&#x27;\)</span> 相或球化渗碳体），随机分布在不同坐标与半径；</li>
+<li><strong>Lamellar Pearlite（层片状共析组织）</strong>：模拟共析钢中的珠光体或层状共晶组织，具有随机旋转取向角 <span class="math-inline" data-tex="\theta \in [0, \pi)">\(\theta \in [0, \pi)\)</span> 与不同层片间距；</li>
+<li><strong>Dendritic Solidification（枝晶凝固组织）</strong>：模拟铸造合金凝固过程中的正交一次与二次树枝晶干及分枝扰动；</li>
+<li><strong>Grain-Boundary Network（多晶晶界网络）</strong>：基于随机晶核 Voronoi 距离场生成的等轴晶粒与亮色晶界网络。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">CLASS_NAMES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;0: Spherical Precipitates&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;1: Lamellar Pearlite&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;2: Dendritic Solidification&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;3: Grain-Boundary Network&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_microstructure_dataset</span><span class="p">(</span><span class="n">n_per_class</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">):</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">yy</span><span class="p">,</span> <span class="n">xx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">size</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">size</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="n">size</span>
+    <span class="n">images</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_per_class</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Spherical precipitates</span>
+                <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">),</span> <span class="mf">0.18</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+                <span class="n">n_blobs</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_blobs</span><span class="p">):</span>
+                    <span class="n">cy</span><span class="p">,</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.88</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                    <span class="n">r</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.06</span><span class="p">,</span> <span class="mf">0.13</span><span class="p">)</span>
+                    <span class="n">img</span><span class="p">[(</span><span class="n">yy</span> <span class="o">-</span> <span class="n">cy</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">xx</span> <span class="o">-</span> <span class="n">cx</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">&lt;=</span> <span class="n">r</span> <span class="o">**</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+                <span class="n">img</span> <span class="o">=</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="bp">cls</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># Lamellar pearlite</span>
+                <span class="n">theta</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+                <span class="n">freq</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">)</span>
+                <span class="n">phase</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+                <span class="n">coord</span> <span class="o">=</span> <span class="n">xx</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="n">yy</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+                <span class="n">warp</span> <span class="o">=</span> <span class="mf">0.03</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span> <span class="o">-</span><span class="n">xx</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="n">yy</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span> <span class="o">*</span> <span class="mf">2.0</span><span class="p">)</span>
+                <span class="n">wave</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">freq</span> <span class="o">*</span> <span class="p">(</span><span class="n">coord</span> <span class="o">+</span> <span class="n">warp</span><span class="p">)</span> <span class="o">+</span> <span class="n">phase</span><span class="p">)</span>
+                <span class="n">img</span> <span class="o">=</span> <span class="p">(</span><span class="n">wave</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.7</span> <span class="o">+</span> <span class="mf">0.15</span>
+                <span class="n">img</span> <span class="o">=</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.65</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="bp">cls</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># Dendritic solidification</span>
+                <span class="n">theta</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">6</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">3</span><span class="p">])</span> <span class="o">+</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+                <span class="n">u</span> <span class="o">=</span> <span class="p">(</span><span class="n">xx</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">yy</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">xx</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">yy</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+                <span class="n">trunk1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">u</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.004</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.6</span> <span class="o">+</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">7.0</span> <span class="o">*</span> <span class="n">v</span><span class="p">))</span>
+                <span class="n">trunk2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">v</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.004</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.6</span> <span class="o">+</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">7.0</span> <span class="o">*</span> <span class="n">u</span><span class="p">))</span>
+                <span class="n">sec_arms</span> <span class="o">=</span> <span class="mf">0.45</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">5.0</span> <span class="o">*</span> <span class="n">u</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.08</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">v</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.06</span><span class="p">)</span>
+                <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">0.15</span> <span class="o">+</span> <span class="mf">0.75</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">trunk1</span><span class="p">,</span> <span class="n">trunk2</span><span class="p">),</span> <span class="n">sec_arms</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+                <span class="n">img</span> <span class="o">=</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># Grain-boundary network (Voronoi ridges)</span>
+                <span class="n">n_seeds</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+                <span class="n">pts</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_seeds</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+                <span class="n">dists</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">yy</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">pts</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">xx</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">pts</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">sorted_d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">dists</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">ridge</span> <span class="o">=</span> <span class="n">sorted_d</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">sorted_d</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span>
+                <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">ridge</span> <span class="o">/</span> <span class="mf">0.022</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.75</span> <span class="o">+</span> <span class="mf">0.15</span>
+
+            <span class="n">noise</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">img</span> <span class="o">+</span> <span class="n">noise</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+            <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+    <span class="n">X_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>  <span class="c1"># (N, 1, H, W)</span>
+    <span class="n">y_lbl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">X_img</span><span class="p">,</span> <span class="n">y_lbl</span>
+
+<span class="n">X_img</span><span class="p">,</span> <span class="n">y_lbl</span> <span class="o">=</span> <span class="n">generate_microstructure_dataset</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dataset X shape:&quot;</span><span class="p">,</span> <span class="n">X_img</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s2">&quot;| y shape:&quot;</span><span class="p">,</span> <span class="n">y_lbl</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mf">3.2</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">cls_idx</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">axes</span><span class="p">):</span>
+    <span class="n">sample_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">y_lbl</span> <span class="o">==</span> <span class="n">cls_idx</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">X_img</span><span class="p">[</span><span class="n">sample_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">CLASS_NAMES</span><span class="p">[</span><span class="n">cls_idx</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mf">9.5</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Synthetic Metallographic / SEM Microstructure Dataset (4 Classes)&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.02</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="4-2-划分数据集并对比展平-mlp-与-cnn">4.2 划分数据集并对比展平 MLP 与 CNN</h3>
+<p>我们将 600 张微结构图像按分层抽样（<code>stratify=y_lbl</code>）划分为训练集（384 张）、验证集（96 张）与独立测试集（120 张）。</p>
+<p>为了直观验证卷积归纳偏置的威力，我们在同一份数据上对比两个模型：</p>
+<ol>
+<li><strong>展平多层感知机 <code>FlattenedMLP</code></strong>：将 <span class="math-inline" data-tex="48\times 48 = 2304">\(48\times 48 = 2304\)</span> 个像素直接展平后送入两层全连接网络（含约 15 万个参数）；</li>
+<li><strong>卷积神经网络 <code>MicrostructureCNN</code></strong>：由三层 <span class="math-inline" data-tex="3\times 3">\(3\times 3\)</span> 卷积 + ReLU + 最大池化/全局平均池化组成（仅含约 1.4 万个参数，不到 MLP 的十分之一）。</li>
+</ol>
+<p>多分类任务使用交叉熵损失函数 <code>nn.CrossEntropyLoss()</code>，模型输出层维度为类别数 4（对应 4 个类别的未归一化 Logits）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">X_trval</span><span class="p">,</span> <span class="n">X_te</span><span class="p">,</span> <span class="n">y_trval</span><span class="p">,</span> <span class="n">y_te</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X_img</span><span class="p">,</span> <span class="n">y_lbl</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y_lbl</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span>
+<span class="p">)</span>
+<span class="n">X_tr</span><span class="p">,</span> <span class="n">X_va</span><span class="p">,</span> <span class="n">y_tr</span><span class="p">,</span> <span class="n">y_va</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X_trval</span><span class="p">,</span> <span class="n">y_trval</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y_trval</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span>
+<span class="p">)</span>
+
+<span class="n">Xtr_t</span><span class="p">,</span> <span class="n">Xva_t</span><span class="p">,</span> <span class="n">Xte_t</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">(</span><span class="n">X_tr</span><span class="p">,</span> <span class="n">X_va</span><span class="p">,</span> <span class="n">X_te</span><span class="p">))</span>
+<span class="n">ytr_t</span><span class="p">,</span> <span class="n">yva_t</span><span class="p">,</span> <span class="n">yte_t</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">(</span><span class="n">y_tr</span><span class="p">,</span> <span class="n">y_va</span><span class="p">,</span> <span class="n">y_te</span><span class="p">))</span>
+
+<span class="n">train_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">TensorDataset</span><span class="p">(</span><span class="n">Xtr_t</span><span class="p">,</span> <span class="n">ytr_t</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Train: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">Xtr_t</span><span class="p">)</span><span class="si">}</span><span class="s2"> | Valid: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">Xva_t</span><span class="p">)</span><span class="si">}</span><span class="s2"> | Test: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">Xte_t</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">FlattenedMLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img_size</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">hidden_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">n_classes</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">img_size</span> <span class="o">*</span> <span class="n">img_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MicrostructureCNN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_classes</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>                     <span class="c1"># 48x48 -&gt; 24x24</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>                     <span class="c1"># 24x24 -&gt; 12x12</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">AdaptiveAvgPool2d</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>        <span class="c1"># 12x12 -&gt; 1x1 (Global Average Pooling)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+
+
+<span class="n">mlp_img</span> <span class="o">=</span> <span class="n">FlattenedMLP</span><span class="p">()</span>
+<span class="n">cnn_img</span> <span class="o">=</span> <span class="n">MicrostructureCNN</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;FlattenedMLP 参数量:     &quot;</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">mlp_img</span><span class="o">.</span><span class="n">parameters</span><span class="p">()))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MicrostructureCNN 参数量:&quot;</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">cnn_img</span><span class="o">.</span><span class="n">parameters</span><span class="p">()))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">ce_loss</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_acc</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">preds</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">preds</span> <span class="o">==</span> <span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">train_classifier</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">loader</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">35</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">2e-3</span><span class="p">):</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;train_acc&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;valid_acc&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="n">best_acc</span><span class="p">,</span> <span class="n">best_state</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">):</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">xb</span><span class="p">,</span> <span class="n">yb</span> <span class="ow">in</span> <span class="n">loader</span><span class="p">:</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">ce_loss</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">xb</span><span class="p">),</span> <span class="n">yb</span><span class="p">)</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">tr_acc</span> <span class="o">=</span> <span class="n">evaluate_acc</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Xtr_t</span><span class="p">,</span> <span class="n">ytr_t</span><span class="p">)</span>
+        <span class="n">va_acc</span> <span class="o">=</span> <span class="n">evaluate_acc</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Xva_t</span><span class="p">,</span> <span class="n">yva_t</span><span class="p">)</span>
+        <span class="n">history</span><span class="p">[</span><span class="s2">&quot;train_acc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr_acc</span><span class="p">)</span>
+        <span class="n">history</span><span class="p">[</span><span class="s2">&quot;valid_acc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">va_acc</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">va_acc</span> <span class="o">&gt;</span> <span class="n">best_acc</span><span class="p">:</span>
+            <span class="n">best_acc</span> <span class="o">=</span> <span class="n">va_acc</span>
+            <span class="n">best_state</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">best_state</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">history</span>
+
+<span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">mlp_img</span> <span class="o">=</span> <span class="n">FlattenedMLP</span><span class="p">()</span>
+<span class="n">hist_mlp</span> <span class="o">=</span> <span class="n">train_classifier</span><span class="p">(</span><span class="n">mlp_img</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">35</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+
+<span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">cnn_img</span> <span class="o">=</span> <span class="n">MicrostructureCNN</span><span class="p">()</span>
+<span class="n">hist_cnn</span> <span class="o">=</span> <span class="n">train_classifier</span><span class="p">(</span><span class="n">cnn_img</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">35</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">3e-3</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;FlattenedMLP 测试集准确率:      </span><span class="si">{</span><span class="n">evaluate_acc</span><span class="p">(</span><span class="n">mlp_img</span><span class="p">,</span><span class="w"> </span><span class="n">Xte_t</span><span class="p">,</span><span class="w"> </span><span class="n">yte_t</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MicrostructureCNN 测试集准确率: </span><span class="si">{</span><span class="n">evaluate_acc</span><span class="p">(</span><span class="n">cnn_img</span><span class="p">,</span><span class="w"> </span><span class="n">Xte_t</span><span class="p">,</span><span class="w"> </span><span class="n">yte_t</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.2</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">hist_mlp</span><span class="p">[</span><span class="s2">&quot;valid_acc&quot;</span><span class="p">],</span> <span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Flattened MLP (Valid Acc)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">hist_cnn</span><span class="p">[</span><span class="s2">&quot;valid_acc&quot;</span><span class="p">],</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">2.2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Microstructure CNN (Valid Acc)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Epoch&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Validation Accuracy&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Microstructure Classification: CNN vs. Flattened MLP&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;lower right&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>对比结果非常鲜明：</p>
+<ul>
+<li><strong>展平 MLP</strong> 虽然拥有 15 万个参数，并能将训练集准确率刷到接近 100%，但在测试集上由于析出相位置、层片取向和晶界拓扑随样本不断平移变化，泛化准确率大幅跌落；</li>
+<li><strong><code>MicrostructureCNN</code></strong> 仅用 1.4 万个参数（不到 MLP 的 1/10），依靠局部卷积滤波器提取边缘、条纹周期和节点交叉特征，并通过全局平均池化消除了空间位置依赖，在测试集上轻松达到接近 98%–100% 的分类准确率。</li>
+</ul>
+<h3 id="4-3-物理合理的显微图像数据增强-data-augmentation">4.3 物理合理的显微图像数据增强（Data Augmentation）</h3>
+<p>在材料实验表征中，样品放入电镜样品台时的面内旋转角度（<span class="math-inline" data-tex="90^\circ, 180^\circ, 270^\circ">\(90^\circ, 180^\circ, 270^\circ\)</span>）或水平/垂直镜像翻转，完全不会改变材料的物相与热处理状态。因此，在训练时对每个小批量图像随机施加 90° 整数倍旋转（<code>torch.rot90</code>）与镜像翻转（<code>torch.flip</code>），相当于免费扩充了 8 倍符合物理对称性的训练样本。</p>
+<p>但需要特别警惕<strong>违背物理规律的增强操作</strong>：如果研究目标是定量测定晶粒尺寸或层片间距，且所有电镜图都在固定放大倍数（标尺 Scale Bar 固定）下拍摄，那么随意进行大比例随机缩放裁剪（Random Resized Crop）就会篡改真实的物理特征尺度，导致模型判断失真。</p>
+<h3 id="练习-07b-2-实现旋转与翻转不变的数据增强函数">练习 07b-2：实现旋转与翻转不变的数据增强函数</h3>
+<p>请编写一个函数 <code>augment_batch(xb)</code>，对输入形状为 <code>(B, C, H, W)</code> 的图像批次执行：</p>
+<ol>
+<li>随机抽取 <span class="math-inline" data-tex="k \in \{0, 1, 2, 3\}">\(k \in \{0, 1, 2, 3\}\)</span>，调用 <code>torch.rot90(xb, k=k, dims=(2, 3))</code> 做 <span class="math-inline" data-tex="k \times 90^\circ">\(k \times 90^\circ\)</span> 面内旋转；</li>
+<li>以 0.5 的概率调用 <code>torch.flip(xb, dims=(3,))</code> 做水平翻转。
+在一张层片状珠光体样本上调用该函数 4 次并并排可视化。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 07b-2：在此编写代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-打开-cnn-黑箱-特征图可视化与析出相定量统计">5. 打开 CNN 黑箱：特征图可视化与析出相定量统计</h2>
+<h3 id="5-1-卷积神经网络究竟学到了什么特征">5.1 卷积神经网络究竟学到了什么特征？</h3>
+<p>为了避免将 CNN 当作不可解释的黑箱，我们可以取四类显微组织各一张代表性样品，送入训练好的 <code>cnn_img</code> 第一层卷积 + ReLU，直接观察前 4 个通道激活的特征图（Feature Maps）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">cnn_img</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<span class="n">first_conv_relu</span> <span class="o">=</span> <span class="n">cnn_img</span><span class="o">.</span><span class="n">features</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># Conv2d(1, 16) + ReLU</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mf">8.2</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">cls_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+    <span class="n">sample_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">y_te</span> <span class="o">==</span> <span class="n">cls_idx</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">x_single</span> <span class="o">=</span> <span class="n">Xte_t</span><span class="p">[</span><span class="n">sample_idx</span> <span class="p">:</span> <span class="n">sample_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">fmap</span> <span class="o">=</span> <span class="n">first_conv_relu</span><span class="p">(</span><span class="n">x_single</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>  <span class="c1"># (16, 48, 48)</span>
+
+    <span class="n">axes</span><span class="p">[</span><span class="n">cls_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">x_single</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">cls_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Input Class </span><span class="si">{</span><span class="n">cls_idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">cls_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">cls_idx</span><span class="p">,</span> <span class="n">ch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">fmap</span><span class="p">[</span><span class="n">ch</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">cls_idx</span><span class="p">,</span> <span class="n">ch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Filter </span><span class="si">{</span><span class="n">ch</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">cls_idx</span><span class="p">,</span> <span class="n">ch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;First-Layer Learned Feature Maps Across 4 Microstructure Classes&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.01</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>从第一层特征图可以清楚地看到，CNN 自发分化出了职责不同的物理检测器：有的通道专门高亮亮色相的内部区域（球状析出相与枝晶干响应强烈），有的通道专门提取特定倾角的相界梯度（珠光体层片边缘与多晶晶界网络清晰浮现）。</p>
+<h3 id="5-2-从定性分类到定量金相-析出相面积分数-area-fraction-回归">5.2 从定性分类到定量金相：析出相面积分数（Area Fraction）回归</h3>
+<p>在体视学（Stereology）原理中，截面金相图上的第二相**面积分数（Area Fraction, <span class="math-inline" data-tex="A_A">\(A_A\)</span>）**是三维体积分数（Volume Fraction, <span class="math-inline" data-tex="V_V">\(V_V\)</span>）的无偏估计，直接决定弥散强化合金的 Orowan 强化增量。除定性分类外，只需将 <code>MicrostructureCNN</code> 最后一层的输出维度改为 1 并配合 <code>nn.MSELoss()</code>，网络就能直接从含噪电镜图像中端到端预测析出相面积分数。</p>
+<h3 id="练习-07b-3-用-cnn-端到端回归球状析出相面积分数">练习 07b-3：用 CNN 端到端回归球状析出相面积分数</h3>
+<p>下方代码已为你生成了 240 张具有不同颗粒密度与尺寸的球状析出相显微图 <code>X_af</code> 及其真实面积分数标签 <code>y_af</code>（取值约 <span class="math-inline" data-tex="0.05 \sim 0.45">\(0.05 \sim 0.45\)</span>）。请完成以下步骤：</p>
+<ol>
+<li>实例化一个 <code>MicrostructureCNN(n_classes=1)</code> 并将输出 <code>.squeeze(1)</code> 作为面积分数预测值；</li>
+<li>使用 Adam（<code>lr=3e-3</code>）与 <code>nn.MSELoss()</code> 在前 180 张训练集上训练 30 轮；</li>
+<li>在后 60 张测试集上计算预测面积分数的平均绝对误差（MAE），并绘制真实面积分数 vs. 预测面积分数的对角线散点图（Parity Plot）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 数据准备：生成 240 张球状析出相图像及其真实面积分数标签 y_af</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_precipitate_area_dataset</span><span class="p">(</span><span class="n">n_samples</span><span class="o">=</span><span class="mi">240</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">123</span><span class="p">):</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">yy</span><span class="p">,</span> <span class="n">xx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">size</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">size</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="n">size</span>
+    <span class="n">imgs</span><span class="p">,</span> <span class="n">area_fracs</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_samples</span><span class="p">):</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="n">n_blobs</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_blobs</span><span class="p">):</span>
+            <span class="n">cy</span><span class="p">,</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.14</span><span class="p">)</span>
+            <span class="n">mask</span> <span class="o">|=</span> <span class="p">((</span><span class="n">yy</span> <span class="o">-</span> <span class="n">cy</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">xx</span> <span class="o">-</span> <span class="n">cx</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">&lt;=</span> <span class="n">r</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">area_fracs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span> <span class="o">+</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">imgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">imgs</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">area_fracs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+<span class="n">X_af</span><span class="p">,</span> <span class="n">y_af</span> <span class="o">=</span> <span class="n">make_precipitate_area_dataset</span><span class="p">()</span>
+<span class="n">X_af_tr</span><span class="p">,</span> <span class="n">X_af_te</span> <span class="o">=</span> <span class="n">X_af</span><span class="p">[:</span><span class="mi">180</span><span class="p">],</span> <span class="n">X_af</span><span class="p">[</span><span class="mi">180</span><span class="p">:]</span>
+<span class="n">y_af_tr</span><span class="p">,</span> <span class="n">y_af_te</span> <span class="o">=</span> <span class="n">y_af</span><span class="p">[:</span><span class="mi">180</span><span class="p">],</span> <span class="n">y_af</span><span class="p">[</span><span class="mi">180</span><span class="p">:]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Area fraction range:&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">y_af</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">y_af</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="c1"># 练习 07b-3：在此编写训练与评估代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="本节小结">本节小结</h2>
+<table>
+<thead>
+<tr>
+<th>核心模块</th>
+<th>物理意义与 PyTorch 实践要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>局部连接与权重共享</strong></td>
+<td>同一卷积核在整张显微图上滑动内积，参数量比全连接层减少一个数量级以上，且保留二维拓扑邻域关系</td>
+</tr>
+<tr>
+<td><strong>多尺度层次特征</strong></td>
+<td>浅层卷积提取相界边缘与局部条纹取向，配合 <code>MaxPool2d</code> 逐层扩大感受野，深层捕捉晶粒拓扑与枝晶形貌</td>
+</tr>
+<tr>
+<td><strong>全局平均池化（GAP）</strong></td>
+<td><code>nn.AdaptiveAvgPool2d((1, 1))</code> 对空间坐标求平均，赋予金相分类与体分预测天然的全局平移不变性</td>
+</tr>
+<tr>
+<td><strong>物理合规的数据增强</strong></td>
+<td><span class="math-inline" data-tex="90^\circ">\(90^\circ\)</span> 旋转与镜像翻转符合各向同性截面金相的对称性；固定放大倍率下的尺度敏感任务慎用随机缩放裁剪</td>
+</tr>
+</tbody>
+</table>
+<p>掌握了处理网格图像的 CNN 后，下一讲（<code>08 - Sequence Models and Transformers</code>）我们将转向化学与材料中的另一类核心非表格数据——<strong>变长离散序列（SMILES 分子字符串与化学反应式）</strong>，学习循环神经网络（LSTM）与自注意力机制（Transformer）。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/07-neural-networks-and-cnns.html">返回模块 07</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/07-neural-networks-and-cnns/07a_neural_networks.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">07a · 神经网络基础：从单个神经元到多层感知机与不确定性估计</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/07-neural-networks-and-cnns/07c_exercises.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">07c · 第七讲基础巩固习题：PyTorch 神经网络与显微图像卷积</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l3"><a href="#本节大纲">本节大纲</a></li>      <li class="toc-l2"><a href="#1-为什么普通-mlp-不适合处理材料显微图像">1. 为什么普通 MLP 不适合处理材料显微图像？</a></li>      <li class="toc-l2"><a href="#2-二维卷积运算-从经典滤波到相界边缘提取">2. 二维卷积运算：从经典滤波到相界边缘提取</a></li>      <li class="toc-l2"><a href="#3-pytorch-cnn-核心组件与特征图尺寸推导">3. PyTorch CNN 核心组件与特征图尺寸推导</a></li>      <li class="toc-l3"><a href="#练习-07b-1-计算卷积层参数量与输出空间尺寸">练习 07b-1：计算卷积层参数量与输出空间尺寸</a></li>      <li class="toc-l2"><a href="#4-四类典型材料金相-显微组织分类实战">4. 四类典型材料金相/显微组织分类实战</a></li>      <li class="toc-l3"><a href="#4-1-构建合成材料微结构图像数据集">4.1 构建合成材料微结构图像数据集</a></li>      <li class="toc-l3"><a href="#4-2-划分数据集并对比展平-mlp-与-cnn">4.2 划分数据集并对比展平 MLP 与 CNN</a></li>      <li class="toc-l3"><a href="#4-3-物理合理的显微图像数据增强-data-augmentation">4.3 物理合理的显微图像数据增强（Data Augmentation）</a></li>      <li class="toc-l3"><a href="#练习-07b-2-实现旋转与翻转不变的数据增强函数">练习 07b-2：实现旋转与翻转不变的数据增强函数</a></li>      <li class="toc-l2"><a href="#5-打开-cnn-黑箱-特征图可视化与析出相定量统计">5. 打开 CNN 黑箱：特征图可视化与析出相定量统计</a></li>      <li class="toc-l3"><a href="#5-1-卷积神经网络究竟学到了什么特征">5.1 卷积神经网络究竟学到了什么特征？</a></li>      <li class="toc-l3"><a href="#5-2-从定性分类到定量金相-析出相面积分数-area-fraction-回归">5.2 从定性分类到定量金相：析出相面积分数（Area Fraction）回归</a></li>      <li class="toc-l3"><a href="#练习-07b-3-用-cnn-端到端回归球状析出相面积分数">练习 07b-3：用 CNN 端到端回归球状析出相面积分数</a></li>      <li class="toc-l2"><a href="#本节小结">本节小结</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

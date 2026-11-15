@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习 本套习题帮助你一步步巩固第三讲（03a–03c）中降维可视化、聚类分析与化学空间近邻检索的核心代码操作。每道题只需填写 2–6 行代码 ，并附有预期输出提示供你自查。完成后可对照 solutions/03 exercises solutions.ipyn" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习 | AI for Materials Science" />
+  <meta property="og:description" content="03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习 本套习题帮助你一步步巩固第三讲（03a–03c）中降维可视化、聚类分析与化学空间近邻检索的核心代码操作。每道题只需填写 2–6 行代码 ，并附有预期输出提示供你自查。完成后可对照 solutions/03 exercises solutions.ipyn" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/03-unsupervised-learning/03d_exercises.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/03-unsupervised-learning/03d_exercises.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+>📓 03a_dimensionality_reduction.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03b_clustering.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03b_clustering.html"
+>📓 03b_clustering.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+>📓 03c_pd_dimer_discovery.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03d_exercises.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03d_exercises.html"
+class="active">🏋️ 03d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/03-unsupervised-learning.html">模块 03：无监督学习：化学空间与发现</a> /  <a href="../../exercises.html">习题</a> /  <span>03d_exercises.ipynb</span>
+</div>
+<h1><span class="kind-badge kind-exercise">习题</span> 03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    习题文件：<code>03d_exercises.ipynb</code>（12.6 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03d_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/664d4a2c0de3-03d_exercises.ipynb" download="03d_exercises.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/03-unsupervised-learning/03_exercises_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/03-unsupervised-learning/03d_exercises.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>本套习题帮助你一步步巩固第三讲（<code>03a</code>–<code>03c</code>）中降维可视化、聚类分析与化学空间近邻检索的核心代码操作。每道题只需填写 <strong>2–6 行代码</strong>，并附有预期输出提示供你自查。完成后可对照 <code>solutions/03_exercises_solutions.ipynb</code> 查看完整解答。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="0-公共环境与分子特征准备">0. 公共环境与分子特征准备</h2>
+<p>为了保证每道习题都能在 1 秒内快速运行完毕，我们从 <code>data/solubility.csv</code>（AqSolDB）中固定抽取前 1,000 个分子作为练习子集 <code>df_sub</code>，并提取其 17 个物理化学描述符矩阵 <code>X_raw</code>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">DataStructs</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Descriptors</span><span class="p">,</span> <span class="n">Draw</span><span class="p">,</span> <span class="n">rdFingerprintGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.ML.Cluster</span><span class="w"> </span><span class="kn">import</span> <span class="n">Butina</span>
+
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+
+<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;data/solubility.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;../data/solubility.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;solubility.csv&quot;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">break</span>
+
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;SMILES&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">feature_cols</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;MolMR&quot;</span><span class="p">,</span> <span class="s2">&quot;HeavyAtomCount&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHAcceptors&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHDonors&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumHeteroatoms&quot;</span><span class="p">,</span> <span class="s2">&quot;NumRotatableBonds&quot;</span><span class="p">,</span> <span class="s2">&quot;NumValenceElectrons&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumSaturatedRings&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAliphaticRings&quot;</span><span class="p">,</span> <span class="s2">&quot;RingCount&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">,</span> <span class="s2">&quot;LabuteASA&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BalabanJ&quot;</span><span class="p">,</span> <span class="s2">&quot;BertzCT&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">df_sub</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">1000</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">X_raw</span> <span class="o">=</span> <span class="n">df_sub</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span>
+<span class="n">y_sub</span> <span class="o">=</span> <span class="n">df_sub</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;成功准备练习子集 df_sub: </span><span class="si">{</span><span class="n">X_raw</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第一部分-主成分分析-pca-与新分子投影-对应-03a">第一部分：主成分分析（PCA）与新分子投影（对应 <code>03a</code>）</h2>
+<h3 id="习题-1-特征标准化与-pca-解释方差比">🏋️ 习题 1：特征标准化与 PCA 解释方差比</h3>
+<ol>
+<li>使用 <code>StandardScaler()</code> 对 <code>X_raw</code> 进行标准化，得到 <code>X_scaled</code>；</li>
+<li>在 <code>X_scaled</code> 上拟合 <code>PCA()</code>（保留全部主成分），打印前 3 个主成分各自的解释方差比（<code>pca.explained_variance_ratio_[:3]</code>）以及前 3 个主成分的累计解释方差比。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：前 3 个主成分约 <code>[0.501, 0.163, 0.088]</code>，累计解释方差比约 <code>0.752</code></li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.decomposition</span><span class="w"> </span><span class="kn">import</span> <span class="n">PCA</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-2-找出对-pc1-和-pc2-贡献最大的前-3-个描述符">🏋️ 习题 2：找出对 PC1 和 PC2 贡献最大的前 3 个描述符</h3>
+<p>主成分载荷矩阵存储在 <code>pca.components_</code> 中（第 <code>0</code> 行对应 <code>PC1</code>，第 <code>1</code> 行对应 <code>PC2</code>）。</p>
+<ol>
+<li>将 <code>pca.components_[:2].T</code> 封装为以 <code>feature_cols</code> 为行索引、列名为 <code>[&quot;PC1&quot;, &quot;PC2&quot;]</code> 的 DataFrame <code>loadings</code>；</li>
+<li>分别打印 <code>loadings[&quot;PC1&quot;].abs().nlargest(3)</code> 和 <code>loadings[&quot;PC2&quot;].abs().nlargest(3)</code>，查看主导前两个主轴的物理化学量。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-3-绘制二维-pca-散点图并将新分子投影上去">🏋️ 习题 3：绘制二维 PCA 散点图并将新分子投影上去</h3>
+<p>下方代码已为你算好阿司匹林（<code>aspirin</code>）和并五苯（<code>pentacene</code>）两个新分子的 17 个描述符 DataFrame <code>new_mols_df</code>。</p>
+<ol>
+<li>用习题 1 中<strong>已经拟合好的 <code>scaler</code> 和 <code>pca</code></strong>（切勿重新 <code>fit</code>！），依次调用 <code>scaler.transform</code> 和 <code>pca.transform</code> 计算这两个新分子的主成分坐标 <code>new_pcs</code>；</li>
+<li>将背景数据集 <code>pcs[:, 0], pcs[:, 1]</code> 画成浅灰色散点，把两个新分子画成红色五角星（<code>marker=&quot;*&quot;, s=180, color=&quot;red&quot;</code>）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">new_smiles</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;aspirin&quot;</span><span class="p">:</span>   <span class="s2">&quot;CC(=O)Oc1ccccc1C(=O)O&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pentacene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">new_mols_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">[[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">Descriptors</span><span class="p">,</span> <span class="n">col</span><span class="p">)(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">s</span><span class="p">))</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">feature_cols</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">new_smiles</span><span class="o">.</span><span class="n">values</span><span class="p">()],</span>
+    <span class="n">columns</span><span class="o">=</span><span class="n">feature_cols</span><span class="p">,</span>
+    <span class="n">index</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">new_smiles</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+<span class="p">)</span>
+
+<span class="c1"># 在下方填写你的投影与绘图代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第二部分-k-means-轮廓系数与-butina-分子聚类-对应-03b">第二部分：K-means、轮廓系数与 Butina 分子聚类（对应 <code>03b</code>）</h2>
+<h3 id="习题-4-运行-k-means-并统计各簇分子数与平均溶解度">🏋️ 习题 4：运行 K-means 并统计各簇分子数与平均溶解度</h3>
+<ol>
+<li>在标准化特征 <code>X_scaled</code> 上运行 <code>KMeans(n_clusters=3, n_init=10, random_state=42)</code>，将预测出的簇标签存入 <code>df_sub[&quot;cluster&quot;]</code>；</li>
+<li>使用 <code>df_sub.groupby(&quot;cluster&quot;)[[&quot;MolWt&quot;, &quot;MolLogP&quot;, &quot;Solubility&quot;]].agg([&quot;count&quot;, &quot;mean&quot;])</code> 查看这 3 个簇的分子数量以及平均分子量、平均 <span class="math-inline" data-tex="\log P">\(\log P\)</span> 和平均溶解度。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.cluster</span><span class="w"> </span><span class="kn">import</span> <span class="n">KMeans</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-5-计算不同簇数-k-下的轮廓系数-silhouette-score">🏋️ 习题 5：计算不同簇数 <span class="math-inline" data-tex="k">\(k\)</span> 下的轮廓系数（Silhouette Score）</h3>
+<p>遍历 <code>k</code> 从 <code>2</code> 到 <code>6</code>，每次在 <code>X_scaled</code> 上拟合 <code>KMeans(n_clusters=k, n_init=10, random_state=42)</code>，调用 <code>silhouette_score(X_scaled, km.labels_)</code> 计算轮廓系数并打印，找出轮廓系数最高的 <code>k</code>。</p>
+<ul>
+<li><strong>预期输出</strong>：<code>k=2</code> 时轮廓系数最高（约 <code>0.335</code>）</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">silhouette_score</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-6-使用-rdkit-taylor-butina-算法对分子指纹聚类">🏋️ 习题 6：使用 RDKit Taylor-Butina 算法对分子指纹聚类</h3>
+<p>下方代码已为你计算好前 300 个分子的 Morgan 指纹列表 <code>fps_300</code> 以及两两 Tanimoto 距离下三角数组 <code>dists_300</code>。</p>
+<ol>
+<li>调用 <code>Butina.ClusterData(dists_300, len(fps_300), cutoff, isDistData=True)</code>（设距离阈值 <code>cutoff = 0.5</code>，即要求相似度 <span class="math-inline" data-tex="\ge 0.5">\(\ge 0.5\)</span>）得到聚类结果元组 <code>clusters</code>；</li>
+<li>打印生成的总簇数 <code>len(clusters)</code>，以及最大簇（<code>clusters[0]</code>）包含的分子个数，并用 <code>Draw.MolsToGridImage</code> 画出最大簇的前 4 个分子。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：共生成 <code>207</code> 个簇，第 1 大簇包含 <code>12</code> 个分子。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fp_gen</span> <span class="o">=</span> <span class="n">rdFingerprintGenerator</span><span class="o">.</span><span class="n">GetMorganGenerator</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fpSize</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+<span class="n">mols_300</span> <span class="o">=</span> <span class="n">df_sub</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">300</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="n">fps_300</span> <span class="o">=</span> <span class="p">[</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mols_300</span><span class="p">]</span>
+
+<span class="n">dists_300</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">fps_300</span><span class="p">)):</span>
+    <span class="n">sims</span> <span class="o">=</span> <span class="n">DataStructs</span><span class="o">.</span><span class="n">BulkTanimotoSimilarity</span><span class="p">(</span><span class="n">fps_300</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">fps_300</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">dists_300</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sims</span><span class="p">))</span>
+
+<span class="c1"># 在下方填写你的 Butina 聚类与可视化代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第三部分-按簇交叉验证与膦配体近邻查找-对应-03b-03c">第三部分：按簇交叉验证与膦配体近邻查找（对应 <code>03b</code> &amp; <code>03c</code>）</h2>
+<h3 id="习题-7-对比普通-kfold-与按簇分组-groupkfold-的回归误差">🏋️ 习题 7：对比普通 <code>KFold</code> 与按簇分组 <code>GroupKFold</code> 的回归误差</h3>
+<p>我们先用 <code>KMeans(n_clusters=10, n_init=10, random_state=42)</code> 将 <code>X_scaled</code> 分成 10 个簇，簇编号记为 <code>groups</code>。
+请使用 <code>cross_val_score</code>（评分标准 <code>scoring=&quot;neg_root_mean_squared_error&quot;</code>）分别计算 <code>RandomForestRegressor(n_estimators=50, random_state=42)</code> 在以下两种 5 折划分下的平均测试 RMSE：</p>
+<ol>
+<li>普通随机 5 折：<code>cv=KFold(n_splits=5, shuffle=True, random_state=42)</code>；</li>
+<li>按簇分组 5 折：<code>cv=list(GroupKFold(n_splits=5).split(X_raw, y_sub, groups))</code>。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：<code>Random 5-Fold RMSE = 0.870 | Cluster 5-Fold RMSE = 1.119</code></li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">KFold</span><span class="p">,</span> <span class="n">GroupKFold</span><span class="p">,</span> <span class="n">cross_val_score</span>
+
+<span class="n">groups</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)</span>
+<span class="n">rf</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-8-在-lkb-p-膦配体数据库中查找-16-号正例配体的最近邻">🏋️ 习题 8：在 LKB-P 膦配体数据库中查找 16 号正例配体的最近邻</h3>
+<p>下方代码已读入 <code>03c</code> 的 <code>LKB_P.csv</code>（以配体编号 <code>No.</code> 为行索引），并将 28 个 DFT 描述符标准化为 DataFrame <code>X_lkb</code>。
+请计算所有配体到 <strong>16 号正例配体（<code>X_lkb.loc[16]</code>）</strong> 的欧氏距离：</p>
+<ol>
+<li>使用 <code>dists = np.linalg.norm(X_lkb.values - X_lkb.loc[16].values, axis=1)</code> 计算距离，并封装成以 <code>X_lkb.index</code> 为索引的 <code>pd.Series</code>；</li>
+<li>找出距离最小的前 6 个配体编号（包含 16 号自身），打印它们的距离以及在 <code>ligands</code> 表中的 <code>Type</code> 和 <code>He8_steric</code>。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：除 16 号自身（距离 <code>0.0</code>）外，最近的配体编号依次为 <code>116, 17, 15, 53, 54</code>（注意其中 <code>54</code> 号恰好也是论文的 4 个已知正例之一！）。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;data/LKB_P.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;../data/LKB_P.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;LKB_P.csv&quot;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+        <span class="n">ligands</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">break</span>
+
+<span class="n">drop_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="s2">&quot;PC1&quot;</span><span class="p">,</span> <span class="s2">&quot;PC2&quot;</span><span class="p">,</span> <span class="s2">&quot;PC3&quot;</span><span class="p">,</span> <span class="s2">&quot;PC4&quot;</span><span class="p">]</span>
+<span class="n">X_lkb</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="n">StandardScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">ligands</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">drop_cols</span><span class="p">)),</span>
+    <span class="n">index</span><span class="o">=</span><span class="n">ligands</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/03-unsupervised-learning/03d_exercises.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/03-unsupervised-learning.html">返回模块 03</a>  <a class="btn btn-secondary" href="../../exercises.html">全部习题汇总</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">03c — 科研实战案例：用无监督共识聚类发现新型双核钯(I)催化剂</span>
+  </a>  <a class="pager-link pager-next" href="../../modules/04-bayesian-optimization.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">模块 04 · 贝叶斯优化与主动实验设计</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-公共环境与分子特征准备">0. 公共环境与分子特征准备</a></li>      <li class="toc-l2"><a href="#第一部分-主成分分析-pca-与新分子投影-对应-03a">第一部分：主成分分析（PCA）与新分子投影（对应 03a）</a></li>      <li class="toc-l3"><a href="#习题-1-特征标准化与-pca-解释方差比">🏋️ 习题 1：特征标准化与 PCA 解释方差比</a></li>      <li class="toc-l3"><a href="#习题-2-找出对-pc1-和-pc2-贡献最大的前-3-个描述符">🏋️ 习题 2：找出对 PC1 和 PC2 贡献最大的前 3 个描述符</a></li>      <li class="toc-l3"><a href="#习题-3-绘制二维-pca-散点图并将新分子投影上去">🏋️ 习题 3：绘制二维 PCA 散点图并将新分子投影上去</a></li>      <li class="toc-l2"><a href="#第二部分-k-means-轮廓系数与-butina-分子聚类-对应-03b">第二部分：K-means、轮廓系数与 Butina 分子聚类（对应 03b）</a></li>      <li class="toc-l3"><a href="#习题-4-运行-k-means-并统计各簇分子数与平均溶解度">🏋️ 习题 4：运行 K-means 并统计各簇分子数与平均溶解度</a></li>      <li class="toc-l3"><a href="#习题-5-计算不同簇数-k-下的轮廓系数-silhouette-score">🏋️ 习题 5：计算不同簇数 \(k\) 下的轮廓系数（Silhouette Score）</a></li>      <li class="toc-l3"><a href="#习题-6-使用-rdkit-taylor-butina-算法对分子指纹聚类">🏋️ 习题 6：使用 RDKit Taylor-Butina 算法对分子指纹聚类</a></li>      <li class="toc-l2"><a href="#第三部分-按簇交叉验证与膦配体近邻查找-对应-03b-03c">第三部分：按簇交叉验证与膦配体近邻查找（对应 03b &amp; 03c）</a></li>      <li class="toc-l3"><a href="#习题-7-对比普通-kfold-与按簇分组-groupkfold-的回归误差">🏋️ 习题 7：对比普通 KFold 与按簇分组 GroupKFold 的回归误差</a></li>      <li class="toc-l3"><a href="#习题-8-在-lkb-p-膦配体数据库中查找-16-号正例配体的最近邻">🏋️ 习题 8：在 LKB-P 膦配体数据库中查找 16 号正例配体的最近邻</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

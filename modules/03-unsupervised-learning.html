@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PCA/t-SNE 降维、K-means/DBSCAN/Butina 聚类与 Science 钯二聚体催化剂发现复现。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="模块 03：无监督学习：化学空间与发现 | AI for Materials Science" />
+  <meta property="og:description" content="PCA/t-SNE 降维、K-means/DBSCAN/Butina 聚类与 Science 钯二聚体催化剂发现复现。" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/modules/03-unsupervised-learning.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/modules/03-unsupervised-learning.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../assets/pygments.css" />
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../assets/search-index.js"></script>
+  <script defer src="../assets/app.js"></script>  <title>模块 03：无监督学习：化学空间与发现 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../index.html">课程主页</a>
+      <a href="../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../exercises.html">习题与答案</a>
+      <a href="../index.html#legend">学习指南</a>
+      <a href="../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../modules/03-unsupervised-learning.html"
+class="active">
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+>📓 03a_dimensionality_reduction.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/03-unsupervised-learning/03b_clustering.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03b_clustering.html"
+>📓 03b_clustering.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+>📓 03c_pd_dimer_discovery.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/03-unsupervised-learning/03d_exercises.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03d_exercises.html"
+>🏋️ 03d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb"><a href="../index.html">课程主页</a> / <span>模块 03</span></div>
+<div class="module-head">
+  <span class="module-num">Module 03</span>
+  <span class="status-badge status-done">已完成</span>
+  <span class="module-head-en">Unsupervised Learning &amp; Discovery</span>
+</div>
+<h1>无监督学习：化学空间与发现</h1><div class="progress-panel" data-progress-keys="notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html,notebooks/03-unsupervised-learning/03b_clustering.html,notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html,notebooks/03-unsupervised-learning/03d_exercises.html">
+  <div class="progress-head">
+    <strong>本模块学习进度</strong>
+    <span class="progress-count" data-progress-count>0 / 4</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+  <p class="hint-inline">进度只保存在你当前浏览器（localStorage），不会上传到任何服务器。</p>
+</div><h2 id="lectures">互动实战课件（Notebooks）</h2>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>课件名称</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+                 aria-label="把 03a_dimensionality_reduction.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"><strong>03a — 降维：把高维化学空间画在二维平面上（Dimensionality Reduction）</strong></a><br/>
+          <code>03a_dimensionality_reduction.ipynb</code></td>
+        <td>36.8 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/fd33d300e3cc-03a_dimensionality_reduction.ipynb" download="03a_dimensionality_reduction.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03a_dimensionality_reduction.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/03-unsupervised-learning/03b_clustering.html"
+                 aria-label="把 03b_clustering.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/03-unsupervised-learning/03b_clustering.html"><strong>03b — 聚类：让算法自动划分分子家族（Clustering）</strong></a><br/>
+          <code>03b_clustering.ipynb</code></td>
+        <td>31.6 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/03-unsupervised-learning/03b_clustering.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/93dd15381962-03b_clustering.ipynb" download="03b_clustering.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03b_clustering.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+                 aria-label="把 03c_pd_dimer_discovery.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"><strong>03c — 科研实战案例：用无监督共识聚类发现新型双核钯(I)催化剂</strong></a><br/>
+          <code>03c_pd_dimer_discovery.ipynb</code></td>
+        <td>29.6 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/a0ea33a013b9-03c_pd_dimer_discovery.ipynb" download="03c_pd_dimer_discovery.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03c_pd_dimer_discovery.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="exercises">课后习题（Exercises）<span class="kind-badge kind-exercise">习题</span></h2>
+<p class="hint-inline">建议在完成本模块全部课件后再做习题；参考答案默认折叠，请先独立完成。
+  也可以在<a href="../exercises.html">全部习题汇总页</a>统一查看各模块习题。</p>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/03-unsupervised-learning/03d_exercises.html"
+                 aria-label="把 03d_exercises.ipynb 标记为已完成" />
+        </td>
+        <td><a href="../notebooks/03-unsupervised-learning/03d_exercises.html"><strong>03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习</strong></a><br/>
+          <code>03d_exercises.ipynb</code></td>
+        <td>12.6 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/03-unsupervised-learning/03d_exercises.html">开始做题</a>
+          <a class="btn btn-secondary" href="../files/_shared/664d4a2c0de3-03d_exercises.ipynb" download="03d_exercises.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03d_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>          <a class="btn btn-secondary" href="../solutions/03-unsupervised-learning/03_exercises_solutions.html">参考答案</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="solutions">参考答案（Solutions）</h2>
+<p class="hint-inline">答案页默认折叠，请先独立完成练习再展开。</p>
+<ul class="solution-list">  <li><span class="kind-badge kind-exercise">习题答案</span>
+    <a href="../solutions/03-unsupervised-learning/03_exercises_solutions.html">✅ 03d — 第三讲基础习题参考答案（Solutions）</a>
+    (<code>03_exercises_solutions.ipynb</code> · 11.2 KB) —
+    <a href="../files/_shared/84c171aaacff-03_exercises_solutions.ipynb" download="03_exercises_solutions.ipynb">下载 .ipynb</a></li>  <li><span class="kind-badge kind-lecture">课件答案</span>
+    <a href="../solutions/03-unsupervised-learning/03_unsupervised_solutions.html">✅ 03 — 无监督学习：课堂练习参考答案（Solutions）</a>
+    (<code>03_unsupervised_solutions.ipynb</code> · 30.6 KB) —
+    <a href="../files/_shared/1b951b5fd6df-03_unsupervised_solutions.ipynb" download="03_unsupervised_solutions.ipynb">下载 .ipynb</a></li></ul><h2>配套数据集（Datasets）</h2>
+<ul>  <li><code>Dimer_LKB_P.csv</code> (39.0 KB) —
+    <a href="../files/_shared/b2fbfd0a8854-Dimer_LKB_P.csv" download="Dimer_LKB_P.csv">下载数据集</a></li>  <li><code>LKB_P.csv</code> (68.8 KB) —
+    <a href="../files/_shared/ca3d60de5735-LKB_P.csv" download="LKB_P.csv">下载数据集</a></li>  <li><code>solubility.csv</code> (2.1 MB) —
+    <a href="../files/_shared/f274636a3ed2-solubility.csv" download="solubility.csv">下载数据集</a></li>  <li><code>unknown_clusters.csv</code> (150.8 KB) —
+    <a href="../files/_shared/833b00a3d968-unknown_clusters.csv" download="unknown_clusters.csv">下载数据集</a></li>  <li><code>unknown_clusters_labels.csv</code> (10.3 KB) —
+    <a href="../files/_shared/73001f4320d5-unknown_clusters_labels.csv" download="unknown_clusters_labels.csv">下载数据集</a></li></ul>
+<h2>模块导读与教学设计</h2><div class="markdown-body"><h1>03 — 无监督学习：化学空间探索与催化剂发现（Unsupervised Learning）</h1>
+<p>在前两讲完成分子数据清洗与监督学习（回归/分类）建模后，本讲进入<strong>无监督学习（Unsupervised Learning）</strong>：当面对成千上万个没有实验标签（或仅有极少数已知正例）的分子时，如何直接从分子特征矩阵 <span class="math-inline" data-tex="X">\(X\)</span> 出发，绘制二维化学空间地图、自动划分分子结构家族、构建严格的模型外推测试集，以及在极端小样本条件下加速新催化剂发现。</p>
+<hr />
+<h2>课程模块结构</h2>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>Notebook</th>
+<th>核心内容</th>
+<th>建议课时</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>03a</strong></td>
+<td><code>03a_dimensionality_reduction.ipynb</code></td>
+<td><strong>降维与化学空间可视化</strong>：无监督学习概览、AqSolDB 万级分子库、PCA 几何直觉与标准化前提、17 个描述符的解释方差与载荷（Loadings）化学解读、新分子（有机半导体）投影与 17 维全空间最近邻适用域诊断、为什么稀疏分子指纹做线性 PCA 会失效、非线性流形降维 t-SNE 及其四大解读准则</td>
+<td>60–75 min</td>
+</tr>
+<tr>
+<td><strong>03b</strong></td>
+<td><code>03b_clustering.ipynb</code></td>
+<td><strong>聚类与严格数据划分</strong>：手写 K-means 拆解“分配—更新质心”迭代与局部最优陷阱、肘部法则（Inertia）与轮廓系数（Silhouette Score）、非凸流形与基于密度的聚类（DBSCAN）、高维指纹空间的 Tanimoto 距离分布与化学信息学标准 <strong>Taylor-Butina 聚类</strong>、基于聚类的分组交叉验证（Cluster Split / <code>GroupKFold</code>）</td>
+<td>60–75 min</td>
+</tr>
+<tr>
+<td><strong>03c</strong></td>
+<td><code>03c_pd_dimer_discovery.ipynb</code></td>
+<td><strong>科研实战案例：发现新型双核 Pd(I) 催化剂</strong>：复现 Hueffel et al. (<em>Science</em> 2021)——在仅有 4 个已知正例且常规 DFT 自由能判据失效的困境下，结合 LKB-P 配体知识库、1,000 次共识 K-means 打分（Consensus Clustering）与二聚体专用 DFT 描述符，从 348 个膦配体中靶向筛出 21 个候选并实验证实 8 个新型催化剂</td>
+<td>50–60 min</td>
+</tr>
+<tr>
+<td><strong>03d</strong></td>
+<td><code>03d_exercises.ipynb</code></td>
+<td><strong>第三讲基础巩固习题</strong>：涵盖标准化与 PCA 解释方差、主成分载荷排序、新分子 PCA 投影、K-means 聚类与轮廓系数、RDKit Taylor-Butina 指纹聚类、<code>GroupKFold</code> 按簇交叉验证及 LKB-P 配体近邻检索的 8 道基础练习</td>
+<td>30–45 min</td>
+</tr>
+<tr>
+<td><strong>参考答案</strong></td>
+<td><code>solutions/03_unsupervised_solutions.ipynb</code><br><code>solutions/03_exercises_solutions.ipynb</code></td>
+<td>分别汇总 <code>03a</code>–<code>03c</code> 随堂练习（9 道）与 <code>03d</code> 基础巩固习题（8 道）的完整可运行代码与物理化学解析</td>
+<td>课后自查</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>与前两讲的前后呼应</h2>
+<table>
+<thead>
+<tr>
+<th>前序模块埋下的问题</th>
+<th>本讲在何处深入解答</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>01c</code> / <code>02c</code>：描述符之间的高度共线性与特征重要性分摊</td>
+<td><strong><code>03a</code> 第 3 节</strong>：对 17 个描述符做 PCA，发现前 5 个主成分即可解释 &gt;90% 的方差，其中 <code>PC1</code>（占 54% 方差）集中概括了所有与“分子尺寸”相关的共线特征</td>
+</tr>
+<tr>
+<td><code>02c</code>：Yalkowsky 溶解度方程中疏水性（<span class="math-inline" data-tex="\log P">\(\log P\)</span>）的主导地位</td>
+<td><strong><code>03a</code> 第 3 节</strong>：PCA 在从未见过溶解度标签的情况下，提取出的第二主成分 <code>PC2</code>（亲油 vs 极性）与实测 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 呈现显著相关性（<span class="math-inline" data-tex="r = -0.49">\(r = -0.49\)</span>）</td>
+</tr>
+<tr>
+<td><code>01d</code> / <code>02b</code>：2D 描述符与二值指纹的表征盲区与适用域（AD）</td>
+<td><strong><code>03a</code> 第 4 &amp; 6 节</strong>：17 维距离定量揭示 <code>C8-BTBT</code>（<code>1.85</code>）和 <code>rubrene</code>（<code>2.19</code>）远超数据集 95% 分位数（<code>1.34</code>），而 <code>pentacene</code> 因数据集中存在同分异构体二苯并蒽距离仅为 <code>0.18</code>；t-SNE 揭示二值指纹被长烷基链主导而引发“性质悬崖（Activity Cliff）”</td>
+</tr>
+<tr>
+<td><code>02b</code>：随机交叉验证因混入同系物近亲而高估外推能力</td>
+<td><strong><code>03b</code> 第 5 节</strong>：用指纹聚类配合 <code>GroupKFold</code> 构建 <strong>Cluster Split</strong>，整簇留作测试时随机森林 RMSE 从随机 5 折的 <code>1.14 ± 0.03</code> 恶化至 <code>1.27 ± 0.15</code>，真实反映跨结构家族外推难度</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>数据集与运行环境说明</h2>
+<ul>
+<li><strong><code>data/</code> 目录文件</strong>：
+<ul>
+<li><code>solubility.csv</code>：AqSolDB 水溶解度数据集（9,982 条记录，含预计算的 17 个 RDKit 描述符），用于 <code>03a</code> 与 <code>03b</code>；</li>
+<li><code>unknown_clusters.csv</code> 与 <code>unknown_clusters_labels.csv</code>：900 个未知类别的生物/高分子化合物 SMILES 及真实类别标签，用于练习 <code>03b-2</code>；</li>
+<li><code>LKB_P.csv</code>（348 个膦配体的 28 个通用 DFT 描述符）与 <code>Dimer_LKB_P.csv</code>（66 个膦配体的 36 个二聚体专用 DFT 描述符），源自 Hueffel et al., <em>Science</em> 2021，用于 <code>03c</code>。</li>
+</ul>
+</li>
+<li><strong>运行耗时参考</strong>：<code>03a</code> 全文运行约 1 分钟（其中 9,480 个分子的 t-SNE 约 30–45 秒）；<code>03b</code> 约 30–40 秒；<code>03c</code> 约 1 分钟（包含两轮各 1,000 次 K-means 共识聚类）。</li>
+<li><strong>Windows 多线程线性代数库提示</strong>：若在部分同时安装了 MKL 与 OpenBLAS 的 Conda 环境（如 Windows 下的旧版环境）中对 <span class="math-inline" data-tex="9480 \times 2048">\(9480 \times 2048\)</span> 矩阵运行 <code>PCA</code> 时出现底层线程死锁，可在启动 Jupyter 前设置环境变量 <code>MKL_NUM_THREADS=1</code>。</li>
+</ul>
+</div><nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../notebooks/02-supervised-learning/02d_exercises.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">02d — 第二讲基础习题：回归、交叉验证与分类巩固练习</span>
+  </a>  <a class="pager-link pager-next" href="../notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">03a — 降维：把高维化学空间画在二维平面上（Dimensionality Reduction）</span>
+  </a></nav>  </main></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

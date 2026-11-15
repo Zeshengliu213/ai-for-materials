@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="01e — 第一讲基础习题：Python、Pandas、绘图与 RDKit 巩固练习 本套习题旨在帮助你快速巩固第一讲（01a–01d）的核心编程操作。每道题只需要填写 1–5 行代码 ，题目下方给出了预期输出提示，方便你随时自查。完成后可对照 solutions/01 exercises solutions.ipyn" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="01e — 第一讲基础习题：Python、Pandas、绘图与 RDKit 巩固练习 | AI for Materials Science" />
+  <meta property="og:description" content="01e — 第一讲基础习题：Python、Pandas、绘图与 RDKit 巩固练习 本套习题旨在帮助你快速巩固第一讲（01a–01d）的核心编程操作。每道题只需要填写 1–5 行代码 ，题目下方给出了预期输出提示，方便你随时自查。完成后可对照 solutions/01 exercises solutions.ipyn" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/01-basics/01e_exercises.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/01-basics/01e_exercises.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>01e — 第一讲基础习题：Python、Pandas、绘图与 RDKit 巩固练习 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01a_python_crash_course.html"
+           data-progress-mark="notebooks/01-basics/01a_python_crash_course.html"
+>📓 01a_python_crash_course.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01b_pandas.html"
+           data-progress-mark="notebooks/01-basics/01b_pandas.html"
+>📓 01b_pandas.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01c_plotting.html"
+           data-progress-mark="notebooks/01-basics/01c_plotting.html"
+>📓 01c_plotting.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01d_rdkit_basics.html"
+           data-progress-mark="notebooks/01-basics/01d_rdkit_basics.html"
+>📓 01d_rdkit_basics.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01e_exercises.html"
+           data-progress-mark="notebooks/01-basics/01e_exercises.html"
+class="active">🏋️ 01e_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/01-basics.html">模块 01：Python 与化学/材料数据基础</a> /  <a href="../../exercises.html">习题</a> /  <span>01e_exercises.ipynb</span>
+</div>
+<h1><span class="kind-badge kind-exercise">习题</span> 01e — 第一讲基础习题：Python、Pandas、绘图与 RDKit 巩固练习</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    习题文件：<code>01e_exercises.ipynb</code>（12.4 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/01%20-%20Basics/01e_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/e30059b5abd1-01e_exercises.ipynb" download="01e_exercises.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/01-basics/01_exercises_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/01-basics/01e_exercises.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>本套习题旨在帮助你快速巩固第一讲（<code>01a</code>–<code>01d</code>）的核心编程操作。每道题只需要填写 <strong>1–5 行代码</strong>，题目下方给出了预期输出提示，方便你随时自查。完成后可对照 <code>solutions/01_exercises_solutions.ipynb</code> 查看完整参考答案。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第一部分-python-基础语法-对应-01a">第一部分：Python 基础语法（对应 <code>01a</code>）</h2>
+<h3 id="习题-1-变量与算术运算-带隙与吸收波长换算">🏋️ 习题 1：变量与算术运算（带隙与吸收波长换算）</h3>
+<p>半导体材料的光学带隙 <span class="math-inline" data-tex="E_g">\(E_g\)</span>（单位：<span class="math-inline" data-tex="\text{eV}">\(\text{eV}\)</span>）与吸收截止波长 <span class="math-inline" data-tex="\lambda">\(\lambda\)</span>（单位：<span class="math-inline" data-tex="\text{nm}">\(\text{nm}\)</span>）满足换算关系：
+<div class="math-block" data-tex="\lambda\ (\text{nm}) = \frac{1240}{E_g\ (\text{eV})}">\[\lambda\ (\text{nm}) = \frac{1240}{E_g\ (\text{eV})}\]</div>
+已知某钙钛矿光伏薄膜的带隙 <code>bandgap_ev = 1.55</code>，请计算其吸收截止波长并赋值给变量 <code>wavelength_nm</code>，然后用 f-string 打印结果（保留 1 位小数）。</p>
+<ul>
+<li><strong>预期输出</strong>：<code>吸收截止波长: 800.0 nm</code></li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">bandgap_ev</span> <span class="o">=</span> <span class="mf">1.55</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-2-列表索引-切片与内置统计函数">🏋️ 习题 2：列表索引、切片与内置统计函数</h3>
+<p>某课题组制备了 5 个同批次有机太阳能电池器件，测得的光电转换效率（PCE，单位 %）保存在列表 <code>pce_list</code> 中。请依次计算并打印：</p>
+<ol>
+<li>前 3 个器件的效率子列表 <code>first_three</code>（使用切片 <code>[:3]</code>）；</li>
+<li>5 个器件中的最高效率 <code>max_pce</code>（使用 <code>max()</code>）；</li>
+<li>5 个器件的平均效率 <code>mean_pce</code>（使用 <code>sum()</code> 和 <code>len()</code>）。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：前三个 <code>[16.2, 16.8, 15.9]</code>，最高 <code>17.1</code>，平均 <code>16.5</code></li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">pce_list</span> <span class="o">=</span> <span class="p">[</span><span class="mf">16.2</span><span class="p">,</span> <span class="mf">16.8</span><span class="p">,</span> <span class="mf">15.9</span><span class="p">,</span> <span class="mf">17.1</span><span class="p">,</span> <span class="mf">16.5</span><span class="p">]</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-3-字典操作与列表推导式">🏋️ 习题 3：字典操作与列表推导式</h3>
+<p>下方字典 <code>mol_weights</code> 记录了几种稠环芳烃的分子量（g/mol）：</p>
+<ol>
+<li>向字典中新增一个键值对：<code>&quot;pyrene&quot;: 202.25</code>；</li>
+<li>使用<strong>列表推导式</strong>（或 <code>for</code> 循环），找出字典中所有<strong>分子量大于 150</strong> 的分子名称，存入列表 <code>heavy_mols</code> 并打印。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：<code>['anthracene', 'pentacene', 'pyrene']</code></li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">mol_weights</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;benzene&quot;</span><span class="p">:</span> <span class="mf">78.11</span><span class="p">,</span>
+    <span class="s2">&quot;naphthalene&quot;</span><span class="p">:</span> <span class="mf">128.17</span><span class="p">,</span>
+    <span class="s2">&quot;anthracene&quot;</span><span class="p">:</span> <span class="mf">178.23</span><span class="p">,</span>
+    <span class="s2">&quot;pentacene&quot;</span><span class="p">:</span> <span class="mf">278.35</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-4-编写函数与条件分支-if-elif-else">🏋️ 习题 4：编写函数与条件分支（<code>if / elif / else</code>）</h3>
+<p>请补全函数 <code>classify_solubility(logS)</code>，根据输入的水溶解度对数值 <code>logS</code> 返回对应的溶解度等级字符串：</p>
+<ul>
+<li>若 <code>logS &gt;= -2.0</code>，返回 <code>&quot;Soluble&quot;</code>；</li>
+<li>若 <code>-4.0 &lt;= logS &lt; -2.0</code>，返回 <code>&quot;Slightly Soluble&quot;</code>；</li>
+<li>若 <code>logS &lt; -4.0</code>，返回 <code>&quot;Insoluble&quot;</code>。</li>
+</ul>
+<p>补全后运行单元格，查看对 <code>[-0.8, -3.1, -5.6]</code> 的分类结果。</p>
+<ul>
+<li><strong>预期输出</strong>：<code>['Soluble', 'Slightly Soluble', 'Insoluble']</code></li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">classify_solubility</span><span class="p">(</span><span class="n">logS</span><span class="p">):</span>
+    <span class="c1"># 在下方补全函数逻辑：</span>
+    <span class="k">pass</span>
+
+<span class="n">test_values</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.8</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.1</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.6</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">classify_solubility</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">test_values</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第二部分-numpy-与-pandas-数据处理-对应-01b">第二部分：NumPy 与 Pandas 数据处理（对应 <code>01b</code>）</h2>
+<h3 id="习题-5-numpy-数组向量化运算">🏋️ 习题 5：NumPy 数组向量化运算</h3>
+<p>已知 5 个溶液样品的实测摩尔浓度（单位为毫摩尔每升，<span class="math-inline" data-tex="\text{mmol/L}">\(\text{mmol/L}\)</span>）保存在 NumPy 数组 <code>conc_mM</code> 中。请<strong>不要使用 <code>for</code> 循环</strong>，直接利用 NumPy 向量化运算：</p>
+<ol>
+<li>将单位换算为摩尔每升（<span class="math-inline" data-tex="\text{mol/L}">\(\text{mol/L}\)</span>，即除以 <code>1000</code>），存入 <code>conc_M</code>；</li>
+<li>用 <code>np.log10()</code> 计算对应的对数浓度 <code>logS</code>，四舍五入保留 2 位小数并打印。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：<code>[-3.3  -2.92 -2.6  -2.3  -2.  ]</code></li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">conc_mM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">])</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-6-pandas-多条件筛选与排序">🏋️ 习题 6：Pandas 多条件筛选与排序</h3>
+<p>下方代码已为你读入 ESOL 数据集 <code>df</code>（包含 <code>name</code>、<code>smiles</code>、<code>logS</code>、<code>MolWt</code>、<code>MolLogP</code>、<code>NumAromaticRings</code> 六列）。
+请从 <code>df</code> 中筛选出同时满足以下两个条件的分子：</p>
+<ol>
+<li>芳香环数量 <code>NumAromaticRings == 2</code>；</li>
+<li>实测水溶解度 <code>logS &gt; -2.0</code>。</li>
+</ol>
+<p>将筛选结果按 <code>logS</code> <strong>从高到低</strong>排序（<code>ascending=False</code>），打印满足条件的分子总数，并显示前 5 行。</p>
+<ul>
+<li><strong>预期输出</strong>：共 <code>15</code> 个分子，排第一的是 <code>N,N-dimethyl-4-(4-pyridinyl)aniline</code> 或 <code>quinoxaline</code> 等高水溶性双芳环分子（<code>logS</code> 最高为 <code>-0.80</code>）。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Descriptors</span>
+
+<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/esol.csv&quot;</span><span class="p">),</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;../01 - Basics/data/esol.csv&quot;</span><span class="p">)]:</span>
+    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">break</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+    <span class="s2">&quot;Compound ID&quot;</span><span class="p">:</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;measured log solubility in mols per litre&quot;</span><span class="p">:</span> <span class="s2">&quot;logS&quot;</span><span class="p">,</span>
+<span class="p">})[[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;smiles&quot;</span><span class="p">,</span> <span class="s2">&quot;logS&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">mols</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolWt&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">Descriptors</span><span class="o">.</span><span class="n">MolWt</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mols</span><span class="p">]</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">Descriptors</span><span class="o">.</span><span class="n">MolLogP</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mols</span><span class="p">]</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">Descriptors</span><span class="o">.</span><span class="n">NumAromaticRings</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mols</span><span class="p">]</span>
+
+<span class="c1"># 在下方填写你的筛选与排序代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-7-pandas-分组聚合-groupby">🏋️ 习题 7：Pandas 分组聚合（<code>groupby</code>）</h3>
+<p>使用上一题的 <code>df</code>，按芳香环数量 <code>NumAromaticRings</code> 进行分组（<code>df.groupby(&quot;NumAromaticRings&quot;)[&quot;logS&quot;]</code>），使用 <code>.agg([&quot;count&quot;, &quot;mean&quot;])</code> 统计每种芳香环数量下的<strong>分子个数</strong>与<strong>平均溶解度</strong>（保留 2 位小数）。</p>
+<ul>
+<li><strong>思考</strong>：随着芳香环数量从 0 增加到 4 以上，平均水溶解度呈现什么趋势？</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第三部分-科研绘图与-rdkit-分子操作-对应-01c-01d">第三部分：科研绘图与 RDKit 分子操作（对应 <code>01c</code> &amp; <code>01d</code>）</h2>
+<h3 id="习题-8-使用-matplotlib-绘制并排子图-直方图-散点图">🏋️ 习题 8：使用 Matplotlib 绘制并排子图（直方图 + 散点图）</h3>
+<p>请使用 <code>fig, axes = plt.subplots(1, 2, figsize=(10, 4))</code> 创建左右两张子图：</p>
+<ol>
+<li>在左图 <code>axes[0]</code> 中画出 <code>df[&quot;MolWt&quot;]</code> 的分布直方图（<code>axes[0].hist(..., bins=25)</code>），横轴标签设为 <code>&quot;Molecular Weight (g/mol)&quot;</code>；</li>
+<li>在右图 <code>axes[1]</code> 中画出 <code>df[&quot;MolWt&quot;]</code>（横轴）对 <code>df[&quot;logS&quot;]</code>（纵轴）的散点图（<code>axes[1].scatter(..., s=10, alpha=0.5)</code>），并设置横纵轴标签。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="c1"># 在下方填写你的绘图代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-9-rdkit-分子解析与物理化学描述符计算">🏋️ 习题 9：RDKit 分子解析与物理化学描述符计算</h3>
+<p>解热镇痛药**对乙酰氨基酚（Paracetamol / 扑热息痛）**的 SMILES 为 <code>&quot;CC(=O)Nc1ccc(O)cc1&quot;</code>。</p>
+<ol>
+<li>用 <code>Chem.MolFromSmiles</code> 将其转换为 RDKit <code>Mol</code> 对象 <code>mol_para</code>；</li>
+<li>分别调用 <code>Descriptors.MolWt</code>、<code>Descriptors.MolLogP</code>、<code>Descriptors.NumHDonors</code> 和 <code>Descriptors.NumHAcceptors</code> 计算并打印它的分子量、<span class="math-inline" data-tex="\log P">\(\log P\)</span>、氢键给体数和氢键受体数；</li>
+<li>在单元格最后一行直接写 <code>mol_para</code> 显示其二维结构式。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：<code>MolWt = 151.16</code>，<code>MolLogP = 1.35</code>，<code>HBD = 2</code>，<code>HBA = 2</code></li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">para_smiles</span> <span class="o">=</span> <span class="s2">&quot;CC(=O)Nc1ccc(O)cc1&quot;</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-10-morgan-分子指纹与-tanimoto-相似度计算">🏋️ 习题 10：Morgan 分子指纹与 Tanimoto 相似度计算</h3>
+<p>下方给出了三个分子的 SMILES：苯酚（<code>phenol</code>）、对甲苯酚（<code>p_cresol</code>，比苯酚多一个甲基）和环己烷（<code>cyclohexane</code>，饱和脂肪环）。</p>
+<ol>
+<li>使用已创建的 <code>fp_gen</code>（<code>GetMorganGenerator(radius=2, fpSize=2048)</code>）调用 <code>fp_gen.GetFingerprint(mol)</code> 为三个分子生成指纹 <code>fp_phenol</code>、<code>fp_cresol</code>、<code>fp_cyclo</code>；</li>
+<li>调用 <code>DataStructs.TanimotoSimilarity(fp1, fp2)</code> 分别计算：
+<ul>
+<li>苯酚与对甲苯酚的相似度 <code>sim_1</code>；</li>
+<li>苯酚与环己烷的相似度 <code>sim_2</code>。</li>
+</ul>
+</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：<code>苯酚 vs 对甲苯酚: 0.429</code>，<code>苯酚 vs 环己烷: 0.000</code></li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataStructs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">rdFingerprintGenerator</span>
+
+<span class="n">mol_phenol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="s2">&quot;Oc1ccccc1&quot;</span><span class="p">)</span>
+<span class="n">mol_cresol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="s2">&quot;Cc1ccc(O)cc1&quot;</span><span class="p">)</span>
+<span class="n">mol_cyclo</span>  <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="s2">&quot;C1CCCCC1&quot;</span><span class="p">)</span>
+
+<span class="n">fp_gen</span> <span class="o">=</span> <span class="n">rdFingerprintGenerator</span><span class="o">.</span><span class="n">GetMorganGenerator</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fpSize</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/01-basics/01e_exercises.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/01-basics.html">返回模块 01</a>  <a class="btn btn-secondary" href="../../exercises.html">全部习题汇总</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/01-basics/01d_rdkit_basics.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">01d · 用 RDKit 处理分子结构与特征表示</span>
+  </a>  <a class="pager-link pager-next" href="../../modules/02-supervised-learning.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">模块 02 · 监督学习与模型评估防坑</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#第一部分-python-基础语法-对应-01a">第一部分：Python 基础语法（对应 01a）</a></li>      <li class="toc-l3"><a href="#习题-1-变量与算术运算-带隙与吸收波长换算">🏋️ 习题 1：变量与算术运算（带隙与吸收波长换算）</a></li>      <li class="toc-l3"><a href="#习题-2-列表索引-切片与内置统计函数">🏋️ 习题 2：列表索引、切片与内置统计函数</a></li>      <li class="toc-l3"><a href="#习题-3-字典操作与列表推导式">🏋️ 习题 3：字典操作与列表推导式</a></li>      <li class="toc-l3"><a href="#习题-4-编写函数与条件分支-if-elif-else">🏋️ 习题 4：编写函数与条件分支（if / elif / else）</a></li>      <li class="toc-l2"><a href="#第二部分-numpy-与-pandas-数据处理-对应-01b">第二部分：NumPy 与 Pandas 数据处理（对应 01b）</a></li>      <li class="toc-l3"><a href="#习题-5-numpy-数组向量化运算">🏋️ 习题 5：NumPy 数组向量化运算</a></li>      <li class="toc-l3"><a href="#习题-6-pandas-多条件筛选与排序">🏋️ 习题 6：Pandas 多条件筛选与排序</a></li>      <li class="toc-l3"><a href="#习题-7-pandas-分组聚合-groupby">🏋️ 习题 7：Pandas 分组聚合（groupby）</a></li>      <li class="toc-l2"><a href="#第三部分-科研绘图与-rdkit-分子操作-对应-01c-01d">第三部分：科研绘图与 RDKit 分子操作（对应 01c &amp; 01d）</a></li>      <li class="toc-l3"><a href="#习题-8-使用-matplotlib-绘制并排子图-直方图-散点图">🏋️ 习题 8：使用 Matplotlib 绘制并排子图（直方图 + 散点图）</a></li>      <li class="toc-l3"><a href="#习题-9-rdkit-分子解析与物理化学描述符计算">🏋️ 习题 9：RDKit 分子解析与物理化学描述符计算</a></li>      <li class="toc-l3"><a href="#习题-10-morgan-分子指纹与-tanimoto-相似度计算">🏋️ 习题 10：Morgan 分子指纹与 Tanimoto 相似度计算</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

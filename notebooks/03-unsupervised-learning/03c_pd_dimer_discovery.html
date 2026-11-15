@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 03c — 科研实战案例：用无监督共识聚类发现新型双核钯(I)催化剂 案例来源 ：Hueffel et al., &#34;Accelerated dinuclear palladium catalyst identification through unsupervised machine le" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="03c — 科研实战案例：用无监督共识聚类发现新型双核钯(I)催化剂 | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 03c — 科研实战案例：用无监督共识聚类发现新型双核钯(I)催化剂 案例来源 ：Hueffel et al., &#34;Accelerated dinuclear palladium catalyst identification through unsupervised machine le" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>03c — 科研实战案例：用无监督共识聚类发现新型双核钯(I)催化剂 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+>📓 03a_dimensionality_reduction.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03b_clustering.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03b_clustering.html"
+>📓 03b_clustering.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+class="active">📓 03c_pd_dimer_discovery.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03d_exercises.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03d_exercises.html"
+>🏋️ 03d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/03-unsupervised-learning.html">模块 03：无监督学习：化学空间与发现</a> /  <span>03c_pd_dimer_discovery.ipynb</span>
+</div>
+<h1>03c — 科研实战案例：用无监督共识聚类发现新型双核钯(I)催化剂</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>03c_pd_dimer_discovery.ipynb</code>（29.6 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03c_pd_dimer_discovery.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/a0ea33a013b9-03c_pd_dimer_discovery.ipynb" download="03c_pd_dimer_discovery.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/03-unsupervised-learning/03_unsupervised_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03c_pd_dimer_discovery.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>03c — 科研实战案例：用无监督共识聚类发现新型双核钯(I)催化剂</h1>
+<blockquote>
+<p><strong>案例来源</strong>：Hueffel et al., <em>&quot;Accelerated dinuclear palladium catalyst identification through unsupervised machine learning&quot;</em>, <strong>Science</strong> 374, 1134–1140 (2021)。</p>
+</blockquote>
+<p>在前面的学习中，我们已经习惯了拥有上千个带标签样本（如 ESOL 的 1,128 个分子、AqSolDB 的 9,480 个分子）的理想场景。但在真实的合成化学与新材料探索前沿，科学家更常面临的是<strong>极端小样本困境（Extreme Low-Data Regime）</strong>：</p>
+<ul>
+<li>文献中已知具有某种奇特催化活性或物相结构的<strong>正例只有寥寥 3–5 个</strong>；</li>
+<li>传统的量子化学（DFT）计算单点自由能无法解释为什么有些分子行、有些分子不行；</li>
+<li>样本量太少（4 个正例），任何监督学习分类器（随机森林、神经网络）都无法训练。</li>
+</ul>
+<p>本节将完整复现 Schoenebeck 课题组发表在 <em>Science</em> 上的经典工作：看他们如何仅凭 <strong>K-means 聚类 + 1000 次随机重启共识打分 + 两阶段领域专属 DFT 描述符</strong>，从 348 个候选膦配体中将实验合成范围精准缩小到 21 个，并最终在实验室合成出 <strong>8 个全新的空气稳定双核 Pd(I) 催化剂</strong>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;03 - Unsupervised Learning&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="0-环境准备">0. 环境准备</h2>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.cluster</span><span class="w"> </span><span class="kn">import</span> <span class="n">KMeans</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">silhouette_score</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span><span class="p">,</span> <span class="n">MinMaxScaler</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-科学问题背景-为什么常规理论与监督学习在这里双双失灵">1. 科学问题背景：为什么常规理论与监督学习在这里双双失灵？</h2>
+<p>钯（Pd）催化的交叉偶联反应（如 Suzuki 偶联、Buchwald–Hartwig 碳氮偶联）是现代药物合成与有机光电材料（如噻吩聚合物、BTBT 衍生物、三苯胺空穴传输材料）制备的核心反应。</p>
+<p>在催化循环中，钯催化剂究竟以什么活性物种形态（Speciation）存在，直接决定了反应活性与选择性：单核钯配合物可能发生配体解离、歧化，或者两个钯原子桥联形成<strong>双核二聚体（Dimer）</strong>：</p>
+<div align="center"><img src="../../files/03-unsupervised-learning/img/speciation.png" width="380"/></div>
+<p>研究团队关注的是一类极具应用价值的特殊物种——由两个碘原子桥联的双核一价钯配合物 <strong><span class="math-inline" data-tex="[\text{Pd}(\mu\text{-I})(\text{PR}_3)]_2">\([\text{Pd}(\mu\text{-I})(\text{PR}_3)]_2\)</span></strong>。这类 <span class="math-inline" data-tex="\text{Pd(I)}">\(\text{Pd(I)}\)</span> 二聚体不仅在空气中异常稳定（易于储存和称量），而且在许多偶联反应中展现出独特的催化活性。然而在当时，化学界<strong>一共只知道 4 种大位阻膦配体</strong>能稳定形成这种 <span class="math-inline" data-tex="\text{Pd(I)}">\(\text{Pd(I)}\)</span> 二聚体，绝大多数膦配体都只会停留在常规的 <span class="math-inline" data-tex="\text{Pd(0)} / \text{Pd(II)}">\(\text{Pd(0)} / \text{Pd(II)}\)</span> 路径：</p>
+<div align="center"><img src="../../files/03-unsupervised-learning/img/pd.png" width="420"/></div>
+<p>更棘手的是，当研究者尝试用传统的量子化学 DFT 计算二聚化反应吉布斯自由能 <span class="math-inline" data-tex="\Delta G^\circ">\(\Delta G^\circ\)</span> 来预测新配体时，发现热力学判据失灵了：例如著名的<strong>三环己基膦（<span class="math-inline" data-tex="\text{PCy}_3">\(\text{PCy}_3\)</span>）</strong>，其 DFT 计算出的二聚化自由能与那 4 个已知正例几乎完全处于同一水平，但在真实实验中却<strong>完全不形成</strong> <span class="math-inline" data-tex="\text{Pd(I)}">\(\text{Pd(I)}\)</span> 二聚体：</p>
+<div align="center"><img src="../../files/03-unsupervised-learning/img/PdDFT.png" width="380"/></div>
+<p><strong>核心挑战</strong>：面对包含 348 个商业可得或已知膦配体的候选库，在“只有 4 个正例、1 个明确反例（<span class="math-inline" data-tex="\text{PCy}_3">\(\text{PCy}_3\)</span>）、且单一热力学指标失效”的局面下，如何决定下一批去实验室合成并测试哪些配体？</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-膦配体知识库-lkb-p-与数据读取避坑">2. 膦配体知识库（LKB-P）与数据读取避坑</h2>
+<p>研究团队首先使用了物理有机化学中经典的<strong>膦配体知识库 LKB-P（Ligand Knowledge Base for Phosphorus donor ligands）</strong>。该数据库对 348 个膦配体在多种参考配合物环境（如与 <span class="math-inline" data-tex="\text{BH}_3">\(\text{BH}_3\)</span>、<span class="math-inline" data-tex="\text{AuCl}">\(\text{AuCl}\)</span>、<span class="math-inline" data-tex="\text{PdCl}_2">\(\text{PdCl}_2\)</span>、<span class="math-inline" data-tex="\text{PtCl}_2">\(\text{PtCl}_2\)</span> 配位）下进行了系统的 DFT 计算，提取出 <strong>28 个量化描述符</strong>，涵盖前线轨道能级（<code>E(HOMO)</code>, <code>E(LUMO)</code>）、质子亲和能（<code>PA</code>）、He8 空间位阻参数（<code>He8_steric</code>）以及配位后的键长、键角与 NBO 电荷等，并预先附带了前 4 个主成分（<code>PC1</code>–<code>PC4</code>）和配体结构大类（<code>Type</code>：如烷基膦 <code>R</code>、芳基膦 <code>Ar</code>、亚磷酸酯 <code>OR</code>/<code>OAr</code>、氨基膦 <code>NR2</code> 等）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">DATA_DIR</span> <span class="o">=</span> <span class="s2">&quot;data&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;LKB_P.csv&quot;</span><span class="p">)):</span>
+    <span class="n">DATA_DIR</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;LKB_P.csv&quot;</span><span class="p">)):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">google.colab</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;请上传 LKB_P.csv 和 Dimer_LKB_P.csv&quot;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;找不到 LKB_P.csv，请确保它位于 data/ 文件夹或当前目录下&quot;</span><span class="p">)</span>
+
+<span class="c1"># 关键细节：设置 index_col=0，将第一列配体编号 &quot;No.&quot;（从 1 开始）设为 DataFrame 的行索引（Index）</span>
+<span class="n">ligands</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;LKB_P.csv&quot;</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;成功读取 LKB-P 数据库: 共 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ligands</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个膦配体，</span><span class="si">{</span><span class="n">ligands</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> 列&quot;</span><span class="p">)</span>
+<span class="n">ligands</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">ligands</span><span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>在论文中，已知能形成 <span class="math-inline" data-tex="\text{Pd(I)}">\(\text{Pd(I)}\)</span> 二聚体的 <strong>4 个正例配体编号</strong>为 <code>[16, 41, 54, 113]</code>，已知不能形成二聚体的<strong>反例 <span class="math-inline" data-tex="\text{PCy}_3">\(\text{PCy}_3\)</span> 编号</strong>为 <code>[21]</code>：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">POSITIVE</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">41</span><span class="p">,</span> <span class="mi">54</span><span class="p">,</span> <span class="mi">113</span><span class="p">]</span>   <span class="c1"># 已知能形成 Pd(I) 二聚体的 4 个正例配体编号</span>
+<span class="n">NEGATIVE</span> <span class="o">=</span> <span class="p">[</span><span class="mi">21</span><span class="p">]</span>                <span class="c1"># 已知不形成二聚体的反例 PCy3 编号</span>
+
+<span class="n">ligands</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">POSITIVE</span> <span class="o">+</span> <span class="n">NEGATIVE</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="s2">&quot;E(HOMO)&quot;</span><span class="p">,</span> <span class="s2">&quot;He8_steric&quot;</span><span class="p">,</span> <span class="s2">&quot;PA&quot;</span><span class="p">]]</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><blockquote>
+<p><strong>数据处理避坑指南：配体编号（<code>.loc</code>）vs 行位置（<code>.iloc</code>）的“差一位”陷阱</strong>
+在第一讲 <code>01b</code> 中我们专门强调过 <code>df.loc</code>（按标签索引）和 <code>df.iloc</code>（按 0 起始的整数行号索引）的区别。<code>LKB_P.csv</code> 的第一列 <code>No.</code> 是从 <code>1</code> 开始的配体编号。如果读取 CSV 时忘记写 <code>index_col=0</code>，再直接用编号 <code>[16, 41, 54, 113]</code> 去切片，就会把“第 16 号配体”错当成“第 17 行（编号 17 的配体）”！这种“差一位（Off-by-one）”的静默错误在科研代码中极其常见——程序完全不会报错，但筛选出的分子名单会彻底偏离原论文。这里我们通过 <code>index_col=0</code> 并统一使用 <code>.loc</code> 严格按配体编号索引，从而保证后续每一步结果与 <em>Science</em> 原论文代码分毫不差。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-为什么只看二维-pca-图帮不上忙">3. 为什么只看二维 PCA 图帮不上忙？</h2>
+<p>拿到高维描述符后，最自然的想法是先像 <code>03a</code> 那样画一张二维 <code>(PC1, PC2)</code> 化学空间散点图，看看 4 个正例（黑圈）和反例 <span class="math-inline" data-tex="\text{PCy}_3">\(\text{PCy}_3\)</span>（红框）落在哪里：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">ligands</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;Type&quot;</span><span class="p">):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">group</span><span class="p">[</span><span class="s2">&quot;PC1&quot;</span><span class="p">],</span> <span class="n">group</span><span class="p">[</span><span class="s2">&quot;PC2&quot;</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+    <span class="n">ligands</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">POSITIVE</span><span class="p">,</span> <span class="s2">&quot;PC1&quot;</span><span class="p">],</span> <span class="n">ligands</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">POSITIVE</span><span class="p">,</span> <span class="s2">&quot;PC2&quot;</span><span class="p">],</span>
+    <span class="n">s</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">facecolors</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">linewidths</span><span class="o">=</span><span class="mf">2.2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Forms Pd(I) dimer (+)&quot;</span>
+<span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+    <span class="n">ligands</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">NEGATIVE</span><span class="p">,</span> <span class="s2">&quot;PC1&quot;</span><span class="p">],</span> <span class="n">ligands</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">NEGATIVE</span><span class="p">,</span> <span class="s2">&quot;PC2&quot;</span><span class="p">],</span>
+    <span class="n">s</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">facecolors</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">linewidths</span><span class="o">=</span><span class="mf">2.2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;PCy3: No dimer (-)&quot;</span>
+<span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;PC1&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;PC2&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;LKB-P Phosphine Ligands in 2D PCA Space&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>观察上面的 PCA 图，很快就会发现两个致命问题：</p>
+<ol>
+<li><strong>正反例混杂</strong>：反例 <span class="math-inline" data-tex="\text{PCy}_3">\(\text{PCy}_3\)</span>（红框）就紧挨着正例黑圈，在前两个主成分构成的平面上根本无法把它们区分开；</li>
+<li><strong>候选过多</strong>：4 个正例分布在烷基膦（<code>R</code>）区域的不同位置，周围密密麻麻围着上百个配体，没法靠肉眼在二维图上画圈筛选。</li>
+</ol>
+<p><strong>原因很容易理解</strong>：PCA 的前两个主成分只负责拉开整个数据库中差异最悬殊的大类（例如把右下角的亚磷酸酯 <code>OAr</code> 和左上角的烷基膦 <code>R</code> 拉开），而决定两个烷基膦“能不能形成 <span class="math-inline" data-tex="\text{Pd(I)}">\(\text{Pd(I)}\)</span> 二聚体”的微妙立体与电子协同效应，隐藏在 28 维全空间的细微组合中，在压缩到二维时被折叠丢失了。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-第一轮筛选-在-28-维空间中用共识聚类-consensus-k-means-锁定稳定近邻">4. 第一轮筛选：在 28 维空间中用共识聚类（Consensus K-means）锁定稳定近邻</h2>
+<p>既然二维投影丢失了关键细节，我们就应该直接在 <strong>28 维标准化描述符全空间</strong>里用聚类寻找与 4 个正例同属一簇的配体。</p>
+<h3 id="4-1-真实科研数据上的簇数-k-选择-当肘部与轮廓系数不再明显">4.1 真实科研数据上的簇数 <span class="math-inline" data-tex="k">\(k\)</span> 选择：当肘部与轮廓系数不再明显</h3>
+<p>我们先剔除类别标签列 <code>Type</code> 和现成的主成分列 <code>PC1</code>–<code>PC4</code>，将纯的 28 个 DFT 描述符做 <code>StandardScaler</code> 标准化，然后画出 <span class="math-inline" data-tex="k = 2, \dots, 14">\(k = 2, \dots, 14\)</span> 的 Inertia 和轮廓系数曲线：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">drop_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="s2">&quot;PC1&quot;</span><span class="p">,</span> <span class="s2">&quot;PC2&quot;</span><span class="p">,</span> <span class="s2">&quot;PC3&quot;</span><span class="p">,</span> <span class="s2">&quot;PC4&quot;</span><span class="p">]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="n">StandardScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">ligands</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">drop_cols</span><span class="p">)),</span>
+    <span class="n">index</span><span class="o">=</span><span class="n">ligands</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;第一轮用于聚类的 DFT 描述符维度: </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">ks</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+<span class="n">inertias</span><span class="p">,</span> <span class="n">silhouettes</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">:</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="n">inertias</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">inertia_</span><span class="p">)</span>
+    <span class="n">silhouettes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">silhouette_score</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">labels_</span><span class="p">))</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ks</span><span class="p">,</span> <span class="n">inertias</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Number of Clusters k&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Inertia on 28D LKB-P Descriptors&quot;</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ks</span><span class="p">,</span> <span class="n">silhouettes</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Number of Clusters k&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Silhouette Score&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>正如我们在 <code>03b</code> 中预告的那样：在真实的 348 个膦配体数据上，Inertia 曲线平滑下降，没有任何明显的“手肘”；轮廓系数整体偏低（<code>0.14 ~ 0.25</code>）。虽然 <span class="math-inline" data-tex="k=2">\(k=2\)</span> 时轮廓系数最高，但如果只分成 2 簇，正例所在的簇会包含近两百个配体，完全起不到缩小实验范围的作用。</p>
+<p>论文作者结合<strong>化学领域先验</strong>做出了选择：既然数据库中配体原本就按化学官能团分为 <strong>8 个结构大类（<code>Type</code>）</strong>，且 <span class="math-inline" data-tex="k = 5 \sim 10">\(k = 5 \sim 10\)</span> 之间的轮廓系数几乎持平，第一轮便选定 <strong><span class="math-inline" data-tex="k = 8">\(k = 8\)</span></strong>。</p>
+<h3 id="4-2-单次-k-means-的随机波动问题">4.2 单次 K-means 的随机波动问题</h3>
+<p>选定 <span class="math-inline" data-tex="k = 8">\(k = 8\)</span> 后，如果我们跑一次 K-means，把“与任意一个正例分在同一个簇”的配体全都捞出来，结果有多稳定？我们换 5 个不同的随机种子（<code>seed = 0, 1, 2, 3, 4</code>）试一试：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">members_with_refs</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">refs</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;运行一次 K-means，返回与参考正例 refs 落在同一个簇中的所有配体编号集合&quot;&quot;&quot;</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">ref_clusters</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">refs</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">labels</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">ref_clusters</span><span class="p">)])</span>
+
+<span class="k">for</span> <span class="n">seed</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+    <span class="n">members</span> <span class="o">=</span> <span class="n">members_with_refs</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">POSITIVE</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;seed = </span><span class="si">{</span><span class="n">seed</span><span class="si">}</span><span class="s2">: 共 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)</span><span class="si">:</span><span class="s2">3d</span><span class="si">}</span><span class="s2"> 个配体与正例同簇 | 反例 PCy3 (#21) 混入了吗？</span><span class="si">{</span><span class="mi">21</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">members</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>可以看到：由于 348 个配体在 28 维空间中并没有截然分开的边界，每次改变随机种子，簇边界就会发生轻微移动，导致与正例同簇的配体数量在 <strong>80 多个到 120 多个之间剧烈波动</strong>！显然，凭单次 K-means 的结果去决定花几个月合成哪些分子是不草率的。</p>
+<h3 id="4-3-化劣势为优势-运行-1-000-次-k-means-统计共识共聚频率-score">4.3 化劣势为优势：运行 1,000 次 K-means 统计共识共聚频率（Score）</h3>
+<p>既然单次 K-means 的簇边界存在随机扰动，论文作者提出了一个非常巧妙的**集成/共识聚类（Consensus Clustering）**思路：</p>
+<blockquote>
+<p>用 <strong>1,000 个不同的随机种子</strong>独立运行 1,000 次 K-means（每次都随机重排初始质心），统计每个候选配体在这 1,000 次划分中<strong>与 4 个已知正例分在同一个簇的频率（记为 <code>Score</code> <span class="math-inline" data-tex="\in [0, 1]">\(\in [0, 1]\)</span>）</strong>。</p>
+</blockquote>
+<ul>
+<li>如果一个配体的 <code>Score</code> 接近 <code>1.0</code>，说明无论初始质心怎么变、簇边界怎么切，它在 28 维空間里都与正例紧紧绑在一起（<strong>高置信度的真近邻</strong>）；</li>
+<li>如果一个配体只是偶然处在簇边界上，它在 1,000 次里只会偶尔与正例同簇，<code>Score</code> 自然会很低。</li>
+</ul>
+<p>下面运行这 1,000 次 K-means（约需 20–30 秒），看看全体配体的 <code>Score</code> 分布以及反例 <span class="math-inline" data-tex="\text{PCy}_3">\(\text{PCy}_3\)</span> 的得分：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">cluster_score</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">refs</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">n_runs</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;运行 n_runs 次不同随机种子的 K-means，统计每个样本与参考正例 refs 同簇的频率&quot;&quot;&quot;</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">ref_pos</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_indexer</span><span class="p">(</span><span class="n">refs</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">seed</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_runs</span><span class="p">):</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">ref_clusters</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">ref_pos</span><span class="p">])</span>
+        <span class="n">counts</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">ref_clusters</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">counts</span> <span class="o">/</span> <span class="n">n_runs</span>
+
+<span class="n">score</span> <span class="o">=</span> <span class="n">cluster_score</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">POSITIVE</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">n_runs</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">5.8</span><span class="p">,</span> <span class="mf">3.4</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">score</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">0.75</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Selection Threshold = 0.75&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Consensus Score (Fraction of 1,000 runs clustered with positives)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Number of Ligands&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;First-Round Consensus Clustering Score Distribution&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;4 个已知正例自身的 Score:&quot;</span><span class="p">,</span> <span class="n">score</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">POSITIVE</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;反例 PCy3 (#21) 的 Score:&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">score</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">21</span><span class="p">],</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>直方图呈现出非常漂亮的两极分化分布：绝大多数配体的 <code>Score</code> 要么接近 <code>0</code>（从不与正例同簇），要么接近 <code>1</code>（总是与正例同簇）。</p>
+<p>最关键的突破在于：<strong>此前二维 PCA 图和单一 DFT 自由能都无法排除的反例 <span class="math-inline" data-tex="\text{PCy}_3">\(\text{PCy}_3\)</span>，在 28 维空间的 1,000 次共识聚类中 <code>Score</code> 只有 <code>0.247</code></strong>！</p>
+<p>按照论文设定，第一轮保留 <code>Score &gt; 0.75</code> 的配体：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">THRESHOLD</span> <span class="o">=</span> <span class="mf">0.75</span>
+<span class="n">selected</span> <span class="o">=</span> <span class="n">score</span><span class="p">[</span><span class="n">score</span> <span class="o">&gt;</span> <span class="n">THRESHOLD</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;第一轮入选 (Score &gt; </span><span class="si">{</span><span class="n">THRESHOLD</span><span class="si">}</span><span class="s2">): 共 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">selected</span><span class="p">)</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ligands</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个配体 | PCy3 在内吗？</span><span class="si">{</span><span class="mi">21</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">selected</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">ligands</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">selected</span><span class="p">,</span> <span class="s2">&quot;Type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>第一轮筛选成功将 348 个候选配体浓缩到了 <strong>78 个</strong>（淘汰了近 80%），并且稳稳排除了反例 <span class="math-inline" data-tex="\text{PCy}_3">\(\text{PCy}_3\)</span>。同时可以看到，入选的 78 个配体虽然以烷基膦（<code>R</code>，48 个）为主，但也跨家族纳入了芳基膦（<code>Ar</code>，13 个）和氨基膦（<code>NR2</code>，14 个），打破了“只挑结构长相一样的配体”的传统思维局限。</p>
+<h3 id="练习-03c-1-第一轮筛选阈值-threshold-的敏感性分析">🏋️ 练习 03c-1：第一轮筛选阈值（Threshold）的敏感性分析</h3>
+<p>论文第一轮选择了 <code>THRESHOLD = 0.75</code>。</p>
+<ol>
+<li>请计算当阈值从 <code>0.05</code> 到 <code>0.95</code>（步长 <code>0.05</code>）变化时入选配体的数量，画出“入选配体数 vs 阈值”曲线，并在图上用竖虚线标出反例 <span class="math-inline" data-tex="\text{PCy}_3">\(\text{PCy}_3\)</span> 的得分位置（<code>score.loc[21]</code>）；</li>
+<li>分别打印阈值取 <code>0.5, 0.75, 0.9, 0.99</code> 时的入选配体数，体会为什么 <code>0.5 ~ 0.9</code> 之间结果相当稳健。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-第二轮精选-引入二聚体专用-dft-描述符-将候选集收敛至-21-个">5. 第二轮精选：引入二聚体专用 DFT 描述符，将候选集收敛至 21 个</h2>
+<p>对于有机合成实验室而言，78 个配体逐一合成并做单晶表征依然工作量太大。为什么第一轮没法筛得更少？</p>
+<p>因为第一轮使用的 LKB-P 数据库是<strong>通用单核配体描述符</strong>（描述的是配体本身或与单核金属配位时的平均性质），并不包含<strong>两个钯原子形成二聚体时的特异性空间拥挤与成键信息</strong>。</p>
+<p>于是，研究团队在第一轮缩小范围的基础上，针对其中的含碳膦配体（共 66 个，保存在 <code>Dimer_LKB_P.csv</code> 中）专门计算了一套包含 <strong>36 个二聚体专属 DFT 描述符</strong>的新特征集——包括 <span class="math-inline" data-tex="\text{Pd–Pd}">\(\text{Pd–Pd}\)</span> 键级、<span class="math-inline" data-tex="\text{Pd–I–Pd}">\(\text{Pd–I–Pd}\)</span> 桥角、二聚体解离能、单重态-三重态能隙以及二聚体中间体的 NBO 电荷分布等。</p>
+<p>第二轮按照论文设置：使用 <code>MinMaxScaler</code> 将 36 个二聚体描述符缩放到 <code>[0, 1]</code> 区间，设簇数 <span class="math-inline" data-tex="k = 6">\(k = 6\)</span>，再次运行 1,000 次 K-means，取 <code>Score &gt; 0.5</code> 的配体作为最终实验合成清单：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">dimers</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;Dimer_LKB_P.csv&quot;</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;第二轮二聚体专用数据库: 共 </span><span class="si">{</span><span class="n">dimers</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> 个配体，</span><span class="si">{</span><span class="n">dimers</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> 列&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;其中属于第一轮 78 个入选名单的有: </span><span class="si">{</span><span class="n">dimers</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">selected</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> 个&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;4 个正例是否全在表内？</span><span class="si">{</span><span class="nb">all</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">dimers</span><span class="o">.</span><span class="n">index</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">POSITIVE</span><span class="p">)</span><span class="si">}</span><span class="s2"> | PCy3 (#21) 是否在表内？</span><span class="si">{</span><span class="mi">21</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">dimers</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">drop_dimer</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="s2">&quot;PC1&quot;</span><span class="p">,</span> <span class="s2">&quot;PC2&quot;</span><span class="p">,</span> <span class="s2">&quot;PC3&quot;</span><span class="p">,</span> <span class="s2">&quot;PC4&quot;</span><span class="p">,</span> <span class="s2">&quot;PC1&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;PC2&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;PC3&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;PC4&#39;&quot;</span><span class="p">]</span>
+<span class="n">X_dimer</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="n">MinMaxScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">dimers</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">drop_dimer</span><span class="p">)),</span>
+    <span class="n">index</span><span class="o">=</span><span class="n">dimers</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;第二轮用于聚类的二聚体专用描述符维度: </span><span class="si">{</span><span class="n">X_dimer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">score_dimer</span> <span class="o">=</span> <span class="n">cluster_score</span><span class="p">(</span><span class="n">X_dimer</span><span class="p">,</span> <span class="n">POSITIVE</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">n_runs</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">candidates</span> <span class="o">=</span> <span class="n">score_dimer</span><span class="p">[</span><span class="n">score_dimer</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+<span class="n">new_candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">POSITIVE</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;第二轮 Score &gt; 0.5 入选总数: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个（含 4 个已知正例，全新候选配体 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">new_candidates</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个）&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;21 个全新候选配体的编号:&quot;</span><span class="p">,</span> <span class="n">new_candidates</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>经过两轮漏斗式无监督筛选，候选配体从最初的 <strong>348 个 → 第一轮 78 个 → 第二轮 21 个全新候选</strong>（仅占初始库的 6%），成功压缩到了一个博士生可以在短期内逐一合成验证的规模！</p>
+<h3 id="练习-03c-2-检验第二轮结果对簇数-k-的稳健性">🏋️ 练习 03c-2：检验第二轮结果对簇数 <span class="math-inline" data-tex="k">\(k\)</span> 的稳健性</h3>
+<p>在第二轮中，如果把簇数分别设为 <span class="math-inline" data-tex="k = 4, 6, 8, 10">\(k = 4, 6, 8, 10\)</span>（为节省时间可设 <code>n_runs=200</code>），统计 <code>Score &gt; 0.5</code> 的新候选配体数量，以及它们与上面 <span class="math-inline" data-tex="k=6">\(k=6\)</span> 选出的 21 个候选名单的重合个数。观察核心候选名单是否随 <span class="math-inline" data-tex="k">\(k\)</span> 剧烈变化。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-03c-3-对比-standardscaler-与-minmaxscaler-对聚类结果的影响">🏋️ 练习 03c-3：对比 <code>StandardScaler</code> 与 <code>MinMaxScaler</code> 对聚类结果的影响</h3>
+<p>论文第一轮使用了 <code>StandardScaler</code>（均值为 0、标准差为 1），第二轮使用了 <code>MinMaxScaler</code>（压缩到 <code>[0, 1]</code>）。</p>
+<ol>
+<li>请把第二轮的特征缩放也换成 <code>StandardScaler()</code>（设 <code>k=6, n_runs=200</code>），看看选出的新候选配体有几个？原来的 21 个候选是否全部保留了下来？</li>
+<li>思考：为什么在包含极端离群值的特征列上，<code>MinMaxScaler</code> 和 <code>StandardScaler</code> 会改变该特征在 K-means 欧氏距离中的话语权？</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [16] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="6-实验验证与方法论启示">6. 实验验证与方法论启示</h2>
+<p>研究团队在实验室中对第二轮筛出的候选配体进行了合成与反应测试，一举发现了 <strong>8 个此前从未报道过的新型 <span class="math-inline" data-tex="\text{Pd(I)}">\(\text{Pd(I)}\)</span> 二聚体配合物</strong>（将人类已知的该类活性催化剂数量直接扩充了两倍），并通过 X 射线单晶衍射确认了它们的晶体结构：</p>
+<div align="center"><img src="../../files/03-unsupervised-learning/img/exp_validation.png" width="650"/></div>
+<p>更令人振奋的是，这 8 个新发现的配体结构跨度极大：既有空间位阻比传统 <span class="math-inline" data-tex="\text{P}(t\text{-Bu})_3">\(\text{P}(t\text{-Bu})_3\)</span> 更小的配体，也有位阻更大的金刚烷基膦；既有含酮羰基的磷杂环，甚至还有<strong>二茂铁基膦（Ferrocenyl phosphine）</strong>——按传统金属有机化学家的经验直觉，这些配体原本根本不会被列入尝试名单。</p>
+<h3 id="从这项-science-工作中学到的四条材料信息学经验">从这项 <em>Science</em> 工作中学到的四条材料信息学经验</h3>
+<ol>
+<li><strong>小样本困境下，用“无监督近邻共识”替代监督学习</strong>：当正例只有 4 个时，强行训练分类器必然严重过拟合；把问题转化为“在高维物理化学特征空间里寻找与已知正例稳定聚在一起的邻居”，是破解极小样本材料发现的通用范式。</li>
+<li><strong>用集成思想（Consensus Clustering）消除算法随机性</strong>：单次 K-means 受初始质心影响很大，但重复 1,000 次统计共聚频率（<code>Score</code>），不仅消除了随机噪声，还自然给出了候选分子的优先级排序。</li>
+<li><strong>两阶段“粗筛 + 精筛”漏斗策略</strong>：第一轮用现成、廉价的通用描述符（LKB-P）快速砍掉 80% 不相干的分子；第二轮只对剩下的候选分子计算昂贵的领域专用 DFT 描述符（Dimer-LKB-P），兼顾了计算成本与物理分辨率。</li>
+<li><strong>机器学习不是取代实验，而是提高实验命中率</strong>：从 348 个配体缩小到 21 个，实验命中率达到约 40%（8 / 21），将原本大海捞针式的试错变成了高命中率的靶向合成。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="小结-第三讲-无监督学习-知识全景">小结：第三讲（无监督学习）知识全景</h2>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>核心方法</th>
+<th>解决的化学与材料问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>03a</code> 降维与可视化</strong></td>
+<td><code>PCA</code>（线性，保留全局方差与载荷解释）<br><code>t-SNE</code>（非线性，保留局部近邻岛屿）</td>
+<td>绘制高维化学空间地图、诊断冗余共线特征、定位新分子适用域、发现表征盲区与性质悬崖</td>
+</tr>
+<tr>
+<td><strong><code>03b</code> 聚类与数据划分</strong></td>
+<td><code>KMeans</code>、<code>DBSCAN</code>、<code>Butina</code> 球形排除聚类<br><code>GroupKFold</code> 按簇交叉验证</td>
+<td>自动划分分子结构家族、挑选高多样性代表分子、构建严格阻断同系物泄漏的外推评估集</td>
+</tr>
+<tr>
+<td><strong><code>03c</code> 催化剂发现案例</strong></td>
+<td>两阶段 DFT 描述符 + 1,000 次共识 K-means</td>
+<td>仅凭 4 个已知正例，从 348 个膦配体中靶向筛出 21 个候选并实验证实 8 个新型 <span class="math-inline" data-tex="\text{Pd(I)}">\(\text{Pd(I)}\)</span> 二聚体</td>
+</tr>
+</tbody>
+</table>
+<h3 id="下一讲预告">下一讲预告</h3>
+<p>在 <code>03c</code> 中，研究团队通过两轮无监督聚类筛出了 21 个候选配体，然后一次性去实验室做了测试。但在很多材料配方优化与合成条件探索（如钙钛矿组分比例、有机太阳能电池退火温度与添加剂浓度）中，<strong>实验是一轮一轮迭代进行的</strong>：每做完几个实验，我们就拿到了新的测量数据。</p>
+<p>如果每次实验都非常昂贵，模型能不能不仅给出预测值，还能同时给出<strong>预测的不确定度（Uncertainty）</strong>，从而智能地平衡“去把握最大的地方深挖（Exploitation）”与“去没探索过的未知区域探路（Exploration）”，告诉我们<strong>下一轮最值得做哪一个实验</strong>？</p>
+<p>这就是下一讲 <strong><code>04 - Bayesian Optimization</code>（高斯过程、贝叶斯优化与主动学习）</strong> 要解决的核心问题。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/03-unsupervised-learning.html">返回模块 03</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/03-unsupervised-learning/03b_clustering.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">03b — 聚类：让算法自动划分分子家族（Clustering）</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/03-unsupervised-learning/03d_exercises.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-环境准备">0. 环境准备</a></li>      <li class="toc-l2"><a href="#1-科学问题背景-为什么常规理论与监督学习在这里双双失灵">1. 科学问题背景：为什么常规理论与监督学习在这里双双失灵？</a></li>      <li class="toc-l2"><a href="#2-膦配体知识库-lkb-p-与数据读取避坑">2. 膦配体知识库（LKB-P）与数据读取避坑</a></li>      <li class="toc-l2"><a href="#3-为什么只看二维-pca-图帮不上忙">3. 为什么只看二维 PCA 图帮不上忙？</a></li>      <li class="toc-l2"><a href="#4-第一轮筛选-在-28-维空间中用共识聚类-consensus-k-means-锁定稳定近邻">4. 第一轮筛选：在 28 维空间中用共识聚类（Consensus K-means）锁定稳定近邻</a></li>      <li class="toc-l3"><a href="#4-1-真实科研数据上的簇数-k-选择-当肘部与轮廓系数不再明显">4.1 真实科研数据上的簇数 \(k\) 选择：当肘部与轮廓系数不再明显</a></li>      <li class="toc-l3"><a href="#4-2-单次-k-means-的随机波动问题">4.2 单次 K-means 的随机波动问题</a></li>      <li class="toc-l3"><a href="#4-3-化劣势为优势-运行-1-000-次-k-means-统计共识共聚频率-score">4.3 化劣势为优势：运行 1,000 次 K-means 统计共识共聚频率（Score）</a></li>      <li class="toc-l3"><a href="#练习-03c-1-第一轮筛选阈值-threshold-的敏感性分析">🏋️ 练习 03c-1：第一轮筛选阈值（Threshold）的敏感性分析</a></li>      <li class="toc-l2"><a href="#5-第二轮精选-引入二聚体专用-dft-描述符-将候选集收敛至-21-个">5. 第二轮精选：引入二聚体专用 DFT 描述符，将候选集收敛至 21 个</a></li>      <li class="toc-l3"><a href="#练习-03c-2-检验第二轮结果对簇数-k-的稳健性">🏋️ 练习 03c-2：检验第二轮结果对簇数 \(k\) 的稳健性</a></li>      <li class="toc-l3"><a href="#练习-03c-3-对比-standardscaler-与-minmaxscaler-对聚类结果的影响">🏋️ 练习 03c-3：对比 StandardScaler 与 MinMaxScaler 对聚类结果的影响</a></li>      <li class="toc-l2"><a href="#6-实验验证与方法论启示">6. 实验验证与方法论启示</a></li>      <li class="toc-l3"><a href="#从这项-science-工作中学到的四条材料信息学经验">从这项 Science 工作中学到的四条材料信息学经验</a></li>      <li class="toc-l2"><a href="#小结-第三讲-无监督学习-知识全景">小结：第三讲（无监督学习）知识全景</a></li>      <li class="toc-l3"><a href="#下一讲预告">下一讲预告</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

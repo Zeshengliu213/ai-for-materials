@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 01c · 科研数据可视化：Matplotlib 与 Seaborn 在上一节（01b）里，我们用 describe() 和 groupby() 算出了溶解度随芳香环数变化的均值和标准差。但统计数字有时会掩盖数据的真实长相——比如数据是不是双峰分布？有没有离群的极端分子？两个特征之间是不是" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="01c · 科研数据可视化：Matplotlib 与 Seaborn | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 01c · 科研数据可视化：Matplotlib 与 Seaborn 在上一节（01b）里，我们用 describe() 和 groupby() 算出了溶解度随芳香环数变化的均值和标准差。但统计数字有时会掩盖数据的真实长相——比如数据是不是双峰分布？有没有离群的极端分子？两个特征之间是不是" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/01-basics/01c_plotting.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/01-basics/01c_plotting.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>01c · 科研数据可视化：Matplotlib 与 Seaborn | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01a_python_crash_course.html"
+           data-progress-mark="notebooks/01-basics/01a_python_crash_course.html"
+>📓 01a_python_crash_course.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01b_pandas.html"
+           data-progress-mark="notebooks/01-basics/01b_pandas.html"
+>📓 01b_pandas.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01c_plotting.html"
+           data-progress-mark="notebooks/01-basics/01c_plotting.html"
+class="active">📓 01c_plotting.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01d_rdkit_basics.html"
+           data-progress-mark="notebooks/01-basics/01d_rdkit_basics.html"
+>📓 01d_rdkit_basics.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01e_exercises.html"
+           data-progress-mark="notebooks/01-basics/01e_exercises.html"
+>🏋️ 01e_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/01-basics.html">模块 01：Python 与化学/材料数据基础</a> /  <span>01c_plotting.ipynb</span>
+</div>
+<h1>01c · 科研数据可视化：Matplotlib 与 Seaborn</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>01c_plotting.ipynb</code>（25.7 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/01%20-%20Basics/01c_plotting.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/ebc4862bfba4-01c_plotting.ipynb" download="01c_plotting.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/01-basics/01_basics_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/01-basics/01c_plotting.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/01%20-%20Basics/01c_plotting.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>01c · 科研数据可视化：Matplotlib 与 Seaborn</h1>
+<p>在上一节（<code>01b</code>）里，我们用 <code>describe()</code> 和 <code>groupby()</code> 算出了溶解度随芳香环数变化的均值和标准差。但统计数字有时会掩盖数据的真实长相——比如数据是不是双峰分布？有没有离群的极端分子？两个特征之间是不是非线性的？</p>
+<p>无论是建模前<strong>摸清数据规律</strong>，还是建模后<strong>展示预测结果</strong>，都离不开画图。Python 里最核心的两个绘图工具是：</p>
+<ol>
+<li><strong><code>matplotlib</code></strong>：最底层、自由度最高的基础绘图库，小到一根刻度线、大到多子图排版都能精细控制；</li>
+<li><strong><code>seaborn</code></strong>：建立在 <code>matplotlib</code> 之上的统计绘图库，直接接收 Pandas 的 <code>DataFrame</code>，一两行代码就能画出漂亮的分组分布图、箱线图和相关性热图。</li>
+</ol>
+<blockquote>
+<p><strong>小提示</strong>：由于 Google Colab 和部分 Linux 环境默认没有安装中文字体，图上的中文字往往会显示成小方框 <code>□□□</code>。因此，我们按照英文期刊的习惯，<strong>图表内的坐标轴标签和标题统一用英文</strong>，正文讲解依然用中文。</p>
+</blockquote>
+<h3 id="本节内容">本节内容</h3>
+<ol>
+<li>Matplotlib 基础：从折线图到第一条拟合曲线</li>
+<li>探索真实数据集：从一维直方图到多维散点图</li>
+<li>多子图排版与高清图片导出（<code>subplots</code> 与 <code>savefig</code>）</li>
+<li>用 Seaborn 快速绘制统计图（分组分布、箱线图、相关性热图与 <code>pairplot</code>）</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;01 - Basics&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-matplotlib-基础-从折线图到第一条拟合曲线">1. Matplotlib 基础：从折线图到第一条拟合曲线</h2>
+<h3 id="1-1-画一张基础折线图">1.1 画一张基础折线图</h3>
+<p>我们先从一组最简单的数据开始。并苯（acene）系列——苯、萘、蒽、并四苯、并五苯——随着稠合苯环数 <span class="math-inline" data-tex="N">\(N\)</span> 从 1 增加到 5，<span class="math-inline" data-tex="\pi">\(\pi\)</span> 共轭体系逐渐拉长，光学能隙（Optical Gap）随之减小。我们把环数和能隙（近似值）放进两个 NumPy 数组里画出来：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">n_rings</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
+<span class="n">gap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">4.9</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">3.3</span><span class="p">,</span> <span class="mf">2.6</span><span class="p">,</span> <span class="mf">2.1</span><span class="p">])</span>    <span class="c1"># 第一单重激发态能量 (eV)，示意约数</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">n_rings</span><span class="p">,</span> <span class="n">gap</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">)</span>                 <span class="c1"># &quot;o-&quot; 表示画圆点并用实线连起来</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Number of fused rings (N)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Optical gap (eV)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Acenes: optical gap vs. conjugation length&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>用 Matplotlib 画图的基本套路就是上面这三步：</p>
+<ol>
+<li>用 <code>plt.plot(x, y, 格式)</code> 把数据画上画布（比如 <code>&quot;o-&quot;</code> 是圆点实线，<code>&quot;s--&quot;</code> 是方块虚线，<code>&quot;o&quot;</code> 是只画点不连线）；</li>
+<li>用 <code>plt.xlabel()</code>、<code>plt.ylabel()</code> 标明坐标轴名称和<strong>物理量单位</strong>（养成好习惯：没有坐标轴标签和单位的图是不合格的）；</li>
+<li>最后调用 <code>plt.show()</code> 把整张图渲染出来。</li>
+</ol>
+<h3 id="1-2-在同一张图上叠加经验拟合曲线">1.2 在同一张图上叠加经验拟合曲线</h3>
+<p>量子化学里最简单的“一维箱中粒子（自由电子气）”模型告诉我们，共轭多烯或并苯的能隙大致与共轭长度的倒数 <span class="math-inline" data-tex="1/N">\(1/N\)</span> 成正比：
+<div class="math-block" data-tex="E_{\text{gap}}(N) \approx a + \frac{b}{N}">\[E_{\text{gap}}(N) \approx a + \frac{b}{N}\]</div></p>
+<p>我们可以用 NumPy 的多项式拟合函数 <code>np.polyfit(x, y, deg=1)</code>，直接对 <span class="math-inline" data-tex="1/N">\(1/N\)</span> 和 <code>gap</code> 做一次线性拟合（这其实就是你在本课程里建立的<strong>第一个回归模型</strong>！），然后把拟合出来的平滑曲线和实验数据点画在同一张图上：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 对 x = 1/n_rings, y = gap 做一阶线性拟合，返回 [斜率 b, 截距 a]</span>
+<span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">n_rings</span><span class="p">,</span> <span class="n">gap</span><span class="p">,</span> <span class="n">deg</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;拟合公式: gap ≈ </span><span class="si">{</span><span class="n">a</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> + </span><span class="si">{</span><span class="n">b</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> / N&quot;</span><span class="p">)</span>
+
+<span class="c1"># 生成从 N = 1 到 N = 10 的 100 个密集点，用来画平滑曲线</span>
+<span class="n">n_fine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">n_rings</span><span class="p">,</span> <span class="n">gap</span><span class="p">,</span> <span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Experimental (approx.)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">n_fine</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="o">/</span> <span class="n">n_fine</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Fit: </span><span class="si">{</span><span class="n">a</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> + </span><span class="si">{</span><span class="n">b</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">/N&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;N -&gt; inf limit (</span><span class="si">{</span><span class="n">a</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> eV)&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Number of fused rings (N)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Optical gap (eV)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>    <span class="c1"># 显示图例（自动读取上面每个 plot 里的 label）</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><blockquote>
+<p><strong>值得思考的一个问题（关于“外推”）</strong>：
+在 <span class="math-inline" data-tex="N = 1 \sim 5">\(N = 1 \sim 5\)</span> 的范围内，这条经验公式拟合得相当准。但如果顺着蓝线往右看，当 <span class="math-inline" data-tex="N \to \infty">\(N \to \infty\)</span>（无限长并苯）时，公式预测能隙会收敛到约 <span class="math-inline" data-tex="1.50\text{ eV}">\(1.50\text{ eV}\)</span>。这个**外推（Extrapolation）**结论可靠吗？</p>
+<p>实际上，当并苯超过 6 个环以后，电子关联效应和开壳层双自由基特征会变得非常显著，简单的 <span class="math-inline" data-tex="1/N">\(1/N\)</span> 模型会严重失效，而且长并苯在空气中极易氧化分解。<strong>在已知数据范围之外盲目相信模型的外推预测，是材料机器学习中最常踩的坑之一</strong>（我们在第 2 章讲适用域、第 4 章讲贝叶斯优化的不确定性时会深入探讨）。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-探索真实数据集-从一维分布到多维散点图">2. 探索真实数据集：从一维分布到多维散点图</h2>
+<p>现在我们把上一节的 <strong>AqSolDB 水溶解度数据集</strong>（9482 个分子）读进来，看看怎么用图形探索一张大表。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;data/solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">google.colab</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;请上传 solubility.csv&quot;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;找不到 solubility.csv，请确保它在 data/ 目录下&quot;</span><span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;读取成功！共 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个分子。&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="2-1-一维分布-直方图-plt-hist">2.1 一维分布：直方图（<code>plt.hist</code>）</h3>
+<p>拿到一个目标性质（比如我们要预测的 <code>Solubility</code>），首先要看它在整个数据集里是怎么分布的。<code>plt.hist()</code> 会把数值区间切分成若干个小柱子（<code>bins</code>），统计落入每个区间的分子个数：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>                         <span class="c1"># 设置画布尺寸：(宽, 高)，单位英寸</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;logS (log mol/L)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Number of molecules&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Distribution of aqueous solubility in AqSolDB&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>从直方图可以一眼看出：绝大多数化合物的 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 集中在 <span class="math-inline" data-tex="-5">\(-5\)</span> 到 <span class="math-inline" data-tex="0">\(0\)</span> 之间，但左侧拖着一条一直延伸到 <span class="math-inline" data-tex="-13">\(-13\)</span> 的长尾巴（正是我们在 <code>01b</code> 里排出来的那些大分子量疏水化合物）。</p>
+<h3 id="2-2-二维关系-散点图-plt-scatter">2.2 二维关系：散点图（<code>plt.scatter</code>）</h3>
+<p>看完了单个变量的分布，接下来看<strong>两个变量之间的关系</strong>。化学直觉告诉我们，油水不相溶：分子的疏水常数 <code>MolLogP</code> 越大（越亲油），在水里的溶解度 <code>Solubility</code> 应该越低。我们用散点图 <code>plt.scatter(x, y)</code> 把这 9482 个分子画出来验证一下：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;MolLogP (lipophilicity)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;logS (log mol/L)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Aqueous solubility vs. MolLogP&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>注意我们在 <code>plt.scatter</code> 里传了两个非常实用的美化参数：</p>
+<ul>
+<li><code>s=5</code>：把点的面积调小；</li>
+<li><code>alpha=0.3</code>：把点的不透明度设为 30%（半透明）。</li>
+</ul>
+<p>当数据点有好几千个时，如果不调小 <code>s</code> 和 <code>alpha</code>，中间密集的点就会完全糊成一团实心的死黑块，根本看不出数据真正扎堆的核心区域在哪里。</p>
+<h3 id="2-3-用颜色引入第三个维度">2.3 用颜色引入第三个维度</h3>
+<p>在二维散点图上，我们还可以把点的颜色 <code>c</code> 绑定到第三个变量（比如芳香环数 <code>NumAromaticRings</code>），再配上一根颜色条 <code>plt.colorbar()</code>，就能在一张平面图上同时观察三个物理量的联动关系：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.8</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">))</span>
+<span class="c1"># .clip(upper=6) 把大于 6 的环数统一截断到 6，避免极个别超大分子拉偏整个颜色条</span>
+<span class="n">sc</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">],</span>
+    <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">],</span>
+    <span class="n">c</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">upper</span><span class="o">=</span><span class="mi">6</span><span class="p">),</span>
+    <span class="n">s</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Number of aromatic rings (6 = 6+)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;logS (log mol/L)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>可以看到，随着颜色从深紫（0 个芳香环）变成亮黄（多芳香环），数据点明显向<strong>右下方</strong>（高 <code>MolLogP</code>、低 <code>logS</code>）迁移。</p>
+<hr />
+<h2 id="3-多子图排版与高清图片导出">3. 多子图排版与高清图片导出</h2>
+<p>写论文或做汇报时，我们经常需要把好几张小图并排拼成一张组图（Figure 1a, 1b, 1c）。这时候用 <code>fig, axes = plt.subplots(行数, 列数, figsize=(...))</code> 最规范：</p>
+<ul>
+<li><code>fig</code> 代表整张大画布（用来调整全局间距、保存图片）；</li>
+<li><code>axes</code> 是一个包含各个小图坐标轴对象的数组（<code>axes[0]</code> 是第一张小图，<code>axes[1]</code> 是第二张小图……）。</li>
+</ul>
+<blockquote>
+<p><strong>唯一需要注意的语法变化</strong>：在单独的 <code>axes[i]</code> 上画图时，设坐标轴标签和范围的方法名要在前面加个 <code>set_</code>——比如 <code>plt.xlabel(...)</code> 变成了 <code>axes[0].set_xlabel(...)</code>，<code>plt.xlim(...)</code> 变成了 <code>axes[0].set_xlim(...)</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">13</span><span class="p">,</span> <span class="mf">3.8</span><span class="p">))</span>
+
+<span class="c1"># 子图 0：分子量分布直方图</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolWt&quot;</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">800</span><span class="p">),</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Molecular weight (g/mol)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Count&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;(a) MolWt distribution&quot;</span><span class="p">)</span>
+
+<span class="c1"># 子图 1：溶解度 vs 分子量</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolWt&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">800</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Molecular weight (g/mol)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;logS (log mol/L)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;(b) logS vs. MolWt&quot;</span><span class="p">)</span>
+
+<span class="c1"># 子图 2：溶解度 vs 极性表面积 TPSA</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;TPSA&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:orange&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">300</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;TPSA (Å²)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;logS (log mol/L)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;(c) logS vs. TPSA&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>       <span class="c1"># 自动调整子图间距，防止坐标轴文字互相重叠</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>画好的图可以用 <code>fig.savefig(&quot;文件名&quot;, dpi=300)</code> 保存到硬盘上。投期刊通常要求位图分辨率至少 <code>dpi=300</code>；如果希望放进论文或 PPT 里无限放大都不模糊，可以直接把后缀改成 <code>.pdf</code> 或 <code>.svg</code> 导出为矢量图：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;logS (log mol/L)&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;solubility_vs_logp.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>   <span class="c1"># 存盘后关闭画布，不在页面上重复显示</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;已保存高清图片 solubility_vs_logp.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-01c-1">🏋️ 练习 01c-1</h3>
+<p>请使用 <code>plt.subplots(1, 2, figsize=(10, 4))</code> 画一张 1 行 2 列的组图：</p>
+<ul>
+<li>左图（<code>axes[0]</code>）：极性表面积 <code>TPSA</code> 在 <code>0 ~ 300</code> 范围内的分布直方图（<code>bins=50</code>）；</li>
+<li>右图（<code>axes[1]</code>）：可旋转键数 <code>NumRotatableBonds</code>（横轴，范围设为 <code>-1 ~ 40</code>）对水溶解度 <code>Solubility</code>（纵轴）的散点图。</li>
+</ul>
+<p>记得给两张子图都加上合适的英文坐标轴标签，并用 <code>fig.tight_layout()</code> 调整布局。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-用-seaborn-快速绘制统计图">4. 用 Seaborn 快速绘制统计图</h2>
+<p>如果我们需要按类别分组画图、画箱线图、或者画相关性矩阵，用纯 Matplotlib 得自己写循环去拆分数据、手动调颜色和图例。而 <strong><code>seaborn</code></strong> 专门为此设计：只要把整个 <code>DataFrame</code> 传给 <code>data=df</code>，再用列名指定 <code>x</code>、<code>y</code> 和分组颜色 <code>hue</code>，剩下的脏活累活它全包了。</p>
+<h3 id="4-1-分组直方图-sns-histplot">4.1 分组直方图（<code>sns.histplot</code>）</h3>
+<p>我们先复用 <code>01b</code> 里的函数，给每个分子打上溶解度等级标签 <code>sol_class</code>，然后用一行 <code>sns.histplot</code> 看看不同溶解度等级的分子在 <code>MolLogP</code> 上是怎么分布的：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">solubility_class</span><span class="p">(</span><span class="n">logs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">logs</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;highly soluble&quot;</span>
+    <span class="k">elif</span> <span class="n">logs</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;soluble&quot;</span>
+    <span class="k">elif</span> <span class="n">logs</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">4</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;slightly soluble&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;insoluble&quot;</span>
+
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;sol_class&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">solubility_class</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.5</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">histplot</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span>
+    <span class="n">hue</span><span class="o">=</span><span class="s2">&quot;sol_class&quot;</span><span class="p">,</span>
+    <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">element</span><span class="o">=</span><span class="s2">&quot;step&quot;</span><span class="p">,</span>
+    <span class="n">hue_order</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;highly soluble&quot;</span><span class="p">,</span> <span class="s2">&quot;soluble&quot;</span><span class="p">,</span> <span class="s2">&quot;slightly soluble&quot;</span><span class="p">,</span> <span class="s2">&quot;insoluble&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="4-2-箱线图-sns-boxplot-不仅看均值-更要看组内涨落">4.2 箱线图（<code>sns.boxplot</code>）：不仅看均值，更要看组内涨落</h3>
+<p>在 <code>01b</code> 里，我们通过 <code>groupby(&quot;NumAromaticRings&quot;)</code> 发现芳香环从 0 增加到 5 时，平均 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 逐步下降。但每组内部的分子溶解度到底有多分散？</p>
+<p>用箱线图 <code>sns.boxplot</code> 可以把每一组的分布完整呈现出来：</p>
+<ul>
+<li>箱子中间的横线是<strong>中位数（50% 分位数）</strong>；</li>
+<li>箱子的上下边界分别是 <strong>75% 和 25% 分位数</strong>（箱子高度代表中间一半数据的跨度）；</li>
+<li>上下伸出的须线之外的散点则是<strong>离群值（Outliers）</strong>。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">few_rings</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">5</span><span class="p">]</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">boxplot</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">few_rings</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;Solubility&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightsteelblue&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Number of aromatic rings&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;logS (log mol/L)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><blockquote>
+<p><strong>从箱线图看建模难度</strong>：
+虽然随着芳香环数增加，箱子整体一直在往下走（印证了“共轭环越多越难溶”的大趋势），但你看每一个箱子自身的上下跨度——哪怕同是含 2 个芳香环的分子，<span class="math-inline" data-tex="\log S">\(\log S\)</span> 也能从 <span class="math-inline" data-tex="+1">\(+1\)</span> 跨到 <span class="math-inline" data-tex="-10">\(-10\)</span>！</p>
+<p>这说明：<strong>单凭“芳香环数”这一个特征，远远不足以把溶解度预测准</strong>。因为环上接的是极性羟基/羧基，还是长链烷基/卤素，会让溶解度差出好几个数量级。这也正是后面我们需要综合十几个描述符（乃至用分子指纹和图神经网络）来建模的原因。</p>
+</blockquote>
+<h3 id="4-3-带线性回归趋势线的散点图-sns-regplot">4.3 带线性回归趋势线的散点图（<code>sns.regplot</code>）</h3>
+<p>想在散点图上顺手叠加上一条最小二乘线性回归线，可以用 <code>sns.regplot</code>。为了避免近万个点显得太拥挤，我们先用 <code>df.sample(1000, random_state=0)</code> 随机抽样 1000 个分子（设定随机数种子 <code>random_state=0</code> 可以保证每次跑出来的抽样结果完全一致）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">regplot</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+    <span class="n">x</span><span class="o">=</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s2">&quot;Solubility&quot;</span><span class="p">,</span>
+    <span class="n">scatter_kws</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;s&quot;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">},</span>
+    <span class="n">line_kws</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;crimson&quot;</span><span class="p">},</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;logS (log mol/L)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="4-4-相关性热图-sns-heatmap">4.4 相关性热图（<code>sns.heatmap</code>）</h3>
+<p>表里有十几个数值描述符，到底哪些描述符跟 <code>Solubility</code> 关系最密切？哪些描述符自己内部就高度绑定？</p>
+<p>我们可以用 <code>df[cols].corr()</code> 一次性算出所有列两两之间的 <strong>Pearson 线性相关系数 <span class="math-inline" data-tex="r">\(r\)</span></strong>（取值在 <span class="math-inline" data-tex="-1">\(-1\)</span> 到 <span class="math-inline" data-tex="+1">\(+1\)</span> 之间：越接近 <span class="math-inline" data-tex="+1">\(+1\)</span> 正相关越强，越接近 <span class="math-inline" data-tex="-1">\(-1\)</span> 负相关越强，接近 <span class="math-inline" data-tex="0">\(0\)</span> 说明没有线性关系），然后交给 <code>sns.heatmap</code> 画成一目了然的红蓝热图：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [16] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">cols</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Solubility&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumHDonors&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHAcceptors&quot;</span><span class="p">,</span> <span class="s2">&quot;NumRotatableBonds&quot;</span><span class="p">,</span> <span class="s2">&quot;RingCount&quot;</span>
+<span class="p">]</span>
+<span class="n">corr</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">7.5</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span> <span class="n">annot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;.2f&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;RdBu_r&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">square</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Pearson correlation matrix&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-01c-2">🏋️ 练习 01c-2</h3>
+<ol>
+<li>观察上面的相关性热图（第一行或第一列）：在这 8 个分子描述符中，与 <code>Solubility</code> <strong>线性相关性最强</strong>（<span class="math-inline" data-tex="|r|">\(|r|\)</span> 最大）的是哪一个？是正相关还是负相关？</li>
+<li>在下面的代码格里运行 <code>corr[&quot;Solubility&quot;].drop(&quot;Solubility&quot;).abs().sort_values(ascending=False)</code>，按相关性绝对值从大到小排个序。</li>
+<li>看看热图里 <code>MolWt</code>（分子量）和 <code>RingCount</code>（总环数）之间的相关系数 <span class="math-inline" data-tex="r">\(r\)</span> 是多少？再看看 <code>TPSA</code>（极性表面积）和 <code>NumHAcceptors</code>（氢键受体数）之间的 <span class="math-inline" data-tex="r">\(r\)</span> 是多少？如果两个输入特征自己就高度相关（统计学上称为<strong>多重共线性</strong>），后面拿它们一起去做线性回归时可能会带来什么问题？</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [17] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="4-5-矩阵散点图-sns-pairplot-一眼看尽两两关系">4.5 矩阵散点图（<code>sns.pairplot</code>）：一眼看尽两两关系</h3>
+<p>如果挑出了三四个核心变量，想同时看清它们各自的分布（对角线）以及任意两个变量之间的散点图（非对角线），<code>sns.pairplot</code> 一行代码就能生成全套矩阵图：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [18] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">sub</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">600</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">pairplot</span><span class="p">(</span>
+    <span class="n">sub</span><span class="p">,</span>
+    <span class="nb">vars</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">,</span> <span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">],</span>
+    <span class="n">hue</span><span class="o">=</span><span class="s2">&quot;sol_class&quot;</span><span class="p">,</span>
+    <span class="n">plot_kws</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;s&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">},</span>
+    <span class="n">diag_kind</span><span class="o">=</span><span class="s2">&quot;kde&quot;</span><span class="p">,</span>
+    <span class="n">hue_order</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;highly soluble&quot;</span><span class="p">,</span> <span class="s2">&quot;soluble&quot;</span><span class="p">,</span> <span class="s2">&quot;slightly soluble&quot;</span><span class="p">,</span> <span class="s2">&quot;insoluble&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="小结">小结</h2>
+<p>这一节我们掌握了科研绘图的完整工具箱：</p>
+<ul>
+<li><strong>基础绘图（Matplotlib）</strong>：用 <code>plt.plot</code> 画趋势与拟合曲线，用 <code>plt.hist</code> 看单变量分布，用 <code>plt.scatter</code>（配合透明度 <code>alpha</code> 与颜色映射 <code>cmap</code>）观察多变量关系，并用 <code>plt.subplots</code> 排版多子图、<code>savefig(dpi=300)</code> 导出论文级图片；</li>
+<li><strong>统计可视化（Seaborn）</strong>：用 <code>histplot</code> 和 <code>boxplot</code> 对比不同分组的分布与涨落，用 <code>heatmap(df.corr())</code> 诊断特征与目标的相关性以及特征之间的多重共线性；</li>
+<li><strong>两个重要的建模伏笔</strong>：
+<ol>
+<li>经验公式在训练范围之外的<strong>外推风险</strong>（长并苯能隙拟合）；</li>
+<li>单一特征（如芳香环数）组内方差极大，以及多个特征之间存在冗余共线性（如 <code>TPSA</code> 与 <code>NumHAcceptors</code>）。</li>
+</ol>
+</li>
+</ul>
+<p><strong>下一节（<code>01d_rdkit_basics.ipynb</code>）</strong>：到现在为止，我们一直在使用别人预先算好的 <code>MolWt</code>、<code>MolLogP</code>、<code>TPSA</code> 等表格列。如果手头只有分子的化学结构（SMILES），怎样自己动手把一个分子变成计算机能读懂的数字描述符和分子指纹？这就是下一节 <strong>RDKit</strong> 要解决的核心问题。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/01-basics/01c_plotting.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/01-basics.html">返回模块 01</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/01-basics/01b_pandas.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">01b · 文件读写与 Pandas 表格处理</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/01-basics/01d_rdkit_basics.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">01d · 用 RDKit 处理分子结构与特征表示</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l3"><a href="#本节内容">本节内容</a></li>      <li class="toc-l2"><a href="#1-matplotlib-基础-从折线图到第一条拟合曲线">1. Matplotlib 基础：从折线图到第一条拟合曲线</a></li>      <li class="toc-l3"><a href="#1-1-画一张基础折线图">1.1 画一张基础折线图</a></li>      <li class="toc-l3"><a href="#1-2-在同一张图上叠加经验拟合曲线">1.2 在同一张图上叠加经验拟合曲线</a></li>      <li class="toc-l2"><a href="#2-探索真实数据集-从一维分布到多维散点图">2. 探索真实数据集：从一维分布到多维散点图</a></li>      <li class="toc-l3"><a href="#2-1-一维分布-直方图-plt-hist">2.1 一维分布：直方图（plt.hist）</a></li>      <li class="toc-l3"><a href="#2-2-二维关系-散点图-plt-scatter">2.2 二维关系：散点图（plt.scatter）</a></li>      <li class="toc-l3"><a href="#2-3-用颜色引入第三个维度">2.3 用颜色引入第三个维度</a></li>      <li class="toc-l2"><a href="#3-多子图排版与高清图片导出">3. 多子图排版与高清图片导出</a></li>      <li class="toc-l3"><a href="#练习-01c-1">🏋️ 练习 01c-1</a></li>      <li class="toc-l2"><a href="#4-用-seaborn-快速绘制统计图">4. 用 Seaborn 快速绘制统计图</a></li>      <li class="toc-l3"><a href="#4-1-分组直方图-sns-histplot">4.1 分组直方图（sns.histplot）</a></li>      <li class="toc-l3"><a href="#4-2-箱线图-sns-boxplot-不仅看均值-更要看组内涨落">4.2 箱线图（sns.boxplot）：不仅看均值，更要看组内涨落</a></li>      <li class="toc-l3"><a href="#4-3-带线性回归趋势线的散点图-sns-regplot">4.3 带线性回归趋势线的散点图（sns.regplot）</a></li>      <li class="toc-l3"><a href="#4-4-相关性热图-sns-heatmap">4.4 相关性热图（sns.heatmap）</a></li>      <li class="toc-l3"><a href="#练习-01c-2">🏋️ 练习 01c-2</a></li>      <li class="toc-l3"><a href="#4-5-矩阵散点图-sns-pairplot-一眼看尽两两关系">4.5 矩阵散点图（sns.pairplot）：一眼看尽两两关系</a></li>      <li class="toc-l2"><a href="#小结">小结</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

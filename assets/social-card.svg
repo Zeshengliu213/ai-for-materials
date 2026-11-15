@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img"
+     aria-label="AI for Materials Science 课程门户">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16324f"/>
+      <stop offset="1" stop-color="#244b73"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <g fill="none" stroke="#f5c86b" stroke-opacity="0.22" stroke-width="2">
+    <circle cx="1010" cy="140" r="54"/><circle cx="1110" cy="250" r="54"/>
+    <circle cx="910" cy="250" r="54"/><circle cx="1010" cy="360" r="54"/>
+    <path d="M1010 194 1110 196M1010 194 910 196M1110 304 1010 306M910 304 1010 306"/>
+  </g>
+  <rect x="80" y="86" width="104" height="104" rx="22" fill="#f5c86b"/>
+  <text x="132" y="155" font-family="Georgia, serif" font-size="42" font-weight="bold"
+        fill="#16324f" text-anchor="middle">AI4M</text>
+  <text x="80" y="300" font-family="Georgia, serif" font-size="78" font-weight="bold" fill="#ffffff">
+    AI for Materials Science
+  </text>
+  <text x="80" y="372" font-family="'Noto Sans SC', sans-serif" font-size="38" fill="#cfe0f2">
+    材料人工智能实战课程 · 研究生课程门户
+  </text>
+  <text x="80" y="470" font-family="'Noto Sans SC', sans-serif" font-size="29" fill="#9dbcd9">
+    10 大模块 · Python / 机器学习 / 贝叶斯优化 / 神经网络 / 生成模型 / 图神经网络
+  </text>
+  <text x="80" y="520" font-family="'Noto Sans SC', sans-serif" font-size="29" fill="#9dbcd9">
+    全部配套可运行 Jupyter Notebook、习题与参考答案
+  </text>
+  <rect x="80" y="560" width="200" height="6" rx="3" fill="#f5c86b"/>
+</svg>

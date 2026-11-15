@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="练习参考答案与解析。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="参考答案：02 — 监督学习：课堂练习参考答案（Solutions） | AI for Materials Science" />
+  <meta property="og:description" content="练习参考答案与解析。" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/solutions/02-supervised-learning/02_supervised_solutions.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/solutions/02-supervised-learning/02_supervised_solutions.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>参考答案：02 — 监督学习：课堂练习参考答案（Solutions） | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+class="active">
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02a_regression.html"
+           data-progress-mark="notebooks/02-supervised-learning/02a_regression.html"
+>📓 02a_regression.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02b_validation_and_tuning.html"
+           data-progress-mark="notebooks/02-supervised-learning/02b_validation_and_tuning.html"
+>📓 02b_validation_and_tuning.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02c_classification.html"
+           data-progress-mark="notebooks/02-supervised-learning/02c_classification.html"
+>📓 02c_classification.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02d_exercises.html"
+           data-progress-mark="notebooks/02-supervised-learning/02d_exercises.html"
+>🏋️ 02d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/02-supervised-learning.html">模块 02：监督学习与模型评估防坑</a> /
+  <span>参考答案</span>
+</div>
+<h1><span class="kind-badge kind-lecture">课件答案</span>
+  02 — 监督学习：课堂练习参考答案（Solutions）</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">答案文件：<code>02_supervised_solutions.ipynb</code>（29.4 KB）</div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/solutions/02_supervised_solutions.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/21f10b6a612a-02_supervised_solutions.ipynb" download="02_supervised_solutions.ipynb">⬇ 下载答案 .ipynb</a>
+    <a class="btn btn-secondary" href="../../modules/02-supervised-learning.html">返回模块 02</a>
+  </div>
+</div>
+<div id="solution-gate" class="academic-box solution-gate-inner">
+  <strong>先自己做一遍，再看答案。</strong>
+  <p>直接阅读答案的学习效果远低于独立实现。建议至少尝试 20 分钟，卡住时先看习题里的
+    💡 提示，再展开本页。</p>
+  <p class="hint-inline">展开状态只在当前浏览器标签页有效，关闭标签页后会重新折叠。</p>
+  <button type="button" id="solution-reveal" class="btn btn-primary">我已尝试，展开参考答案</button>
+</div>
+<div id="solution-body" hidden>
+  <div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/solutions/02_supervised_solutions.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>02 — 监督学习：课堂练习参考答案（Solutions）</h1>
+<p>本 Notebook 汇总了 <code>02a</code>、<code>02b</code>、<code>02c</code> 三个模块中所有课堂练习（<code>02a-1</code> 至 <code>02c-3</code>）的完整可运行参考代码与结果解析。建议先在原讲义中独立动手尝试，再对照本文件核对思路。</p>
+<hr />
+<h2 id="0-公共环境与-esol-数据准备">0. 公共环境与 ESOL 数据准备</h2>
+<p>先把数据、10 个 RDKit 物理化学描述符和训练/测试集划分一次性准备好，方便后续各题直接调用。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;02 - Supervised Learning/solutions&quot;</span><span class="p">))</span>
+    <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">run_line_magic</span><span class="p">(</span><span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install -q rdkit&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">DataStructs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Descriptors</span><span class="p">,</span> <span class="n">Draw</span><span class="p">,</span> <span class="n">rdFingerprintGenerator</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span><span class="p">,</span> <span class="n">KFold</span><span class="p">,</span> <span class="n">GridSearchCV</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.dummy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyClassifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearRegression</span><span class="p">,</span> <span class="n">Ridge</span><span class="p">,</span> <span class="n">LogisticRegression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.neighbors</span><span class="w"> </span><span class="kn">import</span> <span class="n">KNeighborsRegressor</span><span class="p">,</span> <span class="n">KNeighborsClassifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.svm</span><span class="w"> </span><span class="kn">import</span> <span class="n">SVR</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">RandomForestRegressor</span><span class="p">,</span> <span class="n">GradientBoostingRegressor</span><span class="p">,</span>
+    <span class="n">RandomForestClassifier</span><span class="p">,</span> <span class="n">GradientBoostingClassifier</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">mean_absolute_error</span><span class="p">,</span> <span class="n">mean_squared_error</span><span class="p">,</span> <span class="n">r2_score</span><span class="p">,</span>
+    <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">precision_score</span><span class="p">,</span> <span class="n">recall_score</span><span class="p">,</span> <span class="n">f1_score</span><span class="p">,</span> <span class="n">roc_auc_score</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">sns</span><span class="o">.</span><span class="n">set_theme</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s2">&quot;whitegrid&quot;</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="s2">&quot;deep&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+<span class="n">RANDOM_STATE</span> <span class="o">=</span> <span class="mi">42</span>
+
+<span class="n">DATA_PATHS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;../../01 - Basics/data/esol.csv&quot;</span><span class="p">),</span>
+    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;../01 - Basics/data/esol.csv&quot;</span><span class="p">),</span>
+    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/esol.csv&quot;</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">DATA_PATHS</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">break</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+    <span class="s2">&quot;Compound ID&quot;</span><span class="p">:</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;measured log solubility in mols per litre&quot;</span><span class="p">:</span> <span class="s2">&quot;logS&quot;</span><span class="p">,</span>
+<span class="p">})[[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;smiles&quot;</span><span class="p">,</span> <span class="s2">&quot;logS&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;smiles&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">DESC_FUNCS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;MolWt&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">MolWt</span><span class="p">,</span>
+    <span class="s2">&quot;MolLogP&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">MolLogP</span><span class="p">,</span>
+    <span class="s2">&quot;TPSA&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">TPSA</span><span class="p">,</span>
+    <span class="s2">&quot;NumHDonors&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">NumHDonors</span><span class="p">,</span>
+    <span class="s2">&quot;NumHAcceptors&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">NumHAcceptors</span><span class="p">,</span>
+    <span class="s2">&quot;NumRotatableBonds&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">NumRotatableBonds</span><span class="p">,</span>
+    <span class="s2">&quot;RingCount&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">RingCount</span><span class="p">,</span>
+    <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">NumAromaticRings</span><span class="p">,</span>
+    <span class="s2">&quot;HeavyAtomCount&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">HeavyAtomCount</span><span class="p">,</span>
+    <span class="s2">&quot;FractionCSP3&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">FractionCSP3</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([{</span><span class="n">k</span><span class="p">:</span> <span class="n">fn</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">DESC_FUNCS</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]])</span>
+<span class="n">y_reg</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;logS&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> molecules, X shape = </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h1>02a — 回归入门（Regression）练习答案</h1>
+<p>先运行 <code>02a</code> 中的数据划分、评估函数与标准化准备：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">idx_train</span><span class="p">,</span> <span class="n">idx_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)),</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span>
+<span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idx_train</span><span class="p">],</span> <span class="n">X</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idx_test</span><span class="p">]</span>
+<span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">y_reg</span><span class="p">[</span><span class="n">idx_train</span><span class="p">],</span> <span class="n">y_reg</span><span class="p">[</span><span class="n">idx_test</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X_tr</span><span class="p">,</span> <span class="n">y_tr</span><span class="p">,</span> <span class="n">X_te</span><span class="p">,</span> <span class="n">y_te</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;model&quot;</span><span class="p">):</span>
+    <span class="n">pred_tr</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_tr</span><span class="p">)</span>
+    <span class="n">pred_te</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_te</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
+        <span class="s2">&quot;Train RMSE&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y_tr</span><span class="p">,</span> <span class="n">pred_tr</span><span class="p">)),</span>
+        <span class="s2">&quot;Test RMSE&quot;</span><span class="p">:</span>  <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y_te</span><span class="p">,</span> <span class="n">pred_te</span><span class="p">)),</span>
+        <span class="s2">&quot;Test MAE&quot;</span><span class="p">:</span>   <span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">y_te</span><span class="p">,</span> <span class="n">pred_te</span><span class="p">),</span>
+        <span class="s2">&quot;Test R2&quot;</span><span class="p">:</span>    <span class="n">r2_score</span><span class="p">(</span><span class="n">y_te</span><span class="p">,</span> <span class="n">pred_te</span><span class="p">),</span>
+    <span class="p">}</span>
+
+<span class="n">scaler</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span>
+<span class="n">X_train_s</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="n">X_test_s</span>  <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-02a-1-实例化-k-近邻回归器并在原始特征上训练">练习 02a-1：实例化 k 近邻回归器并在原始特征上训练</h3>
+<p><strong>题目回顾</strong>：实例化一个设置 <code>n_neighbors=10</code> 的 <code>KNeighborsRegressor</code>，赋值给变量 <code>knn_reg</code>，并用原始特征 <code>X_train</code>、<code>X_test</code> 调用 <code>evaluate</code> 查看其表现。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">knn_reg</span> <span class="o">=</span> <span class="n">KNeighborsRegressor</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">knn_reg</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">results</span><span class="p">[</span><span class="s2">&quot;kNN (k=10, raw)&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">knn_reg</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="s2">&quot;kNN (k=10, raw)&quot;</span><span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;kNN (k=10, raw)&quot;</span><span class="p">]])</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-02a-2-在标准化特征上训练支持向量回归-svr">练习 02a-2：在标准化特征上训练支持向量回归（SVR）</h3>
+<p><strong>题目回顾</strong>：训练一个默认参数的 <code>SVR()</code>（使用标准化后的 <code>X_train_s</code> 和 <code>X_test_s</code>），把评估结果存进 <code>results[&quot;SVR&quot;]</code>，并对比它与标准化后 kNN 的表现。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">knn_s</span> <span class="o">=</span> <span class="n">KNeighborsRegressor</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train_s</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">results</span><span class="p">[</span><span class="s2">&quot;kNN (k=10, scaled)&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">knn_s</span><span class="p">,</span> <span class="n">X_train_s</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_test_s</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="s2">&quot;kNN (k=10, scaled)&quot;</span><span class="p">)</span>
+
+<span class="n">svr_model</span> <span class="o">=</span> <span class="n">SVR</span><span class="p">()</span>
+<span class="n">svr_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train_s</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">results</span><span class="p">[</span><span class="s2">&quot;SVR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">svr_model</span><span class="p">,</span> <span class="n">X_train_s</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_test_s</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="s2">&quot;SVR&quot;</span><span class="p">)</span>
+
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s2">&quot;model&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>结果解析</strong>：</p>
+<ul>
+<li>未做标准化时，<code>kNN (k=10, raw)</code> 的 Test RMSE 约 <code>0.955</code>；标准化后 <code>kNN (k=10, scaled)</code> 的 Test RMSE 降至 <code>0.733</code>，误差减少了超过 20%。</li>
+<li>在标准化特征上，<code>SVR</code>（默认 RBF 核）的 Test RMSE 进一步降到 <code>0.695</code>，<span class="math-inline" data-tex="R^2 = 0.898">\(R^2 = 0.898\)</span>，略优于标准化后的 kNN。</li>
+<li><strong>注意</strong>：如果把未标准化的 <code>X_train</code> 直接喂给 <code>SVR()</code>，RBF 核函数 <span class="math-inline" data-tex="\exp(-\gamma \|x - x&#x27;\|^2)">\(\exp(-\gamma \|x - x&#x27;\|^2)\)</span> 会完全被数值在几百量级的 <code>MolWt</code> 支配，Test RMSE 会退化到 <code>1.13</code> 左右。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-02a-3-组合-描述符-计数指纹-训练随机森林">练习 02a-3：组合“描述符 + 计数指纹”训练随机森林</h3>
+<p><strong>题目回顾</strong>：把 10 个物理化学描述符与 2048 维 <strong>计数指纹（Count Morgan FP）</strong> 拼接起来（共 2058 维），训练 <code>RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)</code>，存入 <code>results[&quot;RF + desc + count FP&quot;]</code>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 1. 生成 2048 维 Bit 指纹和 Count 指纹</span>
+<span class="n">fp_gen</span> <span class="o">=</span> <span class="n">rdFingerprintGenerator</span><span class="o">.</span><span class="n">GetMorganGenerator</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fpSize</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+<span class="n">X_fp_bit</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprintAsNumPy</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]])</span>
+<span class="n">X_fp_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetCountFingerprintAsNumPy</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]])</span>
+
+<span class="n">fp_train</span><span class="p">,</span> <span class="n">fp_test</span>   <span class="o">=</span> <span class="n">X_fp_bit</span><span class="p">[</span><span class="n">idx_train</span><span class="p">],</span> <span class="n">X_fp_bit</span><span class="p">[</span><span class="n">idx_test</span><span class="p">]</span>
+<span class="n">fpc_train</span><span class="p">,</span> <span class="n">fpc_test</span> <span class="o">=</span> <span class="n">X_fp_count</span><span class="p">[</span><span class="n">idx_train</span><span class="p">],</span> <span class="n">X_fp_count</span><span class="p">[</span><span class="n">idx_test</span><span class="p">]</span>
+
+<span class="c1"># 先补齐 02a 正文里的几个基准模型方便横向对比</span>
+<span class="n">rf_desc</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">results</span><span class="p">[</span><span class="s2">&quot;RF (10 descriptors)&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">rf_desc</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="s2">&quot;RF (10 descriptors)&quot;</span><span class="p">)</span>
+
+<span class="n">rf_bit</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">fp_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">results</span><span class="p">[</span><span class="s2">&quot;RF + bit FP&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">rf_bit</span><span class="p">,</span> <span class="n">fp_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">fp_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="s2">&quot;RF + bit FP&quot;</span><span class="p">)</span>
+
+<span class="n">rf_count</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">fpc_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">results</span><span class="p">[</span><span class="s2">&quot;RF + count FP&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">rf_count</span><span class="p">,</span> <span class="n">fpc_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">fpc_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="s2">&quot;RF + count FP&quot;</span><span class="p">)</span>
+
+<span class="n">X_comb_tr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">X_train</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">fp_train</span><span class="p">])</span>
+<span class="n">X_comb_te</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">X_test</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>  <span class="n">fp_test</span><span class="p">])</span>
+<span class="n">rf_comb</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_comb_tr</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">results</span><span class="p">[</span><span class="s2">&quot;RF + desc + bit FP&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">rf_comb</span><span class="p">,</span> <span class="n">X_comb_tr</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_comb_te</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="s2">&quot;RF + desc + bit FP&quot;</span><span class="p">)</span>
+
+<span class="c1"># 2. 练习 02a-3 解答：拼接 10 个描述符 + 2048 维 Count 指纹</span>
+<span class="n">X_combc_tr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">X_train</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">fpc_train</span><span class="p">])</span>
+<span class="n">X_combc_te</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">X_test</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>  <span class="n">fpc_test</span><span class="p">])</span>
+
+<span class="n">rf_combc</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">rf_combc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_combc_tr</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">results</span><span class="p">[</span><span class="s2">&quot;RF + desc + count FP&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span>
+    <span class="n">rf_combc</span><span class="p">,</span> <span class="n">X_combc_tr</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_combc_te</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="s2">&quot;RF + desc + count FP&quot;</span>
+<span class="p">)</span>
+
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s2">&quot;model&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;Test RMSE&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>结果解析</strong>：</p>
+<ul>
+<li><code>RF + desc + count FP</code> 的 Test RMSE 约为 <code>0.669</code>，略好于 <code>RF + desc + bit FP</code>（<code>0.674</code>），两者都显著优于单独使用指纹（<code>1.093</code> / <code>0.946</code>）或单独使用 10 个描述符（<code>0.688</code>）。</li>
+<li><strong>为什么“描述符 + Bit 指纹”和“描述符 + Count 指纹”差距变小了？</strong>
+单独用 Bit 指纹时，最大的短板是丢失了“分子大小 / 重复基团数量”（比如庚烷和十六烷的 Bit 指纹完全一样）；但当我们把 <code>MolWt</code>、<code>HeavyAtomCount</code>、<code>MolLogP</code> 等全局描述符拼接进去后，分子尺寸信息已经由这 10 个描述符补齐了，因此 Bit 指纹的短板被很大程度弥补了。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h1>02b — 模型验证、超参数调优与适用域（Validation, Tuning &amp; AD）练习答案</h1>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-02b-1-对比默认随机森林与调参后随机森林的训练-测试误差">练习 02b-1：对比默认随机森林与调参后随机森林的训练/测试误差</h3>
+<p><strong>题目回顾</strong>：训练一棵默认参数的 <code>RandomForestRegressor(random_state=42)</code>，对比它和 <code>GridSearchCV</code> 选出的最优模型 <code>rf_gs.best_estimator_</code> 在训练集与测试集上的 RMSE。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">kf</span> <span class="o">=</span> <span class="n">KFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span><span class="p">)</span>
+<span class="n">calc_rmse</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">))</span>
+
+<span class="c1"># 先复现 02b 中的 GridSearchCV</span>
+<span class="n">param_grid_rf</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;n_estimators&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">300</span><span class="p">],</span>
+    <span class="s2">&quot;max_depth&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="s2">&quot;min_samples_leaf&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+    <span class="s2">&quot;max_features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sqrt&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+<span class="p">}</span>
+<span class="n">rf_gs</span> <span class="o">=</span> <span class="n">GridSearchCV</span><span class="p">(</span>
+    <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">param_grid</span><span class="o">=</span><span class="n">param_grid_rf</span><span class="p">,</span>
+    <span class="n">scoring</span><span class="o">=</span><span class="s2">&quot;neg_root_mean_squared_error&quot;</span><span class="p">,</span>
+    <span class="n">cv</span><span class="o">=</span><span class="n">kf</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+<span class="c1"># 默认随机森林</span>
+<span class="n">rf_default</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+<span class="n">comp_02b1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;Model&quot;</span><span class="p">:</span> <span class="s2">&quot;RF (default: n_estimators=100, max_depth=None)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Train RMSE&quot;</span><span class="p">:</span> <span class="n">calc_rmse</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">rf_default</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_train</span><span class="p">)),</span>
+        <span class="s2">&quot;Test RMSE&quot;</span><span class="p">:</span>  <span class="n">calc_rmse</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span>  <span class="n">rf_default</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)),</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;Model&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;RF (GridSearchCV best: </span><span class="si">{</span><span class="n">rf_gs</span><span class="o">.</span><span class="n">best_params_</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Train RMSE&quot;</span><span class="p">:</span> <span class="n">calc_rmse</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">rf_gs</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_train</span><span class="p">)),</span>
+        <span class="s2">&quot;Test RMSE&quot;</span><span class="p">:</span>  <span class="n">calc_rmse</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span>  <span class="n">rf_gs</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)),</span>
+    <span class="p">},</span>
+<span class="p">])</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;Model&quot;</span><span class="p">)</span>
+<span class="n">comp_02b1</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>结果解析</strong>：</p>
+<ul>
+<li>在这 10 个与溶解度高度相关的物理化学描述符上，默认随机森林（<code>max_depth=None, min_samples_leaf=1, max_features=1.0</code>）本身就已经接近最优，调参后（<code>n_estimators=300, max_depth=12</code>）Test RMSE 仅从 <code>0.688</code> 微降至 <code>0.685</code>。</li>
+<li>这正是随机森林在材料与化学表格数据上广受欢迎的原因：<strong>对默认超参数非常稳健（开箱即用）</strong>。相比之下，下面练习 02b-2 中的 kNN 或 SVR 对超参数就敏感得多。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-02b-2-用-pipeline-gridsearchcv-为-knn-调优">练习 02b-2：用 Pipeline + GridSearchCV 为 kNN 调优</h3>
+<p><strong>题目回顾</strong>：给 <code>make_pipeline(StandardScaler(), KNeighborsRegressor())</code> 做网格搜索，搜索空间：</p>
+<ul>
+<li><code>kneighborsregressor__n_neighbors</code>: <code>[3, 5, 10, 20, 40]</code></li>
+<li><code>kneighborsregressor__weights</code>: <code>[&quot;uniform&quot;, &quot;distance&quot;]</code></li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">knn_pipe</span> <span class="o">=</span> <span class="n">make_pipeline</span><span class="p">(</span><span class="n">StandardScaler</span><span class="p">(),</span> <span class="n">KNeighborsRegressor</span><span class="p">())</span>
+
+<span class="n">param_grid_knn</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;kneighborsregressor__n_neighbors&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">40</span><span class="p">],</span>
+    <span class="s2">&quot;kneighborsregressor__weights&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;uniform&quot;</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">],</span>
+<span class="p">}</span>
+
+<span class="n">knn_gs</span> <span class="o">=</span> <span class="n">GridSearchCV</span><span class="p">(</span>
+    <span class="n">knn_pipe</span><span class="p">,</span>
+    <span class="n">param_grid</span><span class="o">=</span><span class="n">param_grid_knn</span><span class="p">,</span>
+    <span class="n">scoring</span><span class="o">=</span><span class="s2">&quot;neg_root_mean_squared_error&quot;</span><span class="p">,</span>
+    <span class="n">cv</span><span class="o">=</span><span class="n">kf</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">knn_gs</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;最优超参数:&quot;</span><span class="p">,</span> <span class="n">knn_gs</span><span class="o">.</span><span class="n">best_params_</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;5-Fold CV 最优 RMSE : </span><span class="si">{</span><span class="o">-</span><span class="n">knn_gs</span><span class="o">.</span><span class="n">best_score_</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;独立测试集 Test RMSE: </span><span class="si">{</span><span class="n">calc_rmse</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span><span class="w"> </span><span class="n">knn_gs</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">))</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># 把全部 10 组参数组合的 CV 结果整理成透视表</span>
+<span class="n">cv_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">knn_gs</span><span class="o">.</span><span class="n">cv_results_</span><span class="p">)</span>
+<span class="n">cv_table</span><span class="p">[</span><span class="s2">&quot;CV_RMSE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">cv_table</span><span class="p">[</span><span class="s2">&quot;mean_test_score&quot;</span><span class="p">]</span>
+<span class="n">cv_table</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span>
+    <span class="n">index</span><span class="o">=</span><span class="s2">&quot;param_kneighborsregressor__n_neighbors&quot;</span><span class="p">,</span>
+    <span class="n">columns</span><span class="o">=</span><span class="s2">&quot;param_kneighborsregressor__weights&quot;</span><span class="p">,</span>
+    <span class="n">values</span><span class="o">=</span><span class="s2">&quot;CV_RMSE&quot;</span><span class="p">,</span>
+<span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>结果解析</strong>：</p>
+<ul>
+<li>最优组合是 <code>n_neighbors=5, weights=&quot;distance&quot;</code>（按距离倒数加权，离得越近的邻居话语权越大），测试集 RMSE 从默认 <code>uniform, k=10</code> 的 <code>0.733</code> 显著降到了 <strong><code>0.658</code></strong>，甚至超过了随机森林在 10 个描述符上的表现（<code>0.685</code>）！</li>
+<li>从透视表还能看到：不论 <code>k</code> 取多少，<code>weights=&quot;distance&quot;</code> 一律优于等权重的 <code>&quot;uniform&quot;</code>。原因在于化学空间中即使挑出最近的 10 个分子，第 1 近邻（可能是同系物）和第 10 近邻的相似度差异也很大，按距离加权能避免远邻的噪声干扰。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-02b-3-用-count-指纹重新计算并五苯-pentacene-的最近邻相似度">练习 02b-3：用 Count 指纹重新计算并五苯（pentacene）的最近邻相似度</h3>
+<p><strong>题目回顾</strong>：在 <code>02b</code> 正文中，用 0/1 Bit 指纹算出的并五苯与训练集最大 Tanimoto 相似度高达 <code>1.000</code>（因为并五苯和蒽、并四苯的局部环碎片种类完全相同）。请改用 <code>fp_gen.GetCountFingerprint(mol)</code>（计数指纹）重新计算并五苯与训练集的最大 Tanimoto 相似度，以及 Top-5 最近邻。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">train_mols</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idx_train</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="n">train_names</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idx_train</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+<span class="n">train_bit_fps</span>   <span class="o">=</span> <span class="p">[</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">train_mols</span><span class="p">]</span>
+<span class="n">train_count_fps</span> <span class="o">=</span> <span class="p">[</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetCountFingerprint</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">train_mols</span><span class="p">]</span>
+
+<span class="n">pentacene_mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="s2">&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</span><span class="p">)</span>
+<span class="n">q_bit</span>   <span class="o">=</span> <span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">pentacene_mol</span><span class="p">)</span>
+<span class="n">q_count</span> <span class="o">=</span> <span class="n">fp_gen</span><span class="o">.</span><span class="n">GetCountFingerprint</span><span class="p">(</span><span class="n">pentacene_mol</span><span class="p">)</span>
+
+<span class="n">sims_bit</span>   <span class="o">=</span> <span class="n">DataStructs</span><span class="o">.</span><span class="n">BulkTanimotoSimilarity</span><span class="p">(</span><span class="n">q_bit</span><span class="p">,</span> <span class="n">train_bit_fps</span><span class="p">)</span>
+<span class="n">sims_count</span> <span class="o">=</span> <span class="n">DataStructs</span><span class="o">.</span><span class="n">BulkTanimotoSimilarity</span><span class="p">(</span><span class="n">q_count</span><span class="p">,</span> <span class="n">train_count_fps</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bit   FP 下 pentacene 与训练集最大相似度: </span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">sims_bit</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Count FP 下 pentacene 与训练集最大相似度: </span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">sims_count</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">top5_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">sims_count</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="mi">5</span><span class="p">]</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;Train Molecule&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">train_names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">top5_idx</span><span class="p">],</span>
+    <span class="s2">&quot;Count FP Tanimoto&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="n">sims_count</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">top5_idx</span><span class="p">],</span>
+    <span class="s2">&quot;Bit FP Tanimoto&quot;</span><span class="p">:</span>   <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="n">sims_bit</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">top5_idx</span><span class="p">],</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>结果解析</strong>：</p>
+<ul>
+<li>在 <code>Bit FP</code> 下，并五苯与训练集中并四苯（tetracene）、蒽（anthracene）的 Tanimoto 相似度都是 <strong><code>1.000</code></strong>（完全撞车，无法区分 3 个环、4 个环还是 5 个环）。</li>
+<li>换成 <code>Count FP</code> 后，由于每个芳香碳碎片出现的次数不同，并五苯与并四苯的相似度降为 <strong><code>0.822</code></strong>，与蒽降为 <strong><code>0.630</code></strong>，与萘降为 <strong><code>0.415</code></strong>——成功按稠环尺寸拉开了梯度！这也再次印证了处理同系物或稠环体系时，<strong>Count 指纹比 Bit 指纹保留了关键的化学计量与尺寸信息</strong>。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h1>02c — 分类与基础特征重要性（Classification &amp; Feature Importance）练习答案</h1>
+<p>先运行 <code>02c</code> 中的分类标签定义与分层抽样划分：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">THRESHOLD</span> <span class="o">=</span> <span class="o">-</span><span class="mf">4.0</span>
+<span class="n">y_cls</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;logS&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">THRESHOLD</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>   <span class="c1"># 1 = insoluble (logS &lt; -4)</span>
+
+<span class="n">X_tr_c</span><span class="p">,</span> <span class="n">X_te_c</span><span class="p">,</span> <span class="n">y_tr_c</span><span class="p">,</span> <span class="n">y_te_c</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">y_cls</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y_cls</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span>
+<span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">eval_classifier</span><span class="p">(</span><span class="n">clf</span><span class="p">,</span> <span class="n">X_te</span><span class="p">,</span> <span class="n">y_te</span><span class="p">):</span>
+    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">clf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_te</span><span class="p">)</span>
+    <span class="n">y_prob</span> <span class="o">=</span> <span class="n">clf</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X_te</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;Accuracy&quot;</span><span class="p">:</span>  <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_te</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">),</span>
+        <span class="s2">&quot;Precision&quot;</span><span class="p">:</span> <span class="n">precision_score</span><span class="p">(</span><span class="n">y_te</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+        <span class="s2">&quot;Recall&quot;</span><span class="p">:</span>    <span class="n">recall_score</span><span class="p">(</span><span class="n">y_te</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+        <span class="s2">&quot;F1&quot;</span><span class="p">:</span>        <span class="n">f1_score</span><span class="p">(</span><span class="n">y_te</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+        <span class="s2">&quot;ROC-AUC&quot;</span><span class="p">:</span>   <span class="n">roc_auc_score</span><span class="p">(</span><span class="n">y_te</span><span class="p">,</span> <span class="n">y_prob</span><span class="p">),</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-02c-1-加入-knn-与梯度提升分类器对比">练习 02c-1：加入 kNN 与梯度提升分类器对比</h3>
+<p><strong>题目回顾</strong>：在 <code>models</code> 字典中加入 <code>make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=10))</code> 和 <code>GradientBoostingClassifier(random_state=42)</code>，对比全部五个模型在测试集上的五项分类指标。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">models</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Dummy (most_frequent)&quot;</span><span class="p">:</span> <span class="n">DummyClassifier</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;most_frequent&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr_c</span><span class="p">,</span> <span class="n">y_tr_c</span><span class="p">),</span>
+    <span class="s2">&quot;LogisticRegression&quot;</span><span class="p">:</span>    <span class="n">make_pipeline</span><span class="p">(</span><span class="n">StandardScaler</span><span class="p">(),</span> <span class="n">LogisticRegression</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">1000</span><span class="p">))</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr_c</span><span class="p">,</span> <span class="n">y_tr_c</span><span class="p">),</span>
+    <span class="s2">&quot;kNN (k=10, scaled)&quot;</span><span class="p">:</span>    <span class="n">make_pipeline</span><span class="p">(</span><span class="n">StandardScaler</span><span class="p">(),</span> <span class="n">KNeighborsClassifier</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">10</span><span class="p">))</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr_c</span><span class="p">,</span> <span class="n">y_tr_c</span><span class="p">),</span>
+    <span class="s2">&quot;GradientBoosting&quot;</span><span class="p">:</span>      <span class="n">GradientBoostingClassifier</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr_c</span><span class="p">,</span> <span class="n">y_tr_c</span><span class="p">),</span>
+    <span class="s2">&quot;RandomForest&quot;</span><span class="p">:</span>          <span class="n">RandomForestClassifier</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr_c</span><span class="p">,</span> <span class="n">y_tr_c</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="n">eval_classifier</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">X_te_c</span><span class="p">,</span> <span class="n">y_te_c</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>结果解析</strong>：</p>
+<ul>
+<li>四个真实模型的 ROC-AUC 都在 <code>0.946 ~ 0.955</code> 之间，整体排序能力都很强。</li>
+<li>其中 <code>RandomForest</code> 和 <code>GradientBoosting</code> 的综合 F1 最高（约 <code>0.81 ~ 0.83</code>）；<code>kNN (k=10)</code> 的 Precision 较高（<code>0.855</code>），意味着它报出的难溶分子误报率低，但 Recall 略低（<code>0.734</code>）。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-02c-2-极端难溶分子筛查-严重类别不平衡">练习 02c-2：极端难溶分子筛查（严重类别不平衡）</h3>
+<p><strong>题目回顾</strong>：将难溶阈值改为 <code>-6.0</code>（<code>y_extreme = (df[&quot;logS&quot;] &lt; -6.0).astype(int)</code>），观察正类占比，并用 <code>stratify=y_extreme</code> 重新划分训练/测试集，对比 <code>DummyClassifier</code> 与 <code>RandomForestClassifier</code> 的 <code>Accuracy</code> 和 <code>F1</code>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">y_extreme</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;logS&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">6.0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;logS &lt; -6 的极端难溶分子占比: </span><span class="si">{</span><span class="n">y_extreme</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">y_extreme</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">y_extreme</span><span class="p">)</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">X_tr_ex</span><span class="p">,</span> <span class="n">X_te_ex</span><span class="p">,</span> <span class="n">y_tr_ex</span><span class="p">,</span> <span class="n">y_te_ex</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">y_extreme</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y_extreme</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span>
+<span class="p">)</span>
+
+<span class="n">dummy_ex</span> <span class="o">=</span> <span class="n">DummyClassifier</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;most_frequent&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr_ex</span><span class="p">,</span> <span class="n">y_tr_ex</span><span class="p">)</span>
+<span class="n">rf_ex</span>    <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">RANDOM_STATE</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr_ex</span><span class="p">,</span> <span class="n">y_tr_ex</span><span class="p">)</span>
+
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;Dummy (永远猜 0)&quot;</span><span class="p">:</span> <span class="n">eval_classifier</span><span class="p">(</span><span class="n">dummy_ex</span><span class="p">,</span> <span class="n">X_te_ex</span><span class="p">,</span> <span class="n">y_te_ex</span><span class="p">),</span>
+    <span class="s2">&quot;RandomForest&quot;</span><span class="p">:</span>     <span class="n">eval_classifier</span><span class="p">(</span><span class="n">rf_ex</span><span class="p">,</span>    <span class="n">X_te_ex</span><span class="p">,</span> <span class="n">y_te_ex</span><span class="p">),</span>
+<span class="p">})</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>结果解析</strong>：</p>
+<ul>
+<li>当正类占比降到 <code>11.1%</code> 时，什么都不学的 <code>DummyClassifier</code> 光靠全猜 <code>0</code> 就能拿到 <strong><code>88.9%</code> 的 Accuracy</strong>！如果论文或报告里只写“模型准确率达到 89%”，看似很高，实则毫无意义。</li>
+<li>看 <code>F1</code> 和 <code>ROC-AUC</code> 才能一眼区分真伪：Dummy 的 F1 是 <code>0.000</code>，而 <code>RandomForest</code> 的 F1 达到 <code>0.816</code>（Precision <code>0.833</code>，Recall <code>0.800</code>，ROC-AUC <code>0.979</code>）。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-02c-3-揪出模型-漏报-最严重的难溶分子并分析原因">练习 02c-3：揪出模型“漏报”最严重的难溶分子并分析原因</h3>
+<p><strong>题目回顾</strong>：在 <code>THRESHOLD = -4.0</code> 的测试集中，找出真实标签为难溶（<code>y_te_c == 1</code>），但随机森林预测的 <code>P(insoluble)</code> 最低的前 6 个分子（最严重的假阴性 False Negatives），打印其信息并画出分子结构。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">rf_clf</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="s2">&quot;RandomForest&quot;</span><span class="p">]</span>
+
+<span class="n">test_df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">X_te_c</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;smiles&quot;</span><span class="p">,</span> <span class="s2">&quot;logS&quot;</span><span class="p">,</span> <span class="s2">&quot;mol&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">test_df</span><span class="p">[</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X_te_c</span><span class="p">[</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">test_df</span><span class="p">[</span><span class="s2">&quot;MolWt&quot;</span><span class="p">]</span>   <span class="o">=</span> <span class="n">X_te_c</span><span class="p">[</span><span class="s2">&quot;MolWt&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">test_df</span><span class="p">[</span><span class="s2">&quot;TPSA&quot;</span><span class="p">]</span>    <span class="o">=</span> <span class="n">X_te_c</span><span class="p">[</span><span class="s2">&quot;TPSA&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">test_df</span><span class="p">[</span><span class="s2">&quot;True_y&quot;</span><span class="p">]</span>  <span class="o">=</span> <span class="n">y_te_c</span><span class="o">.</span><span class="n">values</span>
+<span class="n">test_df</span><span class="p">[</span><span class="s2">&quot;P(insoluble)&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rf_clf</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X_te_c</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
+
+<span class="c1"># 筛选真实难溶 (True_y == 1)，按预测难溶概率从小到大排序，取前 6 个</span>
+<span class="n">fn_worst6</span> <span class="o">=</span> <span class="n">test_df</span><span class="p">[</span><span class="n">test_df</span><span class="p">[</span><span class="s2">&quot;True_y&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;P(insoluble)&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">fn_worst6</span><span class="p">[[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;smiles&quot;</span><span class="p">,</span> <span class="s2">&quot;logS&quot;</span><span class="p">,</span> <span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">,</span> <span class="s2">&quot;P(insoluble)&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+
+<span class="n">legends</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">][:</span><span class="mi">18</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">logS=</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;logS&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, P=</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;P(insoluble)&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="se">\n</span><span class="s2">LogP=</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;MolLogP&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">fn_worst6</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()</span>
+<span class="p">]</span>
+<span class="n">Draw</span><span class="o">.</span><span class="n">MolsToGridImage</span><span class="p">(</span>
+    <span class="n">fn_worst6</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+    <span class="n">molsPerRow</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">subImgSize</span><span class="o">=</span><span class="p">(</span><span class="mi">300</span><span class="p">,</span> <span class="mi">220</span><span class="p">),</span>
+    <span class="n">legends</span><span class="o">=</span><span class="n">legends</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>深度化学原因分析（为什么模型会漏报这 6 个分子？）</strong></p>
+<p>仔细观察这 6 个被模型误判为“可溶”的难溶分子，可以归结为三类典型的物理化学与数据边界机制：</p>
+<ol>
+<li><strong>高对称性 + 强分子间氢键网络导致的“砖头晶格（Brick-dust）”分子</strong>：
+<ul>
+<li>典型代表：<strong>对苯二甲酸（terephthalic acid，PET 塑料单体）</strong>。它的分子量很小（<code>166</code>），带着两个亲水的羧基，<code>MolLogP</code> 只有 <code>1.18</code>，<code>TPSA</code> 高达 <code>74.6</code>。仅看单分子的疏水性（<code>MolLogP</code>），模型有 96.5% 的把握认为它极易溶于水（<code>P(insoluble) = 0.035</code>）。</li>
+<li>但实际上，对苯二甲酸具有高度轴对称的刚性对位结构，在固态下通过羧基二聚体氢键和 <span class="math-inline" data-tex="\pi\text{-}\pi">\(\pi\text{-}\pi\)</span> 堆积形成极其稳固的晶格，<strong>熔点高达 <span class="math-inline" data-tex="300\ ^\circ\text{C}">\(300\ ^\circ\text{C}\)</span> 以上（升华）</strong>！正如正文 6.3 节 Yalkowsky 方程 <span class="math-inline" data-tex="\log S \approx 0.5 - \log P - 0.01(T_m - 25)">\(\log S \approx 0.5 - \log P - 0.01(T_m - 25)\)</span> 所示，2D 描述符完全不知道它有如此高的晶格能（熔点项 <span class="math-inline" data-tex="T_m">\(T_m\)</span>），因而严重高估了它的溶解度。</li>
+</ul>
+</li>
+<li><strong>含金属配位/有机盐的多组分体系</strong>：
+<ul>
+<li>典型代表：<strong><code>bis(2-ethylhexyl)calcium</code>（SMILES 中含有 <code>.</code> 分隔的钙离子 <code>[Ca++]</code> 与有机阴离子）</strong>。RDKit 的常规经验规则在计算含金属离子的多组分盐类 <code>MolLogP</code> 时存在系统性偏差，且离子晶体/配合物的溶解热力学与中性有机小分子截然不同。</li>
+</ul>
+</li>
+<li><strong>硬阈值切分带来的边界样本（Borderline Cases）</strong>：
+<ul>
+<li>如 <code>quinomethionate</code>（<span class="math-inline" data-tex="\log S = -4.09">\(\log S = -4.09\)</span>）、<code>famphur</code>（<span class="math-inline" data-tex="\log S = -4.005">\(\log S = -4.005\)</span>）、<code>ethion</code>（<span class="math-inline" data-tex="\log S = -4.33">\(\log S = -4.33\)</span>）。它们的真实溶解度本来就紧贴在人为设定的分界线 <span class="math-inline" data-tex="-4.0">\(-4.0\)</span> 边缘（甚至 <span class="math-inline" data-tex="-4.005">\(-4.005\)</span> 离“可溶”只差 <span class="math-inline" data-tex="0.005">\(0.005\)</span> 个对数单位，完全在实验测量误差范围内）。这也说明：<strong>把连续物理量硬切成二分类时，分界线附近的样本天然存在标签噪声</strong>，若实验关心边界附近的具体数值，应当回到 <code>02a</code> 的回归模型。</li>
+</ul>
+</li>
+</ol>
+</div></div>
+</div>
+  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-公共环境与-esol-数据准备">0. 公共环境与 ESOL 数据准备</a></li>      <li class="toc-l3"><a href="#练习-02a-1-实例化-k-近邻回归器并在原始特征上训练">练习 02a-1：实例化 k 近邻回归器并在原始特征上训练</a></li>      <li class="toc-l3"><a href="#练习-02a-2-在标准化特征上训练支持向量回归-svr">练习 02a-2：在标准化特征上训练支持向量回归（SVR）</a></li>      <li class="toc-l3"><a href="#练习-02a-3-组合-描述符-计数指纹-训练随机森林">练习 02a-3：组合“描述符 + 计数指纹”训练随机森林</a></li>      <li class="toc-l3"><a href="#练习-02b-1-对比默认随机森林与调参后随机森林的训练-测试误差">练习 02b-1：对比默认随机森林与调参后随机森林的训练/测试误差</a></li>      <li class="toc-l3"><a href="#练习-02b-2-用-pipeline-gridsearchcv-为-knn-调优">练习 02b-2：用 Pipeline + GridSearchCV 为 kNN 调优</a></li>      <li class="toc-l3"><a href="#练习-02b-3-用-count-指纹重新计算并五苯-pentacene-的最近邻相似度">练习 02b-3：用 Count 指纹重新计算并五苯（pentacene）的最近邻相似度</a></li>      <li class="toc-l3"><a href="#练习-02c-1-加入-knn-与梯度提升分类器对比">练习 02c-1：加入 kNN 与梯度提升分类器对比</a></li>      <li class="toc-l3"><a href="#练习-02c-2-极端难溶分子筛查-严重类别不平衡">练习 02c-2：极端难溶分子筛查（严重类别不平衡）</a></li>      <li class="toc-l3"><a href="#练习-02c-3-揪出模型-漏报-最严重的难溶分子并分析原因">练习 02c-3：揪出模型“漏报”最严重的难溶分子并分析原因</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

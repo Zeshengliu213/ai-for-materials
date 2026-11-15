@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 02b · 模型评估防坑：交叉验证、超参数调优与适用域 在上一节（02a）里，我们把数据按 8:2 随机切了一刀，算出随机森林的测试集 ，并在最后发现它在预测并五苯时出现了明显的“贴边”失真。 在实际做科研或审稿时，仅仅汇报一个单次划分的测试集分数是远远不够的。这一节我们要深究三个直接决定" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="02b · 模型评估防坑：交叉验证、超参数调优与适用域 | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 02b · 模型评估防坑：交叉验证、超参数调优与适用域 在上一节（02a）里，我们把数据按 8:2 随机切了一刀，算出随机森林的测试集 ，并在最后发现它在预测并五苯时出现了明显的“贴边”失真。 在实际做科研或审稿时，仅仅汇报一个单次划分的测试集分数是远远不够的。这一节我们要深究三个直接决定" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02b_validation_and_tuning.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02b_validation_and_tuning.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>02b · 模型评估防坑：交叉验证、超参数调优与适用域 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02a_regression.html"
+           data-progress-mark="notebooks/02-supervised-learning/02a_regression.html"
+>📓 02a_regression.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02b_validation_and_tuning.html"
+           data-progress-mark="notebooks/02-supervised-learning/02b_validation_and_tuning.html"
+class="active">📓 02b_validation_and_tuning.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02c_classification.html"
+           data-progress-mark="notebooks/02-supervised-learning/02c_classification.html"
+>📓 02c_classification.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02d_exercises.html"
+           data-progress-mark="notebooks/02-supervised-learning/02d_exercises.html"
+>🏋️ 02d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/02-supervised-learning.html">模块 02：监督学习与模型评估防坑</a> /  <span>02b_validation_and_tuning.ipynb</span>
+</div>
+<h1>02b · 模型评估防坑：交叉验证、超参数调优与适用域</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>02b_validation_and_tuning.ipynb</code>（36.9 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02b_validation_and_tuning.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/75ec82ae97c2-02b_validation_and_tuning.ipynb" download="02b_validation_and_tuning.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/02-supervised-learning/02_supervised_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/02-supervised-learning/02b_validation_and_tuning.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02b_validation_and_tuning.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>02b · 模型评估防坑：交叉验证、超参数调优与适用域</h1>
+<p>在上一节（<code>02a</code>）里，我们把数据按 8:2 随机切了一刀，算出随机森林的测试集 <span class="math-inline" data-tex="\text{RMSE} = 1.17">\(\text{RMSE} = 1.17\)</span>，并在最后发现它在预测并五苯时出现了明显的“贴边”失真。</p>
+<p>在实际做科研或审稿时，仅仅汇报一个单次划分的测试集分数是远远不够的。这一节我们要深究三个直接决定实验成败的问题：</p>
+<ol>
+<li><strong>一次考试的成绩靠得住吗？</strong>——换个随机数种子，分数会晃动多少？怎样用 <strong>K 折交叉验证</strong> 给出带误差棒的可靠评估？</li>
+<li><strong>模型的“旋钮（超参数）”该怎么调？</strong>——怎样用 <strong>网格搜索（<code>GridSearchCV</code>）</strong> 和 <strong>流水线（<code>Pipeline</code>）</strong> 在不发生数据泄漏的前提下选出最佳配置？再多测 1000 个实验数据值得吗（<strong>学习曲线</strong>）？</li>
+<li><strong>面对一个全新的分子，模型的预测到底能不能信？</strong>——当测试分子拥有全新骨架（<strong>Scaffold Split</strong>）或更大共轭尺寸（<strong>外推划分</strong>）时模型会怎样失效？如何用 <strong>适用域（Applicability Domain）</strong> 提前预警？</li>
+</ol>
+<h3 id="本节内容">本节内容</h3>
+<ol>
+<li>从单次划分的随机波动到 K 折交叉验证</li>
+<li>超参数网格搜索（<code>GridSearchCV</code>）与调参的真实收益</li>
+<li>用 <code>Pipeline</code> 杜绝交叉验证中的数据泄漏</li>
+<li>学习曲线（<code>learning_curve</code>）：评估数据量是否充足</li>
+<li>更严苛的泛化考验：骨架划分（Scaffold Split）与跨尺寸外推</li>
+<li>适用域（Applicability Domain）：量化预测的可信度</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;02 - Supervised Learning&quot;</span><span class="p">))</span>
+    <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">run_line_magic</span><span class="p">(</span><span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install -q rdkit&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h2 id="0-环境准备与数据读入">0. 环境准备与数据读入</h2>
+<p>我们先导入所需的库，并按与 <code>02a</code> 完全相同的流程读入清洗后的 AqSolDB 数据集（9480 个有效分子、17 个描述符）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">rdkit</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">rdkit</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">rdkit</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">DataStructs</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Descriptors</span><span class="p">,</span> <span class="n">rdFingerprintGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem.Scaffolds</span><span class="w"> </span><span class="kn">import</span> <span class="n">MurckoScaffold</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearRegression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean_squared_error</span>
+
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">calc_rmse</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;计算均方根误差 (RMSE)。&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;data/solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">google.colab</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;请上传 solubility.csv&quot;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;找不到 solubility.csv，请确保它在 data/ 目录下&quot;</span><span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;SMILES&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">feature_cols</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;MolMR&quot;</span><span class="p">,</span> <span class="s2">&quot;HeavyAtomCount&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHAcceptors&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHDonors&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumHeteroatoms&quot;</span><span class="p">,</span> <span class="s2">&quot;NumRotatableBonds&quot;</span><span class="p">,</span> <span class="s2">&quot;NumValenceElectrons&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumSaturatedRings&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAliphaticRings&quot;</span><span class="p">,</span> <span class="s2">&quot;RingCount&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">,</span> <span class="s2">&quot;LabuteASA&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BalabanJ&quot;</span><span class="p">,</span> <span class="s2">&quot;BertzCT&quot;</span>
+<span class="p">]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;数据集准备完毕：训练集 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">y_train</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个分子，测试集 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">y_test</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个分子。&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-从单次划分的随机波动到-k-折交叉验证">1. 从单次划分的随机波动到 K 折交叉验证</h2>
+<h3 id="1-1-换个随机种子-测试集分数会变多少">1.1 换个随机种子，测试集分数会变多少？</h3>
+<p>在 <code>02a</code> 里，我们划分数据时随手写了 <code>random_state=42</code>，得到随机森林的测试 <span class="math-inline" data-tex="\text{RMSE} = 1.17">\(\text{RMSE} = 1.17\)</span>。如果模型和超参数完全不动，仅仅把划分数据的随机种子换成 <code>0, 1, 2, 3, 4</code>（也就是重新洗牌抽 20% 的分子当测试集），测试 RMSE 会变多少？</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">seed</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]:</span>
+    <span class="n">Xa</span><span class="p">,</span> <span class="n">Xb</span><span class="p">,</span> <span class="n">ya</span><span class="p">,</span> <span class="n">yb</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Xa</span><span class="p">,</span> <span class="n">ya</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;划分随机种子 random_state = </span><span class="si">{</span><span class="n">seed</span><span class="si">}</span><span class="s2">  --&gt;  测试集 RMSE = </span><span class="si">{</span><span class="n">calc_rmse</span><span class="p">(</span><span class="n">yb</span><span class="p">,</span><span class="w"> </span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xb</span><span class="p">))</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>可以看到，仅仅因为哪些难测的分子恰好被分进了测试集，完全相同的模型考出来的 RMSE 就在 <strong><code>1.10</code> 到 <code>1.18</code></strong> 之间上下波动（跨度达 <code>0.08</code>）！</p>
+<p>这告诉我们一个非常重要的事实：<strong>如果两个模型在单次测试集上的 RMSE 只差了 0.02 或 0.03，这完全可能是抽样运气造成的，不能据此声称一个算法比另一个更好。</strong></p>
+<h3 id="1-2-k-折交叉验证-k-fold-cross-validation">1.2 K 折交叉验证（K-Fold Cross-Validation）</h3>
+<p>为了消除单次抽样的偶然性，同时不偷看锁在抽屉里的最终测试集 <code>X_test</code>，标准做法是在<strong>训练集 <code>X_train</code> 内部</strong>进行 <strong>K 折交叉验证</strong>（最常用 <span class="math-inline" data-tex="K=5">\(K=5\)</span>）：</p>
+<pre><code class="language-text"><div class="highlight"><pre><span></span>把训练集均分为 5 份，轮流拿 1 份当验证集（Validation）、其余 4 份当训练集：
+第 1 轮:  [ 验证 ] [ 训练 ] [ 训练 ] [ 训练 ] [ 训练 ]  --&gt;  得分 1
+第 2 轮:  [ 训练 ] [ 验证 ] [ 训练 ] [ 训练 ] [ 训练 ]  --&gt;  得分 2
+第 3 轮:  [ 训练 ] [ 训练 ] [ 验证 ] [ 训练 ] [ 训练 ]  --&gt;  得分 3
+第 4 轮:  [ 训练 ] [ 训练 ] [ 训练 ] [ 验证 ] [ 训练 ]  --&gt;  得分 4
+第 5 轮:  [ 训练 ] [ 训练 ] [ 训练 ] [ 训练 ] [ 验证 ]  --&gt;  得分 5
+</pre></div>
+</code></pre>
+<p>5 轮下来，训练集里的每一个分子都恰好当过一次“模拟考题”。最后我们汇报这 5 个分数的<strong>平均值 ± 标准差</strong>：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">KFold</span><span class="p">,</span> <span class="n">cross_val_score</span>
+
+<span class="n">cv</span> <span class="o">=</span> <span class="n">KFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="n">cross_val_score</span><span class="p">(</span>
+    <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span>
+    <span class="n">cv</span><span class="o">=</span><span class="n">cv</span><span class="p">,</span>
+    <span class="n">scoring</span><span class="o">=</span><span class="s2">&quot;neg_root_mean_squared_error&quot;</span><span class="p">,</span>   <span class="c1"># sklearn 内部约定“分数越大越好”，因此误差指标前面带负号</span>
+<span class="p">)</span>
+
+<span class="n">cv_rmse</span> <span class="o">=</span> <span class="o">-</span><span class="n">scores</span>   <span class="c1"># 去掉负号还原为正的 RMSE</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;5 折各自的验证 RMSE:&quot;</span><span class="p">,</span> <span class="n">cv_rmse</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;5 折交叉验证结果: RMSE = </span><span class="si">{</span><span class="n">cv_rmse</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">cv_rmse</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>在论文或报告中写出 <code>RMSE = 1.142 ± 0.036 (5-fold CV)</code>，既交代了平均水平，又交代了不确定度，比孤零零报一个数字严谨得多。</p>
+<hr />
+<h2 id="2-超参数网格搜索-gridsearchcv">2. 超参数网格搜索（<code>GridSearchCV</code>）</h2>
+<p>在机器学习里，有两种“参数”初学者经常混淆：</p>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>由谁决定</th>
+<th>典型例子</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>模型参数（Parameters）</strong></td>
+<td>调用 <code>fit()</code> 时由算法<strong>从数据中自动学出</strong></td>
+<td>线性回归的权重 <span class="math-inline" data-tex="w_i">\(w_i\)</span>、每棵决策树在哪个特征的哪个阈值分叉</td>
+</tr>
+<tr>
+<td><strong>超参数（Hyperparameters）</strong></td>
+<td>在训练开始<strong>之前</strong>，由我们<strong>人工设定</strong>的模型旋钮</td>
+<td>随机森林的树数 <code>n_estimators</code>、最大树深 <code>max_depth</code>、kNN 的邻居数 <code>n_neighbors</code></td>
+</tr>
+</tbody>
+</table>
+<p>在 <code>02a</code> 里我们发现，默认不限深度（<code>max_depth=None</code>）的随机森林在训练集上 <span class="math-inline" data-tex="\text{RMSE} = 0.42">\(\text{RMSE} = 0.42\)</span>、测试集上 <span class="math-inline" data-tex="1.17">\(1.17\)</span>，存在明显过拟合。如果我们限制树的最大深度 <code>max_depth</code>，或者把树的数量从 100 棵增加到 300 棵，能不能降低过拟合、提升泛化能力？</p>
+<p><strong>网格搜索（<code>GridSearchCV</code>）</strong> 会把我们列出的候选超参数组合成一张网格（下面共 <span class="math-inline" data-tex="2 \times 4 = 8">\(2 \times 4 = 8\)</span> 种组合），对每一种组合自动跑一遍 5 折交叉验证，挑出平均验证误差最小的那一组（总共训练 <span class="math-inline" data-tex="8 \times 5 = 40">\(8 \times 5 = 40\)</span> 个随机森林，约需半分钟）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">GridSearchCV</span>
+
+<span class="n">param_grid</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;n_estimators&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">300</span><span class="p">],</span>
+    <span class="s2">&quot;max_depth&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>   <span class="c1"># None 代表不限制深度，一直分裂到叶子节点纯净为止</span>
+<span class="p">}</span>
+
+<span class="n">grid</span> <span class="o">=</span> <span class="n">GridSearchCV</span><span class="p">(</span>
+    <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">param_grid</span><span class="p">,</span>
+    <span class="n">cv</span><span class="o">=</span><span class="n">cv</span><span class="p">,</span>
+    <span class="n">scoring</span><span class="o">=</span><span class="s2">&quot;neg_root_mean_squared_error&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">grid</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>   <span class="c1"># 铁律：调参只能在训练集 X_train 上进行，绝不能碰 X_test！</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;最优超参数组合:&quot;</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">best_params_</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;最优 5 折交叉验证 RMSE: </span><span class="si">{</span><span class="o">-</span><span class="n">grid</span><span class="o">.</span><span class="n">best_score_</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><blockquote>
+<p><strong>为什么 <code>grid.fit()</code> 绝不能把 <code>X_test</code> 放进去？</strong>
+如果看着测试集 <code>X_test</code> 的分数来挑选超参数，就相当于“拿着期末考试真题去挑选复习策略”，挑出来的参数只是恰好迎合了这批测试分子，测试集也就失去了独立考评的意义。这同样属于<strong>数据泄漏</strong>。</p>
+</blockquote>
+<p>我们把这 8 种超参数组合的 5 折交叉验证成绩展开成表格看看：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">cv_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">cv_results_</span><span class="p">)</span>
+<span class="n">cv_table</span><span class="p">[</span><span class="s2">&quot;CV_RMSE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">cv_table</span><span class="p">[</span><span class="s2">&quot;mean_test_score&quot;</span><span class="p">]</span>
+<span class="n">cv_table</span><span class="p">[[</span><span class="s2">&quot;param_max_depth&quot;</span><span class="p">,</span> <span class="s2">&quot;param_n_estimators&quot;</span><span class="p">,</span> <span class="s2">&quot;CV_RMSE&quot;</span><span class="p">,</span> <span class="s2">&quot;std_test_score&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>仔细看上面这张表，有两个非常接地气的实战结论：</p>
+<ol>
+<li><strong>树太浅会导致欠拟合</strong>：当强行把树深限制为 <code>max_depth=5</code> 时，虽然树没法死记硬背训练数据了，但因为分支太少、表达能力不足，验证集 RMSE 反而恶化到了 <code>1.275</code>。</li>
+<li><strong>调参不是魔法</strong>：当深度放宽到 <code>20</code> 或 <code>None</code>（不限深度）、树数从 <code>100</code> 增加到 <code>300</code> 时，验证集 RMSE 在 <code>1.136 ~ 1.142</code> 之间（<code>max_depth=20</code> 与 <code>None</code> 差距不到 <code>0.001</code>）。也就是说，<strong>花了 40 倍算力做网格搜索，带来的提升只有约 <code>0.005</code>——还不到第 1 节换一个随机种子带来的波动（<code>0.08</code>）的十分之一！</strong></li>
+</ol>
+<p><code>GridSearchCV</code> 在选出最优组合后，默认会自动用这组最优参数在<strong>整个 <code>X_train</code></strong> 上重新训练一遍最终模型，保存在 <code>grid.best_estimator_</code> 中：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">rf_gs</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">best_estimator_</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;调参后的最优模型在测试集上的 RMSE = </span><span class="si">{</span><span class="n">calc_rmse</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span><span class="w"> </span><span class="n">rf_gs</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">))</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-02b-1">🏋️ 练习 02b-1</h3>
+<p>训练一个默认参数的随机森林 <code>rf_default = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1).fit(X_train, y_train)</code>，用 <code>calc_rmse()</code> 分别计算 <code>rf_default</code> 和上面的 <code>rf_gs</code> 在<strong>训练集</strong>与<strong>测试集</strong>上的 RMSE。对比看看：</p>
+<ol>
+<li>调参后的模型测试集 RMSE 改善了多少？对照第 1 节的波动幅度，这个差距显著吗？</li>
+<li>调参后的模型，训练 RMSE 与测试 RMSE 之间的差距（过拟合）消失了吗？</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-用-pipeline-杜绝交叉验证中的数据泄漏">3. 用 <code>Pipeline</code> 杜绝交叉验证中的数据泄漏</h2>
+<p>对于随机森林，我们不需要缩放特征，直接调用 <code>cross_val_score</code> 或 <code>GridSearchCV</code> 就行。但如果是 <code>02a</code> 里必须做 <code>StandardScaler</code> 缩放的 <strong>kNN</strong> 或 <strong>SVR</strong> 呢？</p>
+<p>如果在做 5 折交叉验证<strong>之前</strong>，先写了一句 <code>X_train_s = StandardScaler().fit_transform(X_train)</code>，然后把 <code>X_train_s</code> 传给 <code>cross_val_score</code>，就又犯了隐蔽的<strong>数据泄漏</strong>：因为在第 1 折验证时，缩放器里的均值和标准差已经包含了第 1 折验证集分子的信息！</p>
+<p>正确的做法是：<strong>在 5 折交叉验证的每一轮内部，只拿当前那 4 份训练折去 <code>fit</code> 缩放器，再分别 <code>transform</code> 那 4 份训练折和 1 份验证折。</strong></p>
+<p>难道要我们自己手写循环去做这件繁琐的事吗？不用！<code>scikit-learn</code> 的 <strong><code>Pipeline</code>（流水线，<code>make_pipeline</code>）</strong> 可以把“特征缩放器 + 回归模型”捆绑成一个整体对象。你把它交给 <code>cross_val_score</code> 或 <code>GridSearchCV</code> 时，它会在每一折内部自动按规矩独立执行缩放和训练：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.neighbors</span><span class="w"> </span><span class="kn">import</span> <span class="n">KNeighborsRegressor</span>
+
+<span class="n">knn_pipe</span> <span class="o">=</span> <span class="n">make_pipeline</span><span class="p">(</span><span class="n">StandardScaler</span><span class="p">(),</span> <span class="n">KNeighborsRegressor</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span>
+
+<span class="n">knn_scores</span> <span class="o">=</span> <span class="o">-</span><span class="n">cross_val_score</span><span class="p">(</span><span class="n">knn_pipe</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">cv</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s2">&quot;neg_root_mean_squared_error&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;kNN 流水线 (缩放 + k=5) 5 折交叉验证 RMSE: </span><span class="si">{</span><span class="n">knn_scores</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">knn_scores</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>当需要对 <code>Pipeline</code> 里的某一步做 <code>GridSearchCV</code> 超参数搜索时，参数字典里的键名写作 <strong><code>步骤名称__参数名</code></strong>（注意中间是<strong>两个下划线 <code>__</code></strong>）。<code>make_pipeline</code> 会自动把步骤命名为类名的小写形式，例如 <code>KNeighborsRegressor</code> 对应的步骤名就是 <code>kneighborsregressor</code>。</p>
+<h3 id="练习-02b-2">🏋️ 练习 02b-2</h3>
+<p>虽然随机森林对调参不太敏感，但 kNN 对邻居数 <span class="math-inline" data-tex="k">\(k\)</span> 和投票权重方式非常敏感。请用 <code>GridSearchCV</code> 为 <code>knn_pipe</code> 搜索以下两个超参数的最佳组合（5 折交叉验证）：</p>
+<ul>
+<li><code>&quot;kneighborsregressor__n_neighbors&quot;</code>: <code>[3, 5, 10, 20, 40]</code></li>
+<li><code>&quot;kneighborsregressor__weights&quot;</code>: <code>[&quot;uniform&quot;, &quot;distance&quot;]</code>（<code>&quot;uniform&quot;</code> 表示 <span class="math-inline" data-tex="k">\(k\)</span> 个邻居平权平均；<code>&quot;distance&quot;</code> 表示距离越近的邻居话语权越大）</li>
+</ul>
+<p>打印出选出的最优参数组合 <code>best_params_</code>、交叉验证 RMSE，以及该最优流水线在测试集 <code>X_test</code> 上的 RMSE。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-学习曲线-再多测-1000-个分子值得吗">4. 学习曲线：再多测 1000 个分子值得吗？</h2>
+<p>在真实的材料研发项目里，导师或工业界合作伙伴最常问的一个问题是：<strong>“我们现在测了 500 个样品，模型误差还是有点大。如果再花半年时间多合成、多测 1000 个样品，模型到底能不能明显变好？”</strong></p>
+<p>回答这个问题的标准工具是<strong>学习曲线（<code>learning_curve</code>）</strong>：我们人为地只抽取训练集的 5%（约 380 个分子）、10%、25%、50%、100%（7584 个分子）来训练模型，画出训练误差和交叉验证误差随样本量增长的变化趋势：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">learning_curve</span>
+
+<span class="n">sizes</span><span class="p">,</span> <span class="n">train_scores</span><span class="p">,</span> <span class="n">val_scores</span> <span class="o">=</span> <span class="n">learning_curve</span><span class="p">(</span>
+    <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span>
+    <span class="n">train_sizes</span><span class="o">=</span><span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+    <span class="n">cv</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">scoring</span><span class="o">=</span><span class="s2">&quot;neg_root_mean_squared_error&quot;</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">5.6</span><span class="p">,</span> <span class="mf">3.8</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sizes</span><span class="p">,</span> <span class="o">-</span><span class="n">train_scores</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Training RMSE&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sizes</span><span class="p">,</span> <span class="o">-</span><span class="n">val_scores</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="s2">&quot;s-&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;5-fold CV RMSE&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Number of training molecules (log scale)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;RMSE (logS units)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Learning curve (Random Forest)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>怎样从学习曲线上做科研决策？</p>
+<ul>
+<li><strong>看橙色验证曲线的斜率</strong>：从 380 个分子（<span class="math-inline" data-tex="\text{RMSE} \approx 1.38">\(\text{RMSE} \approx 1.38\)</span>）增加到 7584 个分子（<span class="math-inline" data-tex="\text{RMSE} \approx 1.15">\(\text{RMSE} \approx 1.15\)</span>），验证误差一直在稳步下降（在对数横轴上几乎是一条向下倾斜的直线），说明<strong>当前模型还没有“吃饱”，继续补充高质量实验数据仍然能降低误差</strong>。</li>
+<li>反之，如果橙色曲线早就走平了，而且和蓝色训练曲线都停在一个很高的误差上（比如 1.8），那就说明<strong>瓶颈在于特征信息量不够或模型太简单</strong>——此时再花钱测一万个数据也是白费力气，应该去补充关键物理特征（比如后面要讲的熔点或量子化学描述符）。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-更严苛的泛化考验-骨架划分与尺寸外推">5. 更严苛的泛化考验：骨架划分与尺寸外推</h2>
+<p>前面无论是 <code>train_test_split</code> 还是 <code>KFold</code>，用的都是<strong>随机划分（Random Split）</strong>。但在化学数据集里，随机划分往往会让模型沾便宜：比如数据库里有一组同系物（邻氯苯胺、间氯苯胺、对氯苯胺），随机洗牌后，前两个进了训练集，第三个进了测试集。模型只要记住“氯苯胺的 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 大概是 <span class="math-inline" data-tex="-2">\(-2\)</span>”就能拿高分，但这并不代表它具备预测<strong>全新分子系列</strong>的能力。</p>
+<p>为了真实检验模型在探索新化学空间时的泛化表现，我们需要设计更贴近科研实战的划分方式。</p>
+<h3 id="5-1-按-murcko-骨架划分-scaffold-split">5.1 按 Murcko 骨架划分（Scaffold Split）</h3>
+<p>还记得 <code>01d</code> 第 4.3 节学的 <strong>Bemis–Murcko 骨架</strong>吗？我们可以先提取出每个分子的核心骨架，然后用 <code>GroupShuffleSplit</code> 强制规定：<strong>凡是具有相同 Murcko 骨架的分子，要么全部进训练集，要么全部进测试集，绝不允许跨界！</strong> 这样测试集里的每一个骨架，模型在训练时都从未见过：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">GroupShuffleSplit</span>
+
+<span class="n">scaffolds</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">MurckoScaffold</span><span class="o">.</span><span class="n">MurckoScaffoldSmiles</span><span class="p">(</span><span class="n">mol</span><span class="o">=</span><span class="n">m</span><span class="p">))</span>
+<span class="n">groups</span> <span class="o">=</span> <span class="n">scaffolds</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;acyclic&quot;</span><span class="p">)</span>   <span class="c1"># 无环脂肪族分子的骨架为空字符串，统一归为 &quot;acyclic&quot; 组</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;全库包含的不同 Murcko 骨架总数:&quot;</span><span class="p">,</span> <span class="n">groups</span><span class="o">.</span><span class="n">nunique</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">占比最高的前 5 种骨架（百分比 %）:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">((</span><span class="n">groups</span><span class="o">.</span><span class="n">value_counts</span><span class="p">(</span><span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">gss</span> <span class="o">=</span> <span class="n">GroupShuffleSplit</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">train_idx</span><span class="p">,</span> <span class="n">test_idx</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">gss</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">))</span>
+
+<span class="n">rf_scaf</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">rf_scaf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">train_idx</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">train_idx</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;随机划分 (Random Split)   测试集 RMSE = 1.17&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;骨架划分 (Scaffold Split) 测试集 RMSE = </span><span class="si">{</span><span class="n">calc_rmse</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">test_idx</span><span class="p">],</span><span class="w"> </span><span class="n">rf_scaf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">test_idx</span><span class="p">]))</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>切换到更严格的骨架划分后，测试集 RMSE 从 <code>1.17</code> 略微上升到了 <code>1.20</code>。为什么在 AqSolDB 上差别不算剧烈？
+看上面打印出来的骨架占比就明白了：AqSolDB 是一个通用小分子库，其中 <strong>29.7% 的分子完全没有环（<code>acyclic</code>）</strong>，另有 <strong>18.2% 的分子核心骨架就只是一个单苯环（<code>c1ccccc1</code>）</strong>；而且模型输入的是 <code>MolLogP</code>、<code>MolWt</code> 这类通用物理化学描述符，在不同小分子骨架之间本来就有较好的可迁移性。如果在专门针对某几类复杂杂环骨架的药物或光电材料数据集上（尤其当使用分子指纹建模时），Scaffold Split 的误差往往会比随机划分高出一大截。</p>
+<h3 id="5-2-跨尺寸外推考验-extrapolation-split">5.2 跨尺寸外推考验（Extrapolation Split）</h3>
+<p>比“换一种同尺寸骨架”更残酷的考验是<strong>尺寸外推</strong>：在有机电子材料研发中，公开数据库里绝大多数是 1~2 个环的小分子，而我们想设计合成的往往是 4 个芳香环以上的大共轭体系。</p>
+<p>我们直接模拟这个场景：</p>
+<ul>
+<li><strong>训练集</strong>：只给模型看芳香环数 <strong><span class="math-inline" data-tex="\le 2">\(\le 2\)</span></strong> 的分子（共 8647 个）；</li>
+<li><strong>测试集</strong>：让模型去预测芳香环数 <strong><span class="math-inline" data-tex="\ge 4">\(\ge 4\)</span></strong> 的大共轭分子（共 261 个）。</li>
+</ul>
+<p>看看<strong>线性回归</strong>和<strong>随机森林</strong>在这场跨尺寸外推大考中会交出怎样的答卷：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [16] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">n_arom</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">small_mask</span> <span class="o">=</span> <span class="n">n_arom</span> <span class="o">&lt;=</span> <span class="mi">2</span>
+<span class="n">large_mask</span> <span class="o">=</span> <span class="n">n_arom</span> <span class="o">&gt;=</span> <span class="mi">4</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;训练集 (&lt;=2 个芳香环): </span><span class="si">{</span><span class="n">small_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> 个 | 外推测试集 (&gt;=4 个芳香环): </span><span class="si">{</span><span class="n">large_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> 个</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">extrap_preds</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">&quot;Linear regression&quot;</span><span class="p">,</span> <span class="n">LinearRegression</span><span class="p">()),</span>
+    <span class="p">(</span><span class="s2">&quot;Random forest&quot;</span><span class="p">,</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)),</span>
+<span class="p">]:</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">small_mask</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">small_mask</span><span class="p">])</span>
+    <span class="n">pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">large_mask</span><span class="p">])</span>
+    <span class="n">extrap_preds</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pred</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">18s</span><span class="si">}</span><span class="s2"> | 外推 RMSE = </span><span class="si">{</span><span class="n">calc_rmse</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">large_mask</span><span class="p">],</span><span class="w"> </span><span class="n">pred</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> | 预测出的最低 logS = </span><span class="si">{</span><span class="n">pred</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [17] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">9.8</span><span class="p">,</span> <span class="mf">4.4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">pred</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">extrap_preds</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">large_mask</span><span class="p">],</span> <span class="n">pred</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.55</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="o">-</span><span class="mi">14</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">14</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s2">&quot;k--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Ideal (y = x)&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Measured logS (log mol/L)&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Predicted logS (log mol/L)&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="se">\n</span><span class="s2">(Train: &lt;=2 rings, Test: &gt;=4 rings)&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>上面这两张图堪称机器学习在材料科学中的经典教材案例——<strong>两种模型在外推时以截然相反的方式崩溃了</strong>：</p>
+<ul>
+<li><strong>左图（线性回归）：直线飞出天际</strong>。因为线性公式一旦超出训练范围就会顺着斜率无止境地延伸，加上重原子数与价电子数等共线特征在大分子上比例失调，它竟然把某些大分子预测成了 <span class="math-inline" data-tex="\log S = -46.5">\(\log S = -46.5\)</span>（相当于在整个地球的海洋里都找不到一个溶质分子），外推 RMSE 暴涨到 <strong><code>5.28</code></strong>！</li>
+<li><strong>右图（随机森林）：全员卡在天花板/地板上</strong>。正如我们在 <code>02a</code> 结尾分析的，树模型只能输出训练样本的局部平均值，绝不会跑出训练集的范围。但正因为训练集里根本没有 4 环以上的大分子，所有真正极难溶的大分子（真实 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 在 <span class="math-inline" data-tex="-8 \sim -13">\(-8 \sim -13\)</span>）全都被随机森林高估，齐刷刷地“托底”卡在了 <span class="math-inline" data-tex="-6 \sim -8">\(-6 \sim -8\)</span> 的水平线上（系统性低估了大共轭核带来的溶解度下降）。</li>
+</ul>
+<blockquote>
+<p><strong>这对材料发现意味着什么？</strong>
+在材料研发中，我们最渴望找到的往往是“性质超越现有数据库纪录”的新材料（比如迁移率更高、带隙更窄、或者催化活性更强）。但要时刻清醒：<strong>纯数据驱动的树模型是无法帮你预测出超越训练集上限的极端值的</strong>；而在外推区域，必须结合物理方程约束或主动学习/贝叶斯优化（第 4 章内容）来逐步探索。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="6-适用域-applicability-domain-这个预测能信吗">6. 适用域（Applicability Domain）：这个预测能信吗？</h2>
+<p>既然模型只在“跟训练数据长得像”的分子上才靠谱，那么当实验同事拿来一个新分子让你预测时，你怎样定量告诉他：“这个分子在咱们模型的能力圈内，预测可信”还是“这个分子离训练集太远了，预测纯属瞎蒙”？</p>
+<p>这个“能力圈”在化学信息学里叫做模型的<strong>适用域（Applicability Domain, AD）</strong>。最直观的衡量办法就是利用 <code>01d</code> 学的 <strong>Morgan 指纹与 Tanimoto 相似度</strong>：计算新分子与整个训练集所有分子的 Tanimoto 相似度，取其中的最大值（即<strong>最近邻相似度 <code>max_similarity</code></strong>）。</p>
+<p>我们先在测试集 <code>idx_test</code> 上验证一下：离训练集越远的分子，随机森林的预测误差是不是真的越大？</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [18] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fp_gen</span> <span class="o">=</span> <span class="n">rdFingerprintGenerator</span><span class="o">.</span><span class="n">GetMorganGenerator</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fpSize</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+
+<span class="c1"># 获取与 02a 完全一致的训练集、测试集行下标</span>
+<span class="n">idx_train</span><span class="p">,</span> <span class="n">idx_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)),</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">train_fps</span> <span class="o">=</span> <span class="p">[</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx_train</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_max_similarity</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">ref_fps</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;返回分子 mol 与参考指纹列表 ref_fps 中最相似分子的 Tanimoto 相似度。&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">DataStructs</span><span class="o">.</span><span class="n">BulkTanimotoSimilarity</span><span class="p">(</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">mol</span><span class="p">),</span> <span class="n">ref_fps</span><span class="p">))</span>
+
+<span class="n">test_max_sim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">get_max_similarity</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">train_fps</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx_test</span><span class="p">])</span>
+
+<span class="n">rf</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">idx_train</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">idx_train</span><span class="p">])</span>
+<span class="n">test_sq_err</span> <span class="o">=</span> <span class="p">(</span><span class="n">rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">idx_test</span><span class="p">])</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="n">idx_test</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+
+<span class="c1"># 按最近邻相似度分成 4 档，分别统计样本数与 RMSE：</span>
+<span class="n">sim_bins</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">test_max_sim</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="n">include_lowest</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">ad_summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;sim_bin&quot;</span><span class="p">:</span> <span class="n">sim_bins</span><span class="p">,</span> <span class="s2">&quot;sq_err&quot;</span><span class="p">:</span> <span class="n">test_sq_err</span><span class="p">})</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;sim_bin&quot;</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="s2">&quot;sq_err&quot;</span><span class="p">]</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;分子个数&quot;</span><span class="p">:</span> <span class="n">ad_summary</span><span class="o">.</span><span class="n">size</span><span class="p">(),</span> <span class="s2">&quot;测试 RMSE&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ad_summary</span><span class="o">.</span><span class="n">mean</span><span class="p">())})</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>结果一目了然：当测试分子与训练集的最大相似度在 <code>0.3</code> 以上时，RMSE 稳定在 <code>1.0 ~ 1.2</code> 左右；而一旦最大相似度跌到 <strong><code>0.3</code> 以下</strong>（训练集里根本没有结构相近的参考物），RMSE 立刻恶化到 <strong><code>2.21</code></strong>——跟什么都不学的“瞎猜平均值基线（<code>2.42</code>）”几乎没区别了！</p>
+<p>现在，我们把平时关心的 7 个代表性<strong>有机半导体分子</strong>拿过来，同时用两把尺子检查它们有没有跑出训练集的范围：</p>
+<ol>
+<li><strong>结构相似度尺子</strong>：与训练集分子的最大 Tanimoto 相似度，以及训练集里跟它最像的是哪个分子；</li>
+<li><strong>描述符范围尺子</strong>：它的疏水常数 <code>MolLogP</code> 排在训练集什么位置（训练集里还有百分之多少的分子比它更亲油）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [19] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">osc_candidates</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;pentacene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;3-hexylthiophene&quot;</span><span class="p">:</span> <span class="s2">&quot;CCCCCCc1ccsc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BTBT&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc2c(c1)sc1c2sc2ccccc21&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;C8-BTBT&quot;</span><span class="p">:</span> <span class="s2">&quot;CCCCCCCCc1ccc2c(c1)sc1c3ccc(CCCCCCCC)cc3sc21&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rubrene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc(cc1)-c1c2ccccc2c(-c2ccccc2)c2c(-c3ccccc3)c3ccccc3c(-c3ccccc3)c12&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TIPS-pentacene&quot;</span><span class="p">:</span> <span class="s2">&quot;CC(C)[Si](C#Cc1c2cc3ccccc3cc2c(C#C[Si](C(C)C)(C(C)C)C(C)C)c2cc3ccccc3cc12)(C(C)C)C(C)C&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;EDOT&quot;</span><span class="p">:</span> <span class="s2">&quot;C1COc2cscc2O1&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">train_logP</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">idx_train</span><span class="p">]</span>
+<span class="n">ad_rows</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">osc_candidates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
+    <span class="n">sims</span> <span class="o">=</span> <span class="n">DataStructs</span><span class="o">.</span><span class="n">BulkTanimotoSimilarity</span><span class="p">(</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">mol</span><span class="p">),</span> <span class="n">train_fps</span><span class="p">)</span>
+    <span class="n">best_j</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">sims</span><span class="p">))</span>
+    <span class="n">logp_val</span> <span class="o">=</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">MolLogP</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span>
+    <span class="n">ad_rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s2">&quot;molecule&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+        <span class="s2">&quot;max_similarity (bit FP)&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">sims</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="s2">&quot;nearest_in_train&quot;</span><span class="p">:</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Name&quot;</span><span class="p">][</span><span class="n">idx_train</span><span class="p">[</span><span class="n">best_j</span><span class="p">]],</span>
+        <span class="s2">&quot;MolLogP&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">logp_val</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="s2">&quot;% train with higher logP&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">train_logP</span> <span class="o">&gt;</span> <span class="n">logp_val</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="p">})</span>
+
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ad_rows</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>看看这张适用域体检表，信息量非常丰富：</p>
+<ul>
+<li><strong><code>TIPS-pentacene</code> 和 <code>EDOT</code></strong>：最大 Tanimoto 相似度连 <code>0.40</code> 都不到，说明训练集里根本没有含三异丙基硅乙炔基或二氧乙撑噻吩结构的类似物；</li>
+<li><strong><code>C8-BTBT</code>、<code>rubrene</code>（红荧烯）、<code>TIPS-pentacene</code></strong>：它们的 <code>MolLogP</code> 高达 <span class="math-inline" data-tex="9.6 \sim 12.6">\(9.6 \sim 12.6\)</span>，训练集里超过 99.6% 的分子都没它们这么疏水——它们已经完全处在描述符空间的极端边缘！</li>
+<li><strong>最具有欺骗性的是第一行 <code>pentacene</code>（并五苯）</strong>：表里显示它与训练集中 <code>naphthacene</code>（并四苯的旧称）的最大相似度竟然是 <strong><code>1.00</code></strong>！难道并五苯完全在适用域内、预测绝对可靠吗？</li>
+</ul>
+<p>当然不是！我们在 <code>02a</code> 结尾明明看到随机森林把并五苯预测错了。之所以这里算出来相似度是 <code>1.00</code>，正是因为我们用了<strong>二值 Morgan 指纹（Bit FP）</strong>——它在 <code>01d</code> 里就被我们抓到过分不清并四苯和并五苯！<strong>用来衡量适用域的“尺子”如果选得不对，就会给出虚假的安全感。</strong></p>
+<h3 id="练习-02b-3">🏋️ 练习 02b-3</h3>
+<p>让我们换一把更准确的尺子：改用<strong>计数指纹</strong> <code>fp_gen.GetCountFingerprint(mol)</code> 重新生成训练集的指纹列表 <code>train_count_fps</code>，并计算并五苯（<code>pentacene</code>）与训练集所有分子的 Tanimoto 相似度（<code>DataStructs.BulkTanimotoSimilarity</code> 同样直接支持计数指纹）。</p>
+<ol>
+<li>换用计数指纹后，并五苯与训练集的最大相似度从 <code>1.00</code> 降到了多少？</li>
+<li>打印出与并五苯最相似的前 3 个训练集分子的名称和相似度。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [20] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="小结">小结</h2>
+<p>这一节我们系统学习了怎样科学、诚实地评估和诊断一个机器学习模型：</p>
+<ul>
+<li><strong>交叉验证（<code>KFold</code> / <code>cross_val_score</code>）</strong>：单次 <code>train_test_split</code> 的分数会随随机种子显著波动（<span class="math-inline" data-tex="\pm 0.04">\(\pm 0.04\)</span>），在训练集上做 5 折交叉验证并汇报 <code>均值 ± 标准差</code> 才能区分真实改进与随机运气；</li>
+<li><strong>超参数调优与防泄漏流水线（<code>GridSearchCV</code> + <code>Pipeline</code>）</strong>：用 <code>make_pipeline</code> 把 <code>StandardScaler</code> 与模型捆绑，确保每一折验证都在训练折内部独立缩放；同时认识到当模型默认设置合理时，调参的边际收益往往远小于特征质量和数据量的影响；</li>
+<li><strong>学习曲线（<code>learning_curve</code>）</strong>：通过观察验证误差随样本量增加是否继续下降，判断“继续补测实验数据”是否划算；</li>
+<li><strong>严苛划分与适用域（Scaffold Split / Extrapolation / AD）</strong>：
+<ul>
+<li>面对超出训练范围的大分子，线性模型会沿斜率飞出物理边界，而树模型则会卡在训练集极值处停止外推；</li>
+<li>在对新分子下结论前，务必先检查它与训练集的<strong>最大结构相似度</strong>（注意优先用计数指纹而非二值指纹）以及<strong>核心描述符是否越界</strong>。</li>
+</ul>
+</li>
+</ul>
+<p><strong>下一节（<code>02c_classification.ipynb</code>）</strong>：我们将把连续数值预测转为二元分类任务（筛查“难溶分子”），探讨为什么在类别不平衡时“90% 的准确率”可能是个骗局，并通过特征重要性分析打开随机森林的黑箱。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/02-supervised-learning/02b_validation_and_tuning.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/02-supervised-learning.html">返回模块 02</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/02-supervised-learning/02a_regression.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">02a · 监督学习入门：从分子特征预测水溶解度（回归）</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/02-supervised-learning/02c_classification.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">02c — 分类与基础特征重要性（Classification &amp; Feature Importance）</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l3"><a href="#本节内容">本节内容</a></li>      <li class="toc-l2"><a href="#0-环境准备与数据读入">0. 环境准备与数据读入</a></li>      <li class="toc-l2"><a href="#1-从单次划分的随机波动到-k-折交叉验证">1. 从单次划分的随机波动到 K 折交叉验证</a></li>      <li class="toc-l3"><a href="#1-1-换个随机种子-测试集分数会变多少">1.1 换个随机种子，测试集分数会变多少？</a></li>      <li class="toc-l3"><a href="#1-2-k-折交叉验证-k-fold-cross-validation">1.2 K 折交叉验证（K-Fold Cross-Validation）</a></li>      <li class="toc-l2"><a href="#2-超参数网格搜索-gridsearchcv">2. 超参数网格搜索（GridSearchCV）</a></li>      <li class="toc-l3"><a href="#练习-02b-1">🏋️ 练习 02b-1</a></li>      <li class="toc-l2"><a href="#3-用-pipeline-杜绝交叉验证中的数据泄漏">3. 用 Pipeline 杜绝交叉验证中的数据泄漏</a></li>      <li class="toc-l3"><a href="#练习-02b-2">🏋️ 练习 02b-2</a></li>      <li class="toc-l2"><a href="#4-学习曲线-再多测-1000-个分子值得吗">4. 学习曲线：再多测 1000 个分子值得吗？</a></li>      <li class="toc-l2"><a href="#5-更严苛的泛化考验-骨架划分与尺寸外推">5. 更严苛的泛化考验：骨架划分与尺寸外推</a></li>      <li class="toc-l3"><a href="#5-1-按-murcko-骨架划分-scaffold-split">5.1 按 Murcko 骨架划分（Scaffold Split）</a></li>      <li class="toc-l3"><a href="#5-2-跨尺寸外推考验-extrapolation-split">5.2 跨尺寸外推考验（Extrapolation Split）</a></li>      <li class="toc-l2"><a href="#6-适用域-applicability-domain-这个预测能信吗">6. 适用域（Applicability Domain）：这个预测能信吗？</a></li>      <li class="toc-l3"><a href="#练习-02b-3">🏋️ 练习 02b-3</a></li>      <li class="toc-l2"><a href="#小结">小结</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

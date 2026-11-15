@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="面向零编程基础材料/化学/物理研究生的一学期 AI 实战课程：Python 科学计算、机器学习、贝叶斯优化、神经网络、生成模型与图神经网络，全部配套可运行的 Jupyter Notebook 课件与数据集。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="AI for Materials Science | 材料人工智能实战课程" />
+  <meta property="og:description" content="面向零编程基础材料/化学/物理研究生的一学期 AI 实战课程：Python 科学计算、机器学习、贝叶斯优化、神经网络、生成模型与图神经网络，全部配套可运行的 Jupyter Notebook 课件与数据集。" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/index.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/index.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="assets/pygments.css" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <link rel="stylesheet" href="assets/components.css" />
+  <script>
+    window.AI4M_BASE = "";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="assets/vendor/katex/katex.min.js"></script>
+  <script defer src="assets/search-index.js"></script>
+  <script defer src="assets/app.js"></script>  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Course", "name": "AI for Materials Science", "description": "面向零编程基础材料/化学/物理研究生的一学期 AI 实战课程：Python 科学计算、机器学习、贝叶斯优化、神经网络、生成模型与图神经网络，全部配套可运行的 Jupyter Notebook 课件与数据集。", "inLanguage": "zh-CN", "teaches": ["Python 与化学/材料数据基础", "监督学习与模型评估防坑", "无监督学习：化学空间与发现", "贝叶斯优化与主动实验设计", "特征工程、SHAP 与 3D 分子", "无机与晶体材料信息学", "神经网络与材料显微视觉 CNN", "序列模型、Transformer 与反应预测", "生成模型：分子设计到电镜超分", "图神经网络（GNN）与机器学习势函数"], "hasCourseInstance": {"@type": "CourseInstance", "courseMode": "online"}, "url": "https://zeshengliu213.github.io/ai-for-materials"}</script>
+  <title>AI for Materials Science | 材料人工智能实战课程</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="index.html" class="active">课程主页</a>
+      <a href="index.html#syllabus">课程大纲</a>
+      <a href="exercises.html">习题与答案</a>
+      <a href="index.html#legend">学习指南</a>
+      <a href="index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Graduate Course · 零基础材料研究生一学期实战课程</div>
+    <h1>AI for Materials Science</h1>
+    <p class="hero-desc">
+      本课程面向零编程基础的材料、化学与物理专业研究生，融合林雪平大学（LiU）<em>AI for Materials Science</em>
+      宏观教学脉络与 EPFL CH-457 互动实战设计。全程基于 Python、Scikit-Learn、RDKit、Pymatgen 与 PyTorch，
+      纯 CPU 即可在本地或 Google Colab 流畅运行。
+    </p>
+    <div class="hero-meta">
+      <span>📚 共 10 大课程模块</span>
+      <span>📓 已上线 29 份互动 Notebook 课件</span>
+      <span>🏋️ 7 份课后习题（均配参考答案）</span>
+      <span>🧪 涵盖有机半导体、催化剂发现、晶体材料与图神经网络</span>
+    </div>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#syllabus">浏览课程大纲</a>
+      <a class="btn btn-outline-light" href="modules/01-basics.html">从模块 01 开始学习</a>
+      <a class="btn btn-outline-light" href="exercises.html">做习题</a>
+    </div>
+  </div>
+</section>
+
+<main class="container" id="main-content">
+<section class="roadmap" aria-labelledby="roadmap-title">
+  <div class="roadmap-head">
+    <h2 id="roadmap-title" class="section-title-plain">课程知识脉络（Roadmap）</h2>
+    <p class="roadmap-lead">从“把材料变成数字”到“让模型反过来设计材料”——点击任意节点直接进入对应模块。</p>
+  </div>
+  <ol class="roadmap-track">    <li class="roadmap-stage roadmap-stage-done">
+      <div class="roadmap-stage-top">
+        <span class="roadmap-index">01</span>
+<svg class="stage-icon" viewBox="0 0 48 48" aria-hidden="true">
+  <rect class="vz-surface" x="4" y="8" width="20" height="32" rx="3"/>
+  <g class="vz-grid"><path d="M4 18h20M4 29h20M14 8v32"/></g>
+  <path class="vz-stroke-crimson" d="M28 24h6"/>
+  <path class="vz-line" d="M40 16l6 4v8l-6 4-6-4v-8z"/>
+</svg>
+      </div>
+      <h3 class="roadmap-stage-title">表示与数据</h3>
+      <p class="roadmap-stage-desc">把分子、实验记录与文献数据变成能计算的数字</p>
+      <div class="roadmap-chips">        <a class="roadmap-chip roadmap-chip-done"
+           href="modules/01-basics.html"
+           title="模块 01：Python 与化学/材料数据基础（已完成）">
+          <span class="roadmap-chip-num">01</span>
+          <span class="roadmap-chip-title">Python 与化学/材料数据基础</span>
+        </a>      </div>
+    </li>    <li class="roadmap-stage roadmap-stage-done">
+      <div class="roadmap-stage-top">
+        <span class="roadmap-index">02</span>
+<svg class="stage-icon" viewBox="0 0 48 48" aria-hidden="true">
+  <path class="vz-axis" d="M8 40h34M8 40V8"/>
+  <path class="vz-dashed" d="M8 40L40 10"/>
+  <g class="vz-fill-navy"><circle cx="16" cy="34" r="3"/><circle cx="24" cy="26" r="3"/><circle cx="33" cy="17" r="3"/></g>
+</svg>
+      </div>
+      <h3 class="roadmap-stage-title">经典机器学习与防坑</h3>
+      <p class="roadmap-stage-desc">回归分类、交叉验证、Scaffold Split 与化学空间探索</p>
+      <div class="roadmap-chips">        <a class="roadmap-chip roadmap-chip-done"
+           href="modules/02-supervised-learning.html"
+           title="模块 02：监督学习与模型评估防坑（已完成）">
+          <span class="roadmap-chip-num">02</span>
+          <span class="roadmap-chip-title">监督学习与模型评估防坑</span>
+        </a>        <a class="roadmap-chip roadmap-chip-done"
+           href="modules/03-unsupervised-learning.html"
+           title="模块 03：无监督学习：化学空间与发现（已完成）">
+          <span class="roadmap-chip-num">03</span>
+          <span class="roadmap-chip-title">无监督学习：化学空间与发现</span>
+        </a>      </div>
+    </li>    <li class="roadmap-stage roadmap-stage-done">
+      <div class="roadmap-stage-top">
+        <span class="roadmap-index">03</span>
+<svg class="stage-icon" viewBox="0 0 48 48" aria-hidden="true">
+  <path class="vz-band" d="M5 30C14 12 24 10 32 20c6 8 10 10 12 4v14c-4 6-10 2-16-6-6-8-14-6-23 6z"/>
+  <path class="vz-stroke-navy" d="M5 32C14 18 24 16 32 24c6 6 10 6 12 0"/>
+  <circle class="vz-fill-crimson" cx="21" cy="21" r="3.5"/>
+  <circle class="vz-fill-gold" cx="38" cy="26" r="3.5"/>
+</svg>
+      </div>
+      <h3 class="roadmap-stage-title">贝叶斯主动实验</h3>
+      <p class="roadmap-stage-desc">高斯过程 + 采集函数：用更少的实验找到更好的材料</p>
+      <div class="roadmap-chips">        <a class="roadmap-chip roadmap-chip-done"
+           href="modules/04-bayesian-optimization.html"
+           title="模块 04：贝叶斯优化与主动实验设计（已完成）">
+          <span class="roadmap-chip-num">04</span>
+          <span class="roadmap-chip-title">贝叶斯优化与主动实验设计</span>
+        </a>      </div>
+    </li>    <li class="roadmap-stage">
+      <div class="roadmap-stage-top">
+        <span class="roadmap-index">04</span>
+<svg class="stage-icon" viewBox="0 0 48 48" aria-hidden="true">
+  <g class="vz-line"><path d="M10 16l12-7 12 7v16l-12 7-12-7z" opacity="0.4"/><path d="M10 16l12 7 12-7M22 23v16"/></g>
+  <g class="vz-fill-navy"><circle cx="10" cy="16" r="3"/><circle cx="34" cy="16" r="3"/><circle cx="10" cy="32" r="3"/><circle cx="34" cy="32" r="3"/></g>
+  <circle class="vz-fill-crimson" cx="22" cy="23" r="3.5"/>
+  <g class="vz-stroke-teal" stroke-width="2"><path d="M40 40V28M44 40V20"/></g>
+</svg>
+      </div>
+      <h3 class="roadmap-stage-title">描述符与材料信息学</h3>
+      <p class="roadmap-stage-desc">SHAP 归因、3D 构象、晶体结构与高通量筛选</p>
+      <div class="roadmap-chips">        <a class="roadmap-chip roadmap-chip-todo"
+           href="modules/05-feature-engineering-and-molecular-informatics.html"
+           title="模块 05：特征工程、SHAP 与 3D 分子（待编写）">
+          <span class="roadmap-chip-num">05</span>
+          <span class="roadmap-chip-title">特征工程、SHAP 与 3D 分子</span>
+        </a>        <a class="roadmap-chip roadmap-chip-todo"
+           href="modules/06-materials-informatics.html"
+           title="模块 06：无机与晶体材料信息学（待编写）">
+          <span class="roadmap-chip-num">06</span>
+          <span class="roadmap-chip-title">无机与晶体材料信息学</span>
+        </a>      </div>
+    </li>    <li class="roadmap-stage roadmap-stage-done">
+      <div class="roadmap-stage-top">
+        <span class="roadmap-index">05</span>
+<svg class="stage-icon" viewBox="0 0 48 48" aria-hidden="true">
+  <g class="vz-edge"><path d="M12 12l14 12M12 24l14-12M12 36l14-12M26 24l10 12M26 24l10-12"/></g>
+  <g class="vz-fill-navy"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="24" r="4"/><circle cx="12" cy="36" r="4"/></g>
+  <circle class="vz-fill-teal" cx="26" cy="24" r="4.5"/>
+  <g class="vz-fill-gold"><circle cx="38" cy="12" r="4"/><circle cx="38" cy="36" r="4"/></g>
+</svg>
+      </div>
+      <h3 class="roadmap-stage-title">深度学习表征</h3>
+      <p class="roadmap-stage-desc">神经网络、显微图像 CNN 与 SMILES 序列模型</p>
+      <div class="roadmap-chips">        <a class="roadmap-chip roadmap-chip-done"
+           href="modules/07-neural-networks-and-cnns.html"
+           title="模块 07：神经网络与材料显微视觉 CNN（已完成）">
+          <span class="roadmap-chip-num">07</span>
+          <span class="roadmap-chip-title">神经网络与材料显微视觉 CNN</span>
+        </a>        <a class="roadmap-chip roadmap-chip-done"
+           href="modules/08-sequence-models-and-transformers.html"
+           title="模块 08：序列模型、Transformer 与反应预测（已完成）">
+          <span class="roadmap-chip-num">08</span>
+          <span class="roadmap-chip-title">序列模型、Transformer 与反应预测</span>
+        </a>      </div>
+    </li>    <li class="roadmap-stage">
+      <div class="roadmap-stage-top">
+        <span class="roadmap-index">06</span>
+<svg class="stage-icon" viewBox="0 0 48 48" aria-hidden="true">
+  <ellipse class="vz-latent" cx="16" cy="24" rx="12" ry="14"/>
+  <g class="vz-fill-navy" opacity="0.8"><circle cx="12" cy="18" r="2.4"/><circle cx="20" cy="22" r="2.4"/><circle cx="14" cy="30" r="2.4"/></g>
+  <path class="vz-stroke-crimson" d="M32 24h5"/>
+  <path class="vz-line" d="M42 18l5 3v7l-5 3-5-3v-7z"/>
+</svg>
+      </div>
+      <h3 class="roadmap-stage-title">生成模型与图网络</h3>
+      <p class="roadmap-stage-desc">分子生成、图神经网络与机器学习势函数</p>
+      <div class="roadmap-chips">        <a class="roadmap-chip roadmap-chip-partial"
+           href="modules/09-generative-models.html"
+           title="模块 09：生成模型：分子设计到电镜超分（09a/09b 就绪）">
+          <span class="roadmap-chip-num">09</span>
+          <span class="roadmap-chip-title">生成模型：分子设计到电镜超分</span>
+        </a>        <a class="roadmap-chip roadmap-chip-partial"
+           href="modules/10-graph-neural-networks-and-mlips.html"
+           title="模块 10：图神经网络（GNN）与机器学习势函数（10a/10b 就绪）">
+          <span class="roadmap-chip-num">10</span>
+          <span class="roadmap-chip-title">图神经网络（GNN）与机器学习势函数</span>
+        </a>      </div>
+    </li>  </ol>
+</section>
+
+  <section id="syllabus">
+    <div class="section-header">
+      <h2 class="section-title-plain">课程大纲与课件目录（Syllabus）</h2>
+      <div class="filter-bar">
+        <input id="module-search" class="search-input" type="search"
+               placeholder="筛选模块（如 RDKit / GNN）..." aria-label="筛选课程模块" />
+      </div>
+    </div>
+
+    <div class="progress-panel progress-panel-wide" data-progress-keys="notebooks/01-basics/01a_python_crash_course.html,notebooks/01-basics/01b_pandas.html,notebooks/01-basics/01c_plotting.html,notebooks/01-basics/01d_rdkit_basics.html,notebooks/01-basics/01e_exercises.html,notebooks/02-supervised-learning/02a_regression.html,notebooks/02-supervised-learning/02b_validation_and_tuning.html,notebooks/02-supervised-learning/02c_classification.html,notebooks/02-supervised-learning/02d_exercises.html,notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html,notebooks/03-unsupervised-learning/03b_clustering.html,notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html,notebooks/03-unsupervised-learning/03d_exercises.html,notebooks/04-bayesian-optimization/04a_gaussian_processes.html,notebooks/04-bayesian-optimization/04b_bayesian_optimization.html,notebooks/04-bayesian-optimization/04c_exercises.html,notebooks/07-neural-networks-and-cnns/07a_neural_networks.html,notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html,notebooks/07-neural-networks-and-cnns/07c_exercises.html,notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html,notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html,notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html,notebooks/08-sequence-models-and-transformers/08d_exercises.html,notebooks/09-generative-models/09a_vae_selfies.html,notebooks/09-generative-models/09b_goal_directed_generation.html,notebooks/09-generative-models/09c_microscopy_diffusion_sr.html,notebooks/09-generative-models/09d_exercises.html,notebooks/10-graph-neural-networks-and-mlips/10a_graph_neural_networks.html,notebooks/10-graph-neural-networks-and-mlips/10b_chemprop.html">
+      <div class="progress-head">
+        <strong>我的学习进度</strong>
+        <span class="progress-count" data-progress-count>0 / 29</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+      <div class="progress-foot">
+        <span class="hint-inline">进度只保存在当前浏览器（localStorage），不会上传服务器。</span>
+        <button type="button" id="progress-reset" class="btn btn-secondary">重置进度</button>
+      </div>
+    </div>
+
+    <div class="semester-label">上半学期 · 科学计算、经典机器学习与材料信息学（模块 01–06）</div>
+    <div class="module-grid"><article class="module-card module-card-done">
+  <div>
+    <a class="module-thumb" href="modules/01-basics.html" tabindex="-1" aria-hidden="true">
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="数据表与分子结构示意">
+  <rect class="vz-surface" x="8" y="18" width="120" height="74" rx="4"/>
+  <rect class="vz-fill-navy" x="8" y="18" width="120" height="15" rx="4" opacity="0.85"/>
+  <g class="vz-grid">
+    <path d="M8 48h120M8 63h120M8 78h120M48 18v74M88 18v74"/>
+  </g>
+  <g class="vz-fill-muted">
+    <rect x="15" y="40" width="24" height="4" rx="2"/><rect x="55" y="40" width="24" height="4" rx="2"/>
+    <rect x="95" y="40" width="24" height="4" rx="2"/><rect x="15" y="55" width="18" height="4" rx="2"/>
+    <rect x="55" y="55" width="26" height="4" rx="2"/><rect x="95" y="55" width="16" height="4" rx="2"/>
+    <rect x="15" y="70" width="26" height="4" rx="2"/><rect x="55" y="70" width="18" height="4" rx="2"/>
+    <rect x="95" y="70" width="22" height="4" rx="2"/>
+  </g>
+  <path class="vz-stroke-crimson" d="M146 55h24" marker-end="url(#vz-arrow)"/>
+  <g class="vz-line" stroke-width="2">
+    <path d="M214 34l22 13v26l-22 13-22-13V47z"/>
+    <path d="M218 44l15 9v17l-15 9-15-9V53z" opacity="0.5"/>
+    <path d="M236 47l20-11M192 47l-20-11M214 86v20"/>
+  </g>
+  <circle class="vz-fill-teal" cx="256" cy="36" r="5"/>
+  <circle class="vz-fill-gold" cx="172" cy="36" r="5"/>
+  <circle class="vz-fill-crimson" cx="214" cy="106" r="5"/>
+</svg>
+    </a>
+    <div class="module-card-top">
+      <span class="module-num">Module 01</span>
+      <span class="status-badge status-done">已完成</span>
+    </div>
+    <h3 class="module-title"><a href="modules/01-basics.html">Python 与化学/材料数据基础</a></h3>
+    <p class="module-desc">Python 速成、Pandas 数据清洗、科研绘图与 RDKit 分子表示（AqSolDB 有机半导体主线）。</p>
+    <ul class="module-notebooks">      <li><a href="notebooks/01-basics/01a_python_crash_course.html"
+             data-progress-mark="notebooks/01-basics/01a_python_crash_course.html">📓 01a_python_crash_course.ipynb</a>
+        <span class="module-nb-size">41.1 KB</span></li>      <li><a href="notebooks/01-basics/01b_pandas.html"
+             data-progress-mark="notebooks/01-basics/01b_pandas.html">📓 01b_pandas.ipynb</a>
+        <span class="module-nb-size">30.8 KB</span></li>      <li><a href="notebooks/01-basics/01c_plotting.html"
+             data-progress-mark="notebooks/01-basics/01c_plotting.html">📓 01c_plotting.ipynb</a>
+        <span class="module-nb-size">25.7 KB</span></li>      <li><a href="notebooks/01-basics/01d_rdkit_basics.html"
+             data-progress-mark="notebooks/01-basics/01d_rdkit_basics.html">📓 01d_rdkit_basics.ipynb</a>
+        <span class="module-nb-size">37.3 KB</span></li>      <li><a href="notebooks/01-basics/01e_exercises.html"
+             data-progress-mark="notebooks/01-basics/01e_exercises.html">🏋️ 01e_exercises.ipynb</a>
+        <span class="module-nb-size">12.4 KB</span></li>    </ul>
+  </div>  <div class="card-progress" data-progress-keys="notebooks/01-basics/01a_python_crash_course.html,notebooks/01-basics/01b_pandas.html,notebooks/01-basics/01c_plotting.html,notebooks/01-basics/01d_rdkit_basics.html,notebooks/01-basics/01e_exercises.html">
+    <div class="progress-track progress-track-sm"><div class="progress-fill" data-progress-fill></div></div>
+    <span class="progress-count" data-progress-count>0 / 5</span>
+  </div>  <div class="module-card-footer">
+    <span>4 课件 · 1 习题 · 1 数据集</span>
+    <a href="modules/01-basics.html">进入模块 →</a>
+  </div>
+</article>
+<article class="module-card module-card-done">
+  <div>
+    <a class="module-thumb" href="modules/02-supervised-learning.html" tabindex="-1" aria-hidden="true">
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="预测值对真实值的 parity 散点图">
+  <g class="vz-axis"><path d="M40 96h250M40 96V10"/></g>
+  <path class="vz-dashed" d="M40 96L286 14"/>
+  <g class="vz-band-teal">
+    <path d="M40 96L286 14l12 18L52 110z" opacity="0.14"/>
+  </g>
+  <g class="vz-fill-navy">
+    <circle cx="72" cy="86" r="4"/><circle cx="104" cy="72" r="4"/><circle cx="118" cy="80" r="4"/>
+    <circle cx="146" cy="62" r="4"/><circle cx="162" cy="54" r="4"/><circle cx="186" cy="52" r="4"/>
+    <circle cx="206" cy="38" r="4"/><circle cx="232" cy="34" r="4"/><circle cx="258" cy="22" r="4"/>
+  </g>
+  <g class="vz-fill-crimson"><circle cx="128" cy="38" r="4"/><circle cx="214" cy="74" r="4"/></g>
+</svg>
+    </a>
+    <div class="module-card-top">
+      <span class="module-num">Module 02</span>
+      <span class="status-badge status-done">已完成</span>
+    </div>
+    <h3 class="module-title"><a href="modules/02-supervised-learning.html">监督学习与模型评估防坑</a></h3>
+    <p class="module-desc">回归建模、交叉验证与 Scaffold Split 防数据泄漏、分类模型与特征重要性。</p>
+    <ul class="module-notebooks">      <li><a href="notebooks/02-supervised-learning/02a_regression.html"
+             data-progress-mark="notebooks/02-supervised-learning/02a_regression.html">📓 02a_regression.ipynb</a>
+        <span class="module-nb-size">40.9 KB</span></li>      <li><a href="notebooks/02-supervised-learning/02b_validation_and_tuning.html"
+             data-progress-mark="notebooks/02-supervised-learning/02b_validation_and_tuning.html">📓 02b_validation_and_tuning.ipynb</a>
+        <span class="module-nb-size">36.9 KB</span></li>      <li><a href="notebooks/02-supervised-learning/02c_classification.html"
+             data-progress-mark="notebooks/02-supervised-learning/02c_classification.html">📓 02c_classification.ipynb</a>
+        <span class="module-nb-size">34.1 KB</span></li>      <li><a href="notebooks/02-supervised-learning/02d_exercises.html"
+             data-progress-mark="notebooks/02-supervised-learning/02d_exercises.html">🏋️ 02d_exercises.ipynb</a>
+        <span class="module-nb-size">11.6 KB</span></li>    </ul>
+  </div>  <div class="card-progress" data-progress-keys="notebooks/02-supervised-learning/02a_regression.html,notebooks/02-supervised-learning/02b_validation_and_tuning.html,notebooks/02-supervised-learning/02c_classification.html,notebooks/02-supervised-learning/02d_exercises.html">
+    <div class="progress-track progress-track-sm"><div class="progress-fill" data-progress-fill></div></div>
+    <span class="progress-count" data-progress-count>0 / 4</span>
+  </div>  <div class="module-card-footer">
+    <span>3 课件 · 1 习题 · 1 数据集</span>
+    <a href="modules/02-supervised-learning.html">进入模块 →</a>
+  </div>
+</article>
+<article class="module-card module-card-done">
+  <div>
+    <a class="module-thumb" href="modules/03-unsupervised-learning.html" tabindex="-1" aria-hidden="true">
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="化学空间降维聚类示意">
+  <g class="vz-hull"><ellipse cx="72" cy="40" rx="42" ry="28"/><ellipse cx="178" cy="72" rx="48" ry="28"/><ellipse cx="262" cy="34" rx="40" ry="25"/></g>
+  <g class="vz-fill-navy">
+    <circle cx="58" cy="32" r="4"/><circle cx="76" cy="26" r="4"/><circle cx="68" cy="46" r="4"/>
+    <circle cx="88" cy="44" r="4"/><circle cx="52" cy="50" r="4"/><circle cx="82" cy="56" r="4"/>
+  </g>
+  <g class="vz-fill-teal">
+    <circle cx="160" cy="66" r="4"/><circle cx="180" cy="60" r="4"/><circle cx="196" cy="72" r="4"/>
+    <circle cx="170" cy="82" r="4"/><circle cx="192" cy="86" r="4"/><circle cx="148" cy="78" r="4"/>
+  </g>
+  <g class="vz-fill-gold">
+    <circle cx="250" cy="28" r="4"/><circle cx="268" cy="22" r="4"/><circle cx="274" cy="42" r="4"/>
+    <circle cx="254" cy="44" r="4"/><circle cx="286" cy="32" r="4"/>
+  </g>
+  <circle class="vz-fill-crimson" cx="124" cy="96" r="4.5"/>
+</svg>
+    </a>
+    <div class="module-card-top">
+      <span class="module-num">Module 03</span>
+      <span class="status-badge status-done">已完成</span>
+    </div>
+    <h3 class="module-title"><a href="modules/03-unsupervised-learning.html">无监督学习：化学空间与发现</a></h3>
+    <p class="module-desc">PCA/t-SNE 降维、K-means/DBSCAN/Butina 聚类与 Science 钯二聚体催化剂发现复现。</p>
+    <ul class="module-notebooks">      <li><a href="notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+             data-progress-mark="notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html">📓 03a_dimensionality_reduction.ipynb</a>
+        <span class="module-nb-size">36.8 KB</span></li>      <li><a href="notebooks/03-unsupervised-learning/03b_clustering.html"
+             data-progress-mark="notebooks/03-unsupervised-learning/03b_clustering.html">📓 03b_clustering.ipynb</a>
+        <span class="module-nb-size">31.6 KB</span></li>      <li><a href="notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+             data-progress-mark="notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html">📓 03c_pd_dimer_discovery.ipynb</a>
+        <span class="module-nb-size">29.6 KB</span></li>      <li><a href="notebooks/03-unsupervised-learning/03d_exercises.html"
+             data-progress-mark="notebooks/03-unsupervised-learning/03d_exercises.html">🏋️ 03d_exercises.ipynb</a>
+        <span class="module-nb-size">12.6 KB</span></li>    </ul>
+  </div>  <div class="card-progress" data-progress-keys="notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html,notebooks/03-unsupervised-learning/03b_clustering.html,notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html,notebooks/03-unsupervised-learning/03d_exercises.html">
+    <div class="progress-track progress-track-sm"><div class="progress-fill" data-progress-fill></div></div>
+    <span class="progress-count" data-progress-count>0 / 4</span>
+  </div>  <div class="module-card-footer">
+    <span>3 课件 · 1 习题 · 5 数据集</span>
+    <a href="modules/03-unsupervised-learning.html">进入模块 →</a>
+  </div>
+</article>
+<article class="module-card module-card-done">
+  <div>
+    <a class="module-thumb" href="modules/04-bayesian-optimization.html" tabindex="-1" aria-hidden="true">
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="高斯过程置信区间与采集函数示意">
+  <path class="vz-band" d="M20 62C70 16 96 10 134 30c38 20 60 70 100 58 24-7 44-34 66-46v38c-22 16-42 34-66 38-40 7-62-28-100-40C96 66 70 70 20 92z"/>
+  <path class="vz-stroke-navy" d="M20 76C70 42 96 36 134 50c38 14 60 50 100 42 24-5 44-26 66-38"/>
+  <g class="vz-fill-crimson">
+    <circle cx="62" cy="62" r="4.5"/><circle cx="134" cy="50" r="4.5"/><circle cx="214" cy="84" r="4.5"/>
+  </g>
+  <path class="vz-stroke-gold vz-dashed-soft" d="M20 104c60 0 70-2 96-14 26-12 40 12 70 10 34-2 80-24 114-38"/>
+  <path class="vz-stroke-gold" d="M300 62v14" stroke-width="2"/>
+  <circle class="vz-fill-gold" cx="300" cy="62" r="5"/>
+</svg>
+    </a>
+    <div class="module-card-top">
+      <span class="module-num">Module 04</span>
+      <span class="status-badge status-done">已完成</span>
+    </div>
+    <h3 class="module-title"><a href="modules/04-bayesian-optimization.html">贝叶斯优化与主动实验设计</a></h3>
+    <p class="module-desc">高斯过程回归（GPR）、Tanimoto 分子核、EI/UCB 采集函数与 Science 钯催化偶联反应主动实验设计。</p>
+    <ul class="module-notebooks">      <li><a href="notebooks/04-bayesian-optimization/04a_gaussian_processes.html"
+             data-progress-mark="notebooks/04-bayesian-optimization/04a_gaussian_processes.html">📓 04a_gaussian_processes.ipynb</a>
+        <span class="module-nb-size">29.3 KB</span></li>      <li><a href="notebooks/04-bayesian-optimization/04b_bayesian_optimization.html"
+             data-progress-mark="notebooks/04-bayesian-optimization/04b_bayesian_optimization.html">📓 04b_bayesian_optimization.ipynb</a>
+        <span class="module-nb-size">26.0 KB</span></li>      <li><a href="notebooks/04-bayesian-optimization/04c_exercises.html"
+             data-progress-mark="notebooks/04-bayesian-optimization/04c_exercises.html">🏋️ 04c_exercises.ipynb</a>
+        <span class="module-nb-size">11.9 KB</span></li>    </ul>
+  </div>  <div class="card-progress" data-progress-keys="notebooks/04-bayesian-optimization/04a_gaussian_processes.html,notebooks/04-bayesian-optimization/04b_bayesian_optimization.html,notebooks/04-bayesian-optimization/04c_exercises.html">
+    <div class="progress-track progress-track-sm"><div class="progress-fill" data-progress-fill></div></div>
+    <span class="progress-count" data-progress-count>0 / 3</span>
+  </div>  <div class="module-card-footer">
+    <span>2 课件 · 1 习题 · 2 数据集</span>
+    <a href="modules/04-bayesian-optimization.html">进入模块 →</a>
+  </div>
+</article>
+<article class="module-card module-card-todo">
+  <div>
+    <a class="module-thumb" href="modules/05-feature-engineering-and-molecular-informatics.html" tabindex="-1" aria-hidden="true">
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="SHAP 特征归因蜂群图示意">
+  <path class="vz-axis" d="M160 8v96"/>
+  <g class="vz-fill-crimson">
+    <circle cx="186" cy="22" r="4"/><circle cx="202" cy="20" r="4"/><circle cx="218" cy="24" r="4"/>
+    <circle cx="238" cy="21" r="4"/><circle cx="262" cy="23" r="4"/><circle cx="196" cy="48" r="4"/>
+    <circle cx="214" cy="50" r="4"/><circle cx="232" cy="46" r="4"/><circle cx="178" cy="74" r="4"/>
+    <circle cx="194" cy="76" r="4"/>
+  </g>
+  <g class="vz-fill-navy">
+    <circle cx="142" cy="24" r="4"/><circle cx="124" cy="21" r="4"/><circle cx="106" cy="23" r="4"/>
+    <circle cx="146" cy="48" r="4"/><circle cx="126" cy="50" r="4"/><circle cx="104" cy="46" r="4"/>
+    <circle cx="84" cy="49" r="4"/><circle cx="140" cy="74" r="4"/><circle cx="118" cy="76" r="4"/>
+    <circle cx="96" cy="72" r="4"/><circle cx="72" cy="75" r="4"/><circle cx="150" cy="98" r="4"/>
+    <circle cx="132" cy="100" r="4"/><circle cx="170" cy="97" r="4"/>
+  </g>
+  <g class="vz-fill-muted">
+    <rect x="12" y="19" width="42" height="5" rx="2.5"/><rect x="12" y="45" width="34" height="5" rx="2.5"/>
+    <rect x="12" y="71" width="38" height="5" rx="2.5"/><rect x="12" y="95" width="28" height="5" rx="2.5"/>
+  </g>
+</svg>
+    </a>
+    <div class="module-card-top">
+      <span class="module-num">Module 05</span>
+      <span class="status-badge status-todo">待编写</span>
+    </div>
+    <h3 class="module-title"><a href="modules/05-feature-engineering-and-molecular-informatics.html">特征工程、SHAP 与 3D 分子</a></h3>
+    <p class="module-desc">特征选择与 SHAP 归因分析、3D 分子构象生成与 PubChem API 实战。</p>
+    <ul class="module-notebooks">      <li class="module-nb-planned"><code>05a</code> 特征选择（方差过滤、相关性剪枝、递归特征消除）与 SHAP 归因分析：从“模型说得准”走向“模型说得清”。</li>    </ul>
+  </div>  <div class="module-card-footer">
+    <span>0 课件 · 0 习题 · 0 数据集</span>
+    <a href="modules/05-feature-engineering-and-molecular-informatics.html">查看编写计划 →</a>
+  </div>
+</article>
+<article class="module-card module-card-todo">
+  <div>
+    <a class="module-thumb" href="modules/06-materials-informatics.html" tabindex="-1" aria-hidden="true">
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="晶胞结构与模拟 XRD 谱图示意">
+  <g class="vz-line">
+    <path d="M30 40l44-22 44 22v44l-44 22-44-22z" opacity="0.35"/>
+    <path d="M30 40l44 22 44-22M74 62v44"/>
+  </g>
+  <g class="vz-fill-navy">
+    <circle cx="30" cy="40" r="5"/><circle cx="118" cy="40" r="5"/>
+    <circle cx="30" cy="84" r="5"/><circle cx="118" cy="84" r="5"/>
+  </g>
+  <g class="vz-fill-gold"><circle cx="74" cy="18" r="5"/><circle cx="74" cy="106" r="5"/></g>
+  <circle class="vz-fill-crimson" cx="74" cy="62" r="6"/>
+  <g class="vz-axis"><path d="M160 96h150"/></g>
+  <g class="vz-stroke-teal" stroke-width="2.4">
+    <path d="M176 96V54M198 96V72M222 96V28M244 96V66M266 96V44M288 96V78"/>
+  </g>
+</svg>
+    </a>
+    <div class="module-card-top">
+      <span class="module-num">Module 06</span>
+      <span class="status-badge status-todo">待编写</span>
+    </div>
+    <h3 class="module-title"><a href="modules/06-materials-informatics.html">无机与晶体材料信息学</a></h3>
+    <p class="module-desc">Pymatgen 晶体结构分析、MP/COD 数据库、模拟 XRD、凸包相图与高通量筛选。</p>
+    <ul class="module-notebooks">      <li class="module-nb-planned"><code>06a</code> Pymatgen 晶体结构操作：晶胞、对称性与空间群、超胞与缺陷构建。</li>    </ul>
+  </div>  <div class="module-card-footer">
+    <span>0 课件 · 0 习题 · 0 数据集</span>
+    <a href="modules/06-materials-informatics.html">查看编写计划 →</a>
+  </div>
+</article>
+    </div>
+
+    <div class="semester-label">下半学期 · 材料深度学习、生成模型与图神经网络（模块 07–10）</div>
+    <div class="module-grid"><article class="module-card module-card-done">
+  <div>
+    <a class="module-thumb" href="modules/07-neural-networks-and-cnns.html" tabindex="-1" aria-hidden="true">
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="显微图像卷积与神经网络层示意">
+  <g class="vz-grid">
+    <rect class="vz-surface" x="10" y="20" width="72" height="72" rx="3"/>
+    <path d="M10 44h72M10 68h72M34 20v72M58 20v72"/>
+  </g>
+  <rect class="vz-kernel" x="34" y="44" width="24" height="24"/>
+  <path class="vz-stroke-crimson" d="M92 56h22" marker-end="url(#vz-arrow)"/>
+  <g class="vz-edge">
+    <path d="M150 30l44 26M150 30l44 52M150 56l44-26M150 56l44 26M150 82l44-26M150 82l44 0M194 56l46 26M194 56l46-26M194 30l46 26M194 82l46-26"/>
+  </g>
+  <g class="vz-fill-navy"><circle cx="150" cy="30" r="6"/><circle cx="150" cy="56" r="6"/><circle cx="150" cy="82" r="6"/></g>
+  <g class="vz-fill-teal"><circle cx="194" cy="30" r="6"/><circle cx="194" cy="56" r="6"/><circle cx="194" cy="82" r="6"/></g>
+  <circle class="vz-fill-gold" cx="240" cy="56" r="7"/>
+  <path class="vz-stroke-crimson" d="M256 56h26" marker-end="url(#vz-arrow)"/>
+</svg>
+    </a>
+    <div class="module-card-top">
+      <span class="module-num">Module 07</span>
+      <span class="status-badge status-done">已完成</span>
+    </div>
+    <h3 class="module-title"><a href="modules/07-neural-networks-and-cnns.html">神经网络与材料显微视觉 CNN</a></h3>
+    <p class="module-desc">PyTorch MLP、梯度下降与 MC Dropout 不确定性；卷积神经网络与显微图像识别。</p>
+    <ul class="module-notebooks">      <li><a href="notebooks/07-neural-networks-and-cnns/07a_neural_networks.html"
+             data-progress-mark="notebooks/07-neural-networks-and-cnns/07a_neural_networks.html">📓 07a_neural_networks.ipynb</a>
+        <span class="module-nb-size">42.2 KB</span></li>      <li><a href="notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html"
+             data-progress-mark="notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html">📓 07b_cnn_microstructure.ipynb</a>
+        <span class="module-nb-size">32.9 KB</span></li>      <li><a href="notebooks/07-neural-networks-and-cnns/07c_exercises.html"
+             data-progress-mark="notebooks/07-neural-networks-and-cnns/07c_exercises.html">🏋️ 07c_exercises.ipynb</a>
+        <span class="module-nb-size">13.1 KB</span></li>    </ul>
+  </div>  <div class="card-progress" data-progress-keys="notebooks/07-neural-networks-and-cnns/07a_neural_networks.html,notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html,notebooks/07-neural-networks-and-cnns/07c_exercises.html">
+    <div class="progress-track progress-track-sm"><div class="progress-fill" data-progress-fill></div></div>
+    <span class="progress-count" data-progress-count>0 / 3</span>
+  </div>  <div class="module-card-footer">
+    <span>2 课件 · 1 习题 · 1 数据集</span>
+    <a href="modules/07-neural-networks-and-cnns.html">进入模块 →</a>
+  </div>
+</article>
+<article class="module-card module-card-done">
+  <div>
+    <a class="module-thumb" href="modules/08-sequence-models-and-transformers.html" tabindex="-1" aria-hidden="true">
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="SMILES 词元序列与注意力连接示意">
+  <g class="vz-attention">
+    <path d="M36 62C56 10 140 10 160 62"/>
+    <path d="M98 62C118 20 222 18 246 62"/>
+    <path d="M160 62c16-34 76-34 96 0"/>
+    <path d="M36 62C66 26 212 24 284 62"/>
+  </g>
+  <g class="vz-token">
+    <rect x="16" y="64" width="40" height="30" rx="5"/><rect x="78" y="64" width="40" height="30" rx="5"/>
+    <rect x="140" y="64" width="40" height="30" rx="5"/><rect x="202" y="64" width="40" height="30" rx="5"/>
+    <rect x="264" y="64" width="40" height="30" rx="5"/>
+  </g>
+  <g class="vz-token-text">
+    <text x="36" y="84">C</text><text x="98" y="84">c</text><text x="160" y="84">1</text>
+    <text x="222" y="84">O</text><text x="284" y="84">N</text>
+  </g>
+</svg>
+    </a>
+    <div class="module-card-top">
+      <span class="module-num">Module 08</span>
+      <span class="status-badge status-done">已完成</span>
+    </div>
+    <h3 class="module-title"><a href="modules/08-sequence-models-and-transformers.html">序列模型、Transformer 与反应预测</a></h3>
+    <p class="module-desc">SMILES 语言模型、SMILES 增强与 NLL 异常检测、手写迷你 Transformer 与化学反应产物预测。</p>
+    <ul class="module-notebooks">      <li><a href="notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html"
+             data-progress-mark="notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html">📓 08a_smiles_language_model.ipynb</a>
+        <span class="module-nb-size">39.5 KB</span></li>      <li><a href="notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html"
+             data-progress-mark="notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html">📓 08b_smiles_lstm_aqsoldb.ipynb</a>
+        <span class="module-nb-size">45.2 KB</span></li>      <li><a href="notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html"
+             data-progress-mark="notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html">📓 08c_reaction_transformer.ipynb</a>
+        <span class="module-nb-size">45.2 KB</span></li>      <li><a href="notebooks/08-sequence-models-and-transformers/08d_exercises.html"
+             data-progress-mark="notebooks/08-sequence-models-and-transformers/08d_exercises.html">🏋️ 08d_exercises.ipynb</a>
+        <span class="module-nb-size">13.8 KB</span></li>    </ul>
+  </div>  <div class="card-progress" data-progress-keys="notebooks/08-sequence-models-and-transformers/08a_smiles_language_model.html,notebooks/08-sequence-models-and-transformers/08b_smiles_lstm_aqsoldb.html,notebooks/08-sequence-models-and-transformers/08c_reaction_transformer.html,notebooks/08-sequence-models-and-transformers/08d_exercises.html">
+    <div class="progress-track progress-track-sm"><div class="progress-fill" data-progress-fill></div></div>
+    <span class="progress-count" data-progress-count>0 / 4</span>
+  </div>  <div class="module-card-footer">
+    <span>3 课件 · 1 习题 · 8 数据集</span>
+    <a href="modules/08-sequence-models-and-transformers.html">进入模块 →</a>
+  </div>
+</article>
+<article class="module-card module-card-partial">
+  <div>
+    <a class="module-thumb" href="modules/09-generative-models.html" tabindex="-1" aria-hidden="true">
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="隐空间采样生成新分子示意">
+  <ellipse class="vz-latent" cx="74" cy="55" rx="58" ry="42"/>
+  <g class="vz-fill-navy" opacity="0.75">
+    <circle cx="52" cy="36" r="3.5"/><circle cx="78" cy="28" r="3.5"/><circle cx="96" cy="46" r="3.5"/>
+    <circle cx="44" cy="60" r="3.5"/><circle cx="66" cy="68" r="3.5"/><circle cx="92" cy="74" r="3.5"/>
+    <circle cx="60" cy="50" r="3.5"/><circle cx="108" cy="60" r="3.5"/>
+  </g>
+  <circle class="vz-fill-crimson" cx="80" cy="54" r="6"/>
+  <path class="vz-stroke-crimson" d="M142 55h30" marker-end="url(#vz-arrow)"/>
+  <g class="vz-line" stroke-width="2">
+    <path d="M206 30l20 12v24l-20 12-20-12V42z"/>
+    <path d="M226 42l20-12M186 66l-18 10"/>
+    <path d="M276 46l16 9v18l-16 9-16-9V55z"/>
+    <path d="M246 30l14 16"/>
+  </g>
+  <circle class="vz-fill-teal" cx="246" cy="30" r="5"/>
+  <circle class="vz-fill-gold" cx="168" cy="76" r="5"/>
+</svg>
+    </a>
+    <div class="module-card-top">
+      <span class="module-num">Module 09</span>
+      <span class="status-badge status-partial">09a/09b 就绪</span>
+    </div>
+    <h3 class="module-title"><a href="modules/09-generative-models.html">生成模型：分子设计到电镜超分</a></h3>
+    <p class="module-desc">SELFIES 分子 VAE、定向生成与代理模型欺骗、电镜超分辨率与扩散模型。</p>
+    <ul class="module-notebooks">      <li><a href="notebooks/09-generative-models/09a_vae_selfies.html"
+             data-progress-mark="notebooks/09-generative-models/09a_vae_selfies.html">📓 09a_vae_selfies.ipynb</a>
+        <span class="module-nb-size">46.7 KB</span></li>      <li><a href="notebooks/09-generative-models/09b_goal_directed_generation.html"
+             data-progress-mark="notebooks/09-generative-models/09b_goal_directed_generation.html">📓 09b_goal_directed_generation.ipynb</a>
+        <span class="module-nb-size">37.7 KB</span></li>      <li><a href="notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+             data-progress-mark="notebooks/09-generative-models/09c_microscopy_diffusion_sr.html">📓 09c_microscopy_diffusion_sr.ipynb</a>
+        <span class="module-nb-size">36.7 KB</span></li>      <li><a href="notebooks/09-generative-models/09d_exercises.html"
+             data-progress-mark="notebooks/09-generative-models/09d_exercises.html">🏋️ 09d_exercises.ipynb</a>
+        <span class="module-nb-size">13.1 KB</span></li>    </ul>
+  </div>  <div class="card-progress" data-progress-keys="notebooks/09-generative-models/09a_vae_selfies.html,notebooks/09-generative-models/09b_goal_directed_generation.html,notebooks/09-generative-models/09c_microscopy_diffusion_sr.html,notebooks/09-generative-models/09d_exercises.html">
+    <div class="progress-track progress-track-sm"><div class="progress-fill" data-progress-fill></div></div>
+    <span class="progress-count" data-progress-count>0 / 4</span>
+  </div>  <div class="module-card-footer">
+    <span>3 课件 · 1 习题 · 4 数据集</span>
+    <a href="modules/09-generative-models.html">进入模块 →</a>
+  </div>
+</article>
+<article class="module-card module-card-partial">
+  <div>
+    <a class="module-thumb" href="modules/10-graph-neural-networks-and-mlips.html" tabindex="-1" aria-hidden="true">
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="分子图上的消息传递示意">
+  <g class="vz-edge" stroke-width="2">
+    <path d="M60 34l56 20M116 54l58-24M174 30l54 26M116 54l44 46M60 34L46 86M228 56l48-22M228 56l24 42"/>
+  </g>
+  <g class="vz-msg">
+    <path d="M78 40l22 8M132 46l26-11M190 36l24 12M132 66l16 17"/>
+  </g>
+  <g class="vz-fill-navy"><circle cx="60" cy="34" r="9"/><circle cx="174" cy="30" r="9"/><circle cx="276" cy="34" r="9"/></g>
+  <g class="vz-fill-teal"><circle cx="116" cy="54" r="10"/><circle cx="228" cy="56" r="10"/></g>
+  <g class="vz-fill-gold"><circle cx="46" cy="86" r="8"/><circle cx="160" cy="100" r="8"/><circle cx="252" cy="98" r="8"/></g>
+</svg>
+    </a>
+    <div class="module-card-top">
+      <span class="module-num">Module 10</span>
+      <span class="status-badge status-partial">10a/10b 就绪</span>
+    </div>
+    <h3 class="module-title"><a href="modules/10-graph-neural-networks-and-mlips.html">图神经网络（GNN）与机器学习势函数</a></h3>
+    <p class="module-desc">手写分子 GNN、Chemprop D-MPNN 全课程模型大比拼、晶体 CGCNN 与 MACE 势函数。</p>
+    <ul class="module-notebooks">      <li><a href="notebooks/10-graph-neural-networks-and-mlips/10a_graph_neural_networks.html"
+             data-progress-mark="notebooks/10-graph-neural-networks-and-mlips/10a_graph_neural_networks.html">📓 10a_graph_neural_networks.ipynb</a>
+        <span class="module-nb-size">270.5 KB</span></li>      <li><a href="notebooks/10-graph-neural-networks-and-mlips/10b_chemprop.html"
+             data-progress-mark="notebooks/10-graph-neural-networks-and-mlips/10b_chemprop.html">📓 10b_chemprop.ipynb</a>
+        <span class="module-nb-size">28.3 KB</span></li>    </ul>
+  </div>  <div class="card-progress" data-progress-keys="notebooks/10-graph-neural-networks-and-mlips/10a_graph_neural_networks.html,notebooks/10-graph-neural-networks-and-mlips/10b_chemprop.html">
+    <div class="progress-track progress-track-sm"><div class="progress-fill" data-progress-fill></div></div>
+    <span class="progress-count" data-progress-count>0 / 2</span>
+  </div>  <div class="module-card-footer">
+    <span>2 课件 · 0 习题 · 1 数据集</span>
+    <a href="modules/10-graph-neural-networks-and-mlips.html">进入模块 →</a>
+  </div>
+</article>
+    </div>
+  </section>
+
+  <section id="legend">
+    <h2>Notebook 互动标记说明</h2>
+    <div class="academic-box">
+      <p class="box-lead">所有实战 Notebook 均采用统一的互动教学标记，建议按“先预测、再运行、后修改”的节奏学习：</p>
+      <div class="legend-grid">
+        <div class="legend-item"><strong>📘 讲解</strong><br/>仔细阅读材料/化学物理背景与算法原理</div>
+        <div class="legend-item"><strong>🤔 先猜一猜</strong><br/>运行代码之前先思考程序会输出什么结果</div>
+        <div class="legend-item"><strong>▶️ 运行看看</strong><br/>选中代码格，按 <code>Shift + Enter</code> 执行</div>
+        <div class="legend-item"><strong>✏️ 改一改</strong><br/>修改标有 <code># ✏️</code> 的参数后重新运行观察变化</div>
+        <div class="legend-item"><strong>🏋️ 练习</strong><br/>独立编写代码（参考答案位于各章 <code>solutions/</code>）</div>
+        <div class="legend-item"><strong>💡 小贴士</strong><br/>实用的科研工程技巧或后续章节伏笔提示</div>
+      </div>
+    </div>
+  </section>
+  <section id="exercises-intro">
+    <h2>习题与参考答案</h2>
+    <div class="academic-box">
+      <p class="box-lead">课程共 <strong>7</strong> 份习题 Notebook，
+        全部汇总在 <a href="exercises.html">习题与答案</a> 页面，可按模块查看完成进度。</p>
+      <p>每份习题都配独立的参考答案页，默认折叠显示 —— 先独立完成，再展开对照，
+        这是本课程最重要的学习节奏。</p>
+    </div>
+  </section>
+
+  <section id="setup">
+    <h2>运行环境配置指南</h2>
+    <div class="academic-box">
+      <p class="box-lead"><strong>方式一：Google Colab（零配置推荐）</strong></p>
+      <p>每份课件页面都有“在 Colab 中打开”按钮，点击即可在浏览器中直接运行，无需本地安装。</p>
+      <p><strong>方式二：本地 Conda / Python 环境</strong></p>
+      <pre><code>conda create -n ai4m python=3.10 -y
+conda activate ai4m
+pip install numpy pandas matplotlib seaborn scikit-learn rdkit pymatgen torch jupyter</code></pre>
+    </div>
+  </section>
+</main>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

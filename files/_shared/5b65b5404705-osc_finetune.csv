@@ -1,0 +1,160 @@
+SMILES,Name,Family,HeavyAtoms,NumAromaticRings,n_tokens
+c1ccc2ccccc2c1,naphthalene,acene,10,2,14
+c1ccc2cc3ccccc3cc2c1,anthracene,acene,14,3,20
+c1ccc2cc3cc4ccccc4cc3cc2c1,tetracene,acene,18,4,26
+c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1,pentacene,acene,22,5,32
+c1ccc2c(c1)ccc1ccccc12,phenanthrene,acene,14,3,22
+c1ccc2c(c1)ccc1c3ccccc3ccc21,chrysene,acene,18,4,28
+c1cc2ccc3cccc4ccc(c1)c2c34,pyrene,acene,16,4,26
+c1cc2cccc3c4cccc5cccc(c(c1)c23)c54,perylene,acene,20,5,34
+c1ccc2c(c1)c1ccccc1c1ccccc21,triphenylene,acene,18,4,28
+c1ccc(-c2c3ccccc3c(-c3ccccc3)c3c(-c4ccccc4)c4ccccc4c(-c4ccccc4)c23)cc1,rubrene,acene,42,8,70
+c1ccc(-c2c3cc4ccccc4cc3c(-c3ccccc3)c3cc4ccccc4cc23)cc1,"6,13-diphenylpentacene",acene,34,7,54
+O=C1c2ccccc2C(=O)c2cc3ccccc3cc21,tetracenequinone,acene,20,3,32
+c1ccc2nc3ccccc3cc2c1,acridine,acene,14,3,20
+c1csc(-c2cccs2)c1,2T,oligothiophene,10,2,17
+CCCCc1csc(-c2sccc2CCCC)c1,"C4-2T (3-alkyl, HT)",oligothiophene,18,2,25
+CCCCCCc1csc(-c2sccc2CCCCCC)c1,"C6-2T (3-alkyl, HT)",oligothiophene,22,2,29
+CCCCCCCCc1csc(-c2sccc2CCCCCCCC)c1,"C8-2T (3-alkyl, HT)",oligothiophene,26,2,33
+CCCCCCCCCCc1csc(-c2sccc2CCCCCCCCCC)c1,"C10-2T (3-alkyl, HT)",oligothiophene,30,2,37
+CCCCCCCCCCCCc1csc(-c2sccc2CCCCCCCCCCCC)c1,"C12-2T (3-alkyl, HT)",oligothiophene,34,2,41
+c1csc(-c2ccc(-c3cccs3)s2)c1,3T,oligothiophene,15,3,27
+CCCCc1csc(-c2sc(-c3sccc3CCCC)cc2CCCC)c1,"C4-3T (3-alkyl, HT)",oligothiophene,27,3,39
+CCCCCCc1csc(-c2sc(-c3sccc3CCCCCC)cc2CCCCCC)c1,"C6-3T (3-alkyl, HT)",oligothiophene,33,3,45
+CCCCCCCCc1csc(-c2sc(-c3sccc3CCCCCCCC)cc2CCCCCCCC)c1,"C8-3T (3-alkyl, HT)",oligothiophene,39,3,51
+CCCCCCCCCCc1csc(-c2sc(-c3sccc3CCCCCCCCCC)cc2CCCCCCCCCC)c1,"C10-3T (3-alkyl, HT)",oligothiophene,45,3,57
+CCCCCCCCCCCCc1csc(-c2sc(-c3sccc3CCCCCCCCCCCC)cc2CCCCCCCCCCCC)c1,"C12-3T (3-alkyl, HT)",oligothiophene,51,3,63
+c1csc(-c2ccc(-c3ccc(-c4cccs4)s3)s2)c1,4T,oligothiophene,20,4,37
+CCCCc1csc(-c2sc(-c3sc(-c4sccc4CCCC)cc3CCCC)cc2CCCC)c1,"C4-4T (3-alkyl, HT)",oligothiophene,36,4,53
+CCCCCCc1csc(-c2sc(-c3sc(-c4sccc4CCCCCC)cc3CCCCCC)cc2CCCCCC)c1,"C6-4T (3-alkyl, HT)",oligothiophene,44,4,61
+CCCCCCCCc1csc(-c2sc(-c3sc(-c4sccc4CCCCCCCC)cc3CCCCCCCC)cc2CCCCCCCC)c1,"C8-4T (3-alkyl, HT)",oligothiophene,52,4,69
+CCCCCCCCCCc1csc(-c2sc(-c3sc(-c4sccc4CCCCCCCCCC)cc3CCCCCCCCCC)cc2CCCCCCCCCC)c1,"C10-4T (3-alkyl, HT)",oligothiophene,60,4,77
+c1csc(-c2ccc(-c3ccc(-c4ccc(-c5cccs5)s4)s3)s2)c1,5T,oligothiophene,25,5,47
+CCCCc1csc(-c2sc(-c3sc(-c4sc(-c5sccc5CCCC)cc4CCCC)cc3CCCC)cc2CCCC)c1,"C4-5T (3-alkyl, HT)",oligothiophene,45,5,67
+CCCCCCc1csc(-c2sc(-c3sc(-c4sc(-c5sccc5CCCCCC)cc4CCCCCC)cc3CCCCCC)cc2CCCCCC)c1,"C6-5T (3-alkyl, HT)",oligothiophene,55,5,77
+c1csc(-c2ccc(-c3ccc(-c4ccc(-c5ccc(-c6cccs6)s5)s4)s3)s2)c1,6T,oligothiophene,30,6,57
+CCCCc1ccc(-c2ccc(CCCC)s2)s1,"α,ω-diC4-2T",oligothiophene,18,2,27
+CCCCCCc1ccc(-c2ccc(CCCCCC)s2)s1,"α,ω-diC6-2T",oligothiophene,22,2,31
+CCCCCCCCc1ccc(-c2ccc(CCCCCCCC)s2)s1,"α,ω-diC8-2T",oligothiophene,26,2,35
+CCCCCCCCCCc1ccc(-c2ccc(CCCCCCCCCC)s2)s1,"α,ω-diC10-2T",oligothiophene,30,2,39
+CCCCCCCCCCCCc1ccc(-c2ccc(CCCCCCCCCCCC)s2)s1,"α,ω-diC12-2T",oligothiophene,34,2,43
+CCCCc1ccc(-c2ccc(-c3ccc(CCCC)s3)s2)s1,"α,ω-diC4-3T",oligothiophene,23,3,37
+CCCCCCc1ccc(-c2ccc(-c3ccc(CCCCCC)s3)s2)s1,"α,ω-diC6-3T",oligothiophene,27,3,41
+CCCCCCCCc1ccc(-c2ccc(-c3ccc(CCCCCCCC)s3)s2)s1,"α,ω-diC8-3T",oligothiophene,31,3,45
+CCCCCCCCCCc1ccc(-c2ccc(-c3ccc(CCCCCCCCCC)s3)s2)s1,"α,ω-diC10-3T",oligothiophene,35,3,49
+CCCCCCCCCCCCc1ccc(-c2ccc(-c3ccc(CCCCCCCCCCCC)s3)s2)s1,"α,ω-diC12-3T",oligothiophene,39,3,53
+CCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(CCCC)s4)s3)s2)s1,"α,ω-diC4-4T",oligothiophene,28,4,47
+CCCCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(CCCCCC)s4)s3)s2)s1,"α,ω-diC6-4T",oligothiophene,32,4,51
+CCCCCCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(CCCCCCCC)s4)s3)s2)s1,"α,ω-diC8-4T",oligothiophene,36,4,55
+CCCCCCCCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(CCCCCCCCCC)s4)s3)s2)s1,"α,ω-diC10-4T",oligothiophene,40,4,59
+CCCCCCCCCCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(CCCCCCCCCCCC)s4)s3)s2)s1,"α,ω-diC12-4T",oligothiophene,44,4,63
+CCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(-c5ccc(CCCC)s5)s4)s3)s2)s1,"α,ω-diC4-5T",oligothiophene,33,5,57
+CCCCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(-c5ccc(CCCCCC)s5)s4)s3)s2)s1,"α,ω-diC6-5T",oligothiophene,37,5,61
+CCCCCCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(-c5ccc(CCCCCCCC)s5)s4)s3)s2)s1,"α,ω-diC8-5T",oligothiophene,41,5,65
+CCCCCCCCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(-c5ccc(CCCCCCCCCC)s5)s4)s3)s2)s1,"α,ω-diC10-5T",oligothiophene,45,5,69
+CCCCCCCCCCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(-c5ccc(CCCCCCCCCCCC)s5)s4)s3)s2)s1,"α,ω-diC12-5T",oligothiophene,49,5,73
+CCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(-c5ccc(-c6ccc(CCCC)s6)s5)s4)s3)s2)s1,"α,ω-diC4-6T",oligothiophene,38,6,67
+CCCCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(-c5ccc(-c6ccc(CCCCCC)s6)s5)s4)s3)s2)s1,"α,ω-diC6-6T",oligothiophene,42,6,71
+CCCCCCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(-c5ccc(-c6ccc(CCCCCCCC)s6)s5)s4)s3)s2)s1,"α,ω-diC8-6T",oligothiophene,46,6,75
+CCCCCCCCCCc1ccc(-c2ccc(-c3ccc(-c4ccc(-c5ccc(-c6ccc(CCCCCCCCCC)s6)s5)s4)s3)s2)s1,"α,ω-diC10-6T",oligothiophene,50,6,79
+CCCCCCc1ccsc1,3-hexylthiophene,oligothiophene,11,1,13
+c1ccsc1,thiophene,oligothiophene,5,1,7
+c1cc2sccc2s1,"thieno[3,2-b]thiophene",fused thiophene,8,2,12
+c1cc2sc3ccsc3c2s1,"dithieno[3,2-b:2',3'-d]thiophene",fused thiophene,11,3,17
+c1ccc2c(c1)sc1c3ccccc3sc21,BTBT,fused thiophene,16,4,26
+c1ccc2cc3c(cc2c1)sc1c2cc4ccccc4cc2sc31,DNTT,fused thiophene,24,6,38
+c1ccc2c(c1)sc1c2sc2c3ccccc3sc21,DBTDT,fused thiophene,19,5,31
+c1ccc2c(c1)sc1ccccc12,dibenzothiophene,fused thiophene,13,3,21
+c1ccc2sccc2c1,benzo[b]thiophene,fused thiophene,9,2,13
+c1cc2sc3c4sccc4sc3c2s1,DTT-dimer,fused thiophene,14,4,22
+c1cc2cc3cc4ccsc4cc3cc2s1,anthradithiophene,fused thiophene,16,4,24
+CCCCc1ccc2c(c1)sc1c3ccc(CCCC)cc3sc21,C4-BTBT,fused thiophene,24,4,36
+CCCCc1ccc2cc3c(cc2c1)sc1c2cc4ccc(CCCC)cc4cc2sc31,C4-DNTT,fused thiophene,32,6,48
+CCCCc1cc2sc3cc(CCCC)sc3c2s1,C4-DTT,fused thiophene,19,3,27
+CCCCc1ccc2sc3ccc(CCCC)cc3c2c1,C4-dibenzothiophene,fused thiophene,21,3,29
+CCCCc1csc2c1sc1ccsc12,C4-DTT-mono,fused thiophene,15,3,21
+CCCCCCc1ccc2c(c1)sc1c3ccc(CCCCCC)cc3sc21,C6-BTBT,fused thiophene,28,4,40
+CCCCCCc1ccc2cc3c(cc2c1)sc1c2cc4ccc(CCCCCC)cc4cc2sc31,C6-DNTT,fused thiophene,36,6,52
+CCCCCCc1cc2sc3cc(CCCCCC)sc3c2s1,C6-DTT,fused thiophene,23,3,31
+CCCCCCc1ccc2sc3ccc(CCCCCC)cc3c2c1,C6-dibenzothiophene,fused thiophene,25,3,33
+CCCCCCc1csc2c1sc1ccsc12,C6-DTT-mono,fused thiophene,17,3,23
+CCCCCCCCc1ccc2c(c1)sc1c3ccc(CCCCCCCC)cc3sc21,C8-BTBT,fused thiophene,32,4,44
+CCCCCCCCc1ccc2cc3c(cc2c1)sc1c2cc4ccc(CCCCCCCC)cc4cc2sc31,C8-DNTT,fused thiophene,40,6,56
+CCCCCCCCc1cc2sc3cc(CCCCCCCC)sc3c2s1,C8-DTT,fused thiophene,27,3,35
+CCCCCCCCc1ccc2sc3ccc(CCCCCCCC)cc3c2c1,C8-dibenzothiophene,fused thiophene,29,3,37
+CCCCCCCCc1csc2c1sc1ccsc12,C8-DTT-mono,fused thiophene,19,3,25
+CCCCCCCCCCc1ccc2c(c1)sc1c3ccc(CCCCCCCCCC)cc3sc21,C10-BTBT,fused thiophene,36,4,48
+CCCCCCCCCCc1ccc2cc3c(cc2c1)sc1c2cc4ccc(CCCCCCCCCC)cc4cc2sc31,C10-DNTT,fused thiophene,44,6,60
+CCCCCCCCCCc1cc2sc3cc(CCCCCCCCCC)sc3c2s1,C10-DTT,fused thiophene,31,3,39
+CCCCCCCCCCc1ccc2sc3ccc(CCCCCCCCCC)cc3c2c1,C10-dibenzothiophene,fused thiophene,33,3,41
+CCCCCCCCCCc1csc2c1sc1ccsc12,C10-DTT-mono,fused thiophene,21,3,27
+CCCCCCCCCCCCc1ccc2c(c1)sc1c3ccc(CCCCCCCCCCCC)cc3sc21,C12-BTBT,fused thiophene,40,4,52
+CCCCCCCCCCCCc1ccc2cc3c(cc2c1)sc1c2cc4ccc(CCCCCCCCCCCC)cc4cc2sc31,C12-DNTT,fused thiophene,48,6,64
+CCCCCCCCCCCCc1cc2sc3cc(CCCCCCCCCCCC)sc3c2s1,C12-DTT,fused thiophene,35,3,43
+CCCCCCCCCCCCc1ccc2sc3ccc(CCCCCCCCCCCC)cc3c2c1,C12-dibenzothiophene,fused thiophene,37,3,45
+CCCCCCCCCCCCc1csc2c1sc1ccsc12,C12-DTT-mono,fused thiophene,23,3,29
+c1csc(-c2ccc(-c3cccs3)c3nsnc23)c1,T-D-BT-D,donor-acceptor,19,4,33
+c1csc(-c2ccc(-c3ccc(-c4ccc(-c5cccs5)s4)c4nsnc34)s2)c1,2T-D-BT-D,donor-acceptor,29,6,53
+c1ccc(-c2ccc(-c3ccccc3)c3nsnc23)cc1,Ph-D-BT-D,donor-acceptor,21,4,35
+CCCCCCc1ccc(-c2ccc(-c3ccc(CCCCCC)s3)c3nsnc23)s1,HexT-D-BT-D,donor-acceptor,31,4,47
+c1coc(-c2ccc(-c3ccco3)c3nsnc23)c1,Fu-D-BT-D,donor-acceptor,19,4,33
+c1cc2cc(-c3ccc(-c4cc5ccsc5s4)c4nsnc34)sc2s1,TT-D-BT-D,donor-acceptor,25,6,43
+CCCCCCN1C(=O)C(c2ccc(-c3cccs3)s2)=C2C(=O)N(CCCCCC)C(c3ccc(-c4cccs4)s3)=C21,T-D-DPP-D (N-alkyl) R=C6,donor-acceptor,42,4,74
+CCCCCCCCN1C(=O)C(c2ccc(-c3cccs3)s2)=C2C(=O)N(CCCCCCCC)C(c3ccc(-c4cccs4)s3)=C21,T-D-DPP-D (N-alkyl) R=C8,donor-acceptor,46,4,78
+CCCCCCN1C(=O)C(c2ccc(-c3ccccc3)s2)=C2C(=O)N(CCCCCC)C(c3ccc(-c4ccccc4)s3)=C21,Ph-D-DPP-D (N-alkyl) R=C6,donor-acceptor,44,4,76
+CCCCCCCCN1C(=O)C(c2ccc(-c3ccccc3)s2)=C2C(=O)N(CCCCCCCC)C(c3ccc(-c4ccccc4)s3)=C21,Ph-D-DPP-D (N-alkyl) R=C8,donor-acceptor,48,4,80
+CCCCCCN1C(=O)C(c2ccc(-c3ccco3)s2)=C2C(=O)N(CCCCCC)C(c3ccc(-c4ccco4)s3)=C21,Fu-D-DPP-D (N-alkyl) R=C6,donor-acceptor,42,4,74
+CCCCCCCCN1C(=O)C(c2ccc(-c3ccco3)s2)=C2C(=O)N(CCCCCCCC)C(c3ccc(-c4ccco4)s3)=C21,Fu-D-DPP-D (N-alkyl) R=C8,donor-acceptor,46,4,78
+CCCCCCN1C(=O)c2c(-c3cccs3)sc(-c3cccs3)c2C1=O,T-D-TPD-D R=C6,donor-acceptor,26,3,44
+CCCCCCCCN1C(=O)c2c(-c3cccs3)sc(-c3cccs3)c2C1=O,T-D-TPD-D R=C8,donor-acceptor,28,3,46
+CCCCCCN1C(=O)c2c(-c3ccc(-c4cccs4)s3)sc(-c3ccc(-c4cccs4)s3)c2C1=O,2T-D-TPD-D R=C6,donor-acceptor,36,5,64
+CCCCCCCCN1C(=O)c2c(-c3ccc(-c4cccs4)s3)sc(-c3ccc(-c4cccs4)s3)c2C1=O,2T-D-TPD-D R=C8,donor-acceptor,38,5,66
+CCCCCCN1C(=O)c2c(-c3ccccc3)sc(-c3ccccc3)c2C1=O,Ph-D-TPD-D R=C6,donor-acceptor,28,3,46
+CCCCCCCCN1C(=O)c2c(-c3ccccc3)sc(-c3ccccc3)c2C1=O,Ph-D-TPD-D R=C8,donor-acceptor,30,3,48
+CCCCCCc1ccc(-c2sc(-c3ccc(CCCCCC)s3)c3c2C(=O)N(CCCCCC)C3=O)s1,HexT-D-TPD-D R=C6,donor-acceptor,38,3,60
+CCCCCCCCN1C(=O)c2c(-c3ccc(CCCCCC)s3)sc(-c3ccc(CCCCCC)s3)c2C1=O,HexT-D-TPD-D R=C8,donor-acceptor,40,3,62
+CCCCCCN1C(=O)c2c(-c3ccco3)sc(-c3ccco3)c2C1=O,Fu-D-TPD-D R=C6,donor-acceptor,26,3,44
+CCCCCCCCN1C(=O)c2c(-c3ccco3)sc(-c3ccco3)c2C1=O,Fu-D-TPD-D R=C8,donor-acceptor,28,3,46
+CCCCCCN1C(=O)c2c(-c3cc4ccsc4s3)sc(-c3cc4ccsc4s3)c2C1=O,TT-D-TPD-D R=C6,donor-acceptor,32,5,54
+CCCCCCCCN1C(=O)c2c(-c3cc4ccsc4s3)sc(-c3cc4ccsc4s3)c2C1=O,TT-D-TPD-D R=C8,donor-acceptor,34,5,56
+c1csc(-c2ccc(-c3cccs3)c3nccnc23)c1,T-D-Qx-D,donor-acceptor,20,4,34
+c1csc(-c2ccc(-c3ccc(-c4ccc(-c5cccs5)s4)c4nccnc34)s2)c1,2T-D-Qx-D,donor-acceptor,30,6,54
+c1ccc(-c2ccc(-c3ccccc3)c3nccnc23)cc1,Ph-D-Qx-D,donor-acceptor,22,4,36
+CCCCCCc1ccc(-c2ccc(-c3ccc(CCCCCC)s3)c3nccnc23)s1,HexT-D-Qx-D,donor-acceptor,32,4,48
+c1coc(-c2ccc(-c3ccco3)c3nccnc23)c1,Fu-D-Qx-D,donor-acceptor,20,4,34
+c1cnc2c(-c3cc4ccsc4s3)ccc(-c3cc4ccsc4s3)c2n1,TT-D-Qx-D,donor-acceptor,26,6,44
+C1=CSC(=C2SC=CS2)S1,TTF,other,10,0,19
+N#CC(C#N)=c1ccc(=C(C#N)C#N)cc1,TCNQ,other,16,1,30
+N#CC(C#N)=c1c(F)c(F)c(=C(C#N)C#N)c(F)c1F,F4-TCNQ,other,20,1,40
+CN1C(=O)c2ccc3c4c(ccc(c24)C1=O)C(=O)N(C)C3=O,"NDI-N,N'-dimethyl",other,22,2,44
+O=c1oc(=O)c2c3c4ccc5c(=O)oc(=O)c(ccc6c(ccc1-2)c63)c54,PDI-core,other,26,4,53
+c1ccc(N(c2ccccc2)c2ccccc2)cc1,triphenylamine,other,19,3,29
+c1ccc2c(c1)[nH]c1ccccc12,carbazole,other,13,3,21
+c1ccc(-n2c3ccccc3c3ccccc32)cc1,N-phenylcarbazole,other,19,4,30
+c1ccc2c(c1)Cc1ccccc1-2,fluorene,other,13,2,22
+CCCCCCC1(CCCCCC)c2ccccc2-c2ccccc21,"9,9-dihexylfluorene",other,25,2,34
+CCCCCCCCC1(CCCCCCCC)c2ccccc2-c2ccccc21,"9,9-dioctylfluorene",other,29,2,38
+c1ccc2c(c1)-c1ccccc1C21c2ccccc2-c2ccccc21,spirobifluorene,other,25,4,41
+c1cc2sc3c(sc4c5sccc5sc43)c2s1,pentathienoacene,other,17,5,29
+N#CC(C#N)=Cc1ccc(-c2ccc(-c3ccc(-c4ccc(C=C(C#N)C#N)s4)s3)s2)s1,quaterthiophene-dicyanovinyl,other,32,4,61
+c1cc2c(s1)c1ccsc1c1ccsc21,BDT-core,other,15,4,25
+c1cc2cc3ccsc3cc2s1,benzodithiophene,other,12,3,18
+COc1c2ccsc2c(OC)c2ccsc12,"4,8-dimethoxy-BDT",other,16,3,24
+CCCCOc1c2ccsc2c(OCCCC)c2ccsc12,"4,8-dibutoxy-BDT",other,22,3,30
+CCCCCCOc1c2ccsc2c(OCCCCCC)c2ccsc12,"4,8-dihexyloxy-BDT",other,26,3,34
+Oc1cccc2cccnc12,Alq3-ligand 8-hydroxyquinoline,other,11,2,15
+CN(c1ccccc1)c1ccc2ccccc2c1,NPB-like,other,18,3,26
+COC(=O)CCCC(c1ccccc1)c1ccccc1,PCBM-ester-tail,other,20,2,29
+c1ccc2c(c1)Cc1cc3c(cc1-2)Cc1ccccc1-3,indenofluorene,other,20,3,36
+CCCCCCn1c2ccsc2c2sccc21,dithienopyrrole-N-hexyl,other,17,3,23
+c1cc2c(s1)-c1sccc1C2,cyclopentadithiophene,other,11,2,20
+CCCCCCC1(CCCCCC)c2ccsc2-c2sccc21,CPDT-dihexyl,other,23,2,32
+c1ccc(-c2nc3sc(-c4ccccc4)nc3s2)cc1,thiazolothiazole-diphenyl,other,20,4,34
+c1csc(-c2nccs2)n1,bithiazole,other,10,2,17
+CCCCCCc1ccc(-c2ccc3nsnc3c2-c2ccc(CCCCCC)s2)s1,DTBT-dihexyl,other,31,4,45
+CC1=C(C)SC(=C2SC(C)=C(C)S2)S1,tetrathiafulvalene-tetramethyl,other,14,0,29
+O=C1c2cc3ccccc3cc2C(=O)c2cc3ccccc3cc21,"pentacene-6,13-dione",other,24,4,38
+c1csc(-c2c3ccccc3c(-c3cccs3)c3ccccc23)c1,anthracene-dithiophene,other,24,5,40
+C(=Cc1ccc(C=Cc2ccccc2)cc1)c1ccccc1,distyrylbenzene,other,22,3,34
+C(=Cc1cccs1)c1ccc(C=Cc2cccs2)cc1,DSB-thiophene,other,20,3,32
+C(=Cc1cccs1)c1cccs1,dithienylethene,other,12,2,19

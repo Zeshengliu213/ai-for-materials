@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 03b — 聚类：让算法自动划分分子家族（Clustering） 在 03a 中，我们用 PCA 和 t SNE 把高维化学空间投影到了二维平面上，肉眼能看到结构相似的分子聚成一个个“岛屿”。但在实际科研流程中，我们不能靠人眼在图上画圈来给几万个分子分组，更何况二维投影本身就会丢失或扭曲一" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="03b — 聚类：让算法自动划分分子家族（Clustering） | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 03b — 聚类：让算法自动划分分子家族（Clustering） 在 03a 中，我们用 PCA 和 t SNE 把高维化学空间投影到了二维平面上，肉眼能看到结构相似的分子聚成一个个“岛屿”。但在实际科研流程中，我们不能靠人眼在图上画圈来给几万个分子分组，更何况二维投影本身就会丢失或扭曲一" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/03-unsupervised-learning/03b_clustering.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/03-unsupervised-learning/03b_clustering.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>03b — 聚类：让算法自动划分分子家族（Clustering） | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+>📓 03a_dimensionality_reduction.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03b_clustering.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03b_clustering.html"
+class="active">📓 03b_clustering.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+>📓 03c_pd_dimer_discovery.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03d_exercises.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03d_exercises.html"
+>🏋️ 03d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/03-unsupervised-learning.html">模块 03：无监督学习：化学空间与发现</a> /  <span>03b_clustering.ipynb</span>
+</div>
+<h1>03b — 聚类：让算法自动划分分子家族（Clustering）</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>03b_clustering.ipynb</code>（31.6 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03b_clustering.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/93dd15381962-03b_clustering.ipynb" download="03b_clustering.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/03-unsupervised-learning/03_unsupervised_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/03-unsupervised-learning/03b_clustering.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03b_clustering.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>03b — 聚类：让算法自动划分分子家族（Clustering）</h1>
+<p>在 <code>03a</code> 中，我们用 PCA 和 t-SNE 把高维化学空间投影到了二维平面上，肉眼能看到结构相似的分子聚成一个个“岛屿”。但在实际科研流程中，我们不能靠人眼在图上画圈来给几万个分子分组，更何况二维投影本身就会丢失或扭曲一部分高维距离信息。</p>
+<p><strong>聚类（Clustering）<strong>的任务，是在没有任何类别标签的情况下，直接根据样本之间的距离或密度，自动把数据集划分为若干个</strong>簇（Cluster）</strong>，使得同一簇内的分子彼此高度相似，不同簇的分子差异显著。</p>
+<p>本节按照从底层原理到化学信息学实战的顺序展开：</p>
+<ol>
+<li><strong>K-means 聚类</strong>：在二维合成数据上手写迭代过程，直观理解“分配—更新质心”机制、局部最优陷阱与多次初始化（<code>n_init</code>）；</li>
+<li><strong>如何选择簇数 <span class="math-inline" data-tex="k">\(k\)</span></strong>：肘部法则（Elbow Method / Inertia）与轮廓系数（Silhouette Score）；</li>
+<li><strong>K-means 的几何盲区与密度聚类（DBSCAN）</strong>：如何识别非凸形状簇与离群噪声点；</li>
+<li><strong>分子指纹空间的聚类</strong>：高维化学空间的 Tanimoto 距离分布特征，以及化学信息学标准工具 <strong>Taylor-Butina 聚类算法</strong>；</li>
+<li><strong>用聚类构建严格的模型外推测试集（Cluster Split / <code>GroupKFold</code>）</strong>：定量检验模型在面对“全新结构家族”时的真实泛化能力。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;03 - Unsupervised Learning&quot;</span><span class="p">))</span>
+    <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">run_line_magic</span><span class="p">(</span><span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install -q rdkit&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="0-环境准备">0. 环境准备</h2>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">DataStructs</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Draw</span><span class="p">,</span> <span class="n">rdFingerprintGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.ML.Cluster</span><span class="w"> </span><span class="kn">import</span> <span class="n">Butina</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.cluster</span><span class="w"> </span><span class="kn">import</span> <span class="n">KMeans</span><span class="p">,</span> <span class="n">DBSCAN</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_blobs</span><span class="p">,</span> <span class="n">make_moons</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">silhouette_score</span><span class="p">,</span> <span class="n">adjusted_rand_score</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.decomposition</span><span class="w"> </span><span class="kn">import</span> <span class="n">PCA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">KFold</span><span class="p">,</span> <span class="n">GroupKFold</span><span class="p">,</span> <span class="n">cross_val_score</span>
+
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-k-means-聚类-迭代机制与局部最优陷阱">1. K-means 聚类：迭代机制与局部最优陷阱</h2>
+<h3 id="1-1-从二维玩具数据看清楚算法在做什么">1.1 从二维玩具数据看清楚算法在做什么</h3>
+<p>为了能直接用肉眼看清聚类的每一步几何操作，我们先用 <code>make_blobs</code> 生成一个包含 4 团高斯点云的二维合成数据集（假装不知道真实分组，画成全灰色）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">X_toy</span><span class="p">,</span> <span class="n">y_toy</span> <span class="o">=</span> <span class="n">make_blobs</span><span class="p">(</span><span class="n">n_samples</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">centers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">cluster_std</span><span class="o">=</span><span class="p">[</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.4</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">],</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">4.5</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_toy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X_toy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Toy Data (True Labels Hidden)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="1-2-手写-10-行代码拆解-k-means-的迭代步骤">1.2 手写 10 行代码拆解 K-means 的迭代步骤</h3>
+<p><strong>K-means</strong> 是所有聚类算法中最基础、最快速的一种。给定预设的簇数 <span class="math-inline" data-tex="k">\(k\)</span>，它的工作流程只有交替循环的两步：</p>
+<ol>
+<li><strong>初始化（Initialization）</strong>：在空间中随机挑选 <span class="math-inline" data-tex="k">\(k\)</span> 个点作为初始的<strong>簇质心（Centroids）</strong> <span class="math-inline" data-tex="\mu_1, \dots, \mu_k">\(\mu_1, \dots, \mu_k\)</span>；</li>
+<li><strong>分配步（Assignment）</strong>：计算每个样本到 <span class="math-inline" data-tex="k">\(k\)</span> 个质心的欧氏距离，将每个样本归入离它最近的那个质心所在的簇；</li>
+<li><strong>更新步（Update）</strong>：重新计算每个簇内所有样本的坐标均值，把质心移动到新的均值位置；</li>
+<li><strong>重复第 2–3 步</strong>，直到质心位置不再发生变化（算法收敛）。</li>
+</ol>
+<p>下面我们用纯 NumPy 手写这几步，并把前 4 轮迭代的质心位置（黑色 <code>X</code>）与簇划分画出来：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">kmeans_steps</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">centroids</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">k</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)]</span>   <span class="c1"># 1. 随机挑 k 个样本作为初始质心</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_steps</span><span class="p">):</span>
+        <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">centroids</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">distances</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>                  <span class="c1"># 2. 分配：归入最近的质心</span>
+        <span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">centroids</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">labels</span><span class="p">))</span>
+        <span class="n">centroids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="n">labels</span> <span class="o">==</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">)])</span>  <span class="c1"># 3. 更新：移至簇均值</span>
+    <span class="k">return</span> <span class="n">history</span>
+
+<span class="n">history</span> <span class="o">=</span> <span class="n">kmeans_steps</span><span class="p">(</span><span class="n">X_toy</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">n_steps</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="p">(</span><span class="n">centroids</span><span class="p">,</span> <span class="n">labels</span><span class="p">))</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">history</span><span class="p">)):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_toy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X_toy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;tab10&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">centroids</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">centroids</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Iteration </span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="1-3-局部最优陷阱与多次初始化-n_init-k-means">1.3 局部最优陷阱与多次初始化（<code>n_init</code> &amp; <code>k-means++</code>）</h3>
+<p>仔细看上面第 3 轮收敛后的图像，你会发现一个明显的错误：<strong>左上角原本分开的两团点被合进了同一个蓝色簇，而正下方的一团点却被硬生生切成了两半！</strong></p>
+<p>为什么会这样？看看 <code>Iteration 0</code>：由于随机抽样运气不好，4 个初始质心里有 3 个都落在了正下方那一团里。随后的每一步迭代都只是局部微调，无法跨过中间的空白区跳到左上角去。这说明 <strong>K-means 只能保证收敛到局部最优（Local Optimum），不能保证全局最优</strong>。</p>
+<p>工程上的标准解决办法有两个（scikit-learn 的 <code>KMeans</code> 默认同时启用）：</p>
+<ol>
+<li><strong><code>k-means++</code> 智能初始化</strong>：挑选初始质心时，让新质心尽量远离已经选出的质心，避免初始扎堆；</li>
+<li><strong>多次随机重启（<code>n_init=10</code>）</strong>：换 10 组不同的随机初始质心独立跑完 K-means，最后自动保留簇内总平方距离（称为<strong>惯性 Inertia</strong>）最小的那一次结果。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">kmeans</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_toy</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_toy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X_toy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">y_toy</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;tab10&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;True Groups&quot;</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_toy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X_toy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">kmeans</span><span class="o">.</span><span class="n">labels_</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;tab10&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">kmeans</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;scikit-learn KMeans (k=4, n_init=10)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><blockquote>
+<p><strong>关于簇编号颜色的小细节</strong>：无监督聚类给每个簇分配的整数编号（<code>0, 1, 2, 3</code>）是任意的，因此左图和右图的颜色标签不必一一对应，只要相同的样本点被分在同一个簇内即可。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-如何确定簇数-k-肘部法则与轮廓系数">2. 如何确定簇数 <span class="math-inline" data-tex="k">\(k\)</span>？肘部法则与轮廓系数</h2>
+<p>K-means 要求事先指定簇数 <span class="math-inline" data-tex="k">\(k\)</span>。但在面对未知的化学数据集时，我们事先并不知道里面有几个分子家族。常用的定量参考指标有两个：</p>
+<ol>
+<li>
+<p><strong>簇内平方和 / 惯性（Inertia）与肘部法则（Elbow Method）</strong>：
+<div class="math-block" data-tex="\text{Inertia} = \sum_{i=1}^{N} \|x_i - \mu_{c(i)}\|^2">\[\text{Inertia} = \sum_{i=1}^{N} \|x_i - \mu_{c(i)}\|^2\]</div>
+随着簇数 <span class="math-inline" data-tex="k">\(k\)</span> 增加，每个簇变小，Inertia 必然单调下降（极端情况 <span class="math-inline" data-tex="k=N">\(k=N\)</span> 时 Inertia 为 0）。因此我们不能选 Inertia 最小的 <span class="math-inline" data-tex="k">\(k\)</span>，而是寻找曲线由陡变缓的<strong>拐点（“手肘”位置，Elbow）</strong>：拐点之后再增加 <span class="math-inline" data-tex="k">\(k\)</span> 带来的紧致度收益已非常有限。</p>
+</li>
+<li>
+<p><strong>轮廓系数（Silhouette Score，越大越好）</strong>：
+对每个样本 <span class="math-inline" data-tex="i">\(i\)</span>，计算它到<strong>同簇其他样本</strong>的平均距离 <span class="math-inline" data-tex="a_i">\(a_i\)</span>（衡量簇内紧致度）以及它到<strong>最近的另一个簇所有样本</strong>的平均距离 <span class="math-inline" data-tex="b_i">\(b_i\)</span>（衡量簇间分离度），定义：
+<div class="math-block" data-tex="s_i = \frac{b_i - a_i}{\max(a_i, b_i)} \in [-1, 1]">\[s_i = \frac{b_i - a_i}{\max(a_i, b_i)} \in [-1, 1]\]</div>
+全体样本的平均 <span class="math-inline" data-tex="s_i">\(s_i\)</span> 即为轮廓系数：越接近 <code>1</code> 说明“簇内抱团紧、簇间离得远”；接近 <code>0</code> 说明样本处于两簇交界处；为负说明样本可能被分错了簇。</p>
+</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">ks</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+<span class="n">inertias</span><span class="p">,</span> <span class="n">silhouettes</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">:</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_toy</span><span class="p">)</span>
+    <span class="n">inertias</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">inertia_</span><span class="p">)</span>
+    <span class="n">silhouettes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">silhouette_score</span><span class="p">(</span><span class="n">X_toy</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">labels_</span><span class="p">))</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ks</span><span class="p">,</span> <span class="n">inertias</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Number of Clusters k&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Inertia (Look for the Elbow)&quot;</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ks</span><span class="p">,</span> <span class="n">silhouettes</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Number of Clusters k&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Silhouette Score (Higher is Better)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;轮廓系数最大的最优簇数 k =&quot;</span><span class="p">,</span> <span class="n">ks</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">silhouettes</span><span class="p">))])</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>在理想合成数据上，Inertia 在 <span class="math-inline" data-tex="k=4">\(k=4\)</span> 处出现清晰的肘部拐点，轮廓系数也在 <span class="math-inline" data-tex="k=4">\(k=4\)</span> 处达到峰值。</p>
+<blockquote>
+<p><strong>真实科研数据的提醒</strong>：在真实的分子库（如 <code>03c</code> 即将看到的膦配体库）中，分子在化学空间里往往呈连续过渡分布，Inertia 曲线常常平滑下降而没有明显拐点，轮廓系数也普遍在 <code>0.15 ~ 0.30</code> 之间。此时，<span class="math-inline" data-tex="k">\(k\)</span> 的选择不能机械迷信单一统计指标，而要结合<strong>领域先验知识</strong>与下游实验筛选的目标规模。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-k-means-的凸形假设盲区与基于密度的聚类-dbscan">3. K-means 的凸形假设盲区与基于密度的聚类（DBSCAN）</h2>
+<p>K-means 将每个样本简单归入距离最近的单个质心，这意味着它在几何上相当于用垂直平分超平面切割空间，切出来的簇永远是<strong>球状/凸多面体（Convex Clusters）</strong>。</p>
+<p>如果数据在高维流形或降维平面上呈弯曲条带状（例如下面交错的两个半月形 <code>make_moons</code>），或者数据里混有许多零散的异常离群点，K-means 就会硬生生从中间一刀切错。</p>
+<p>此时需要使用<strong>基于密度的聚类算法 DBSCAN</strong>（Density-Based Spatial Clustering of Applications with Noise）：</p>
+<ul>
+<li>如果一个点在半径 <code>eps</code> 邻域内至少包含 <code>min_samples</code> 个点，则称其为<strong>核心点（Core Point）</strong>；</li>
+<li>彼此距离在 <code>eps</code> 以内的核心点及其邻域点连通形成一个簇（可以沿着任意弯曲形状生长）；</li>
+<li>既不是核心点、也不在任何核心点邻域内的孤立点，会被自动标记为 <strong><code>-1</code>（噪声/离群点，Noise）</strong>，而不会被强行塞进某个簇里。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">X_moons</span><span class="p">,</span> <span class="n">y_moons</span> <span class="o">=</span> <span class="n">make_moons</span><span class="p">(</span><span class="n">n_samples</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="mf">0.07</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">km_moons</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_moons</span><span class="p">)</span>
+<span class="n">db_moons</span> <span class="o">=</span> <span class="n">DBSCAN</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">min_samples</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_moons</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">9.2</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">X_moons</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">km_moons</span><span class="o">.</span><span class="n">labels_</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;tab10&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;K-means (k = 2)&quot;</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">X_moons</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">db_moons</span><span class="o">.</span><span class="n">labels_</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;tab10&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;DBSCAN (eps = 0.15, min_samples = 5)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;DBSCAN 识别出的簇标签:&quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">db_moons</span><span class="o">.</span><span class="n">labels_</span><span class="p">)),</span> <span class="s2">&quot;（其中 -1 代表孤立噪声点）&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><table>
+<thead>
+<tr>
+<th>特性对比</th>
+<th>K-means</th>
+<th>DBSCAN</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>是否需要预设簇数 <span class="math-inline" data-tex="k">\(k\)</span></strong></td>
+<td>必须指定 <code>n_clusters=k</code></td>
+<td>不需要（自动根据密度连通性发现簇数）</td>
+</tr>
+<tr>
+<td><strong>适用的簇几何形状</strong></td>
+<td>仅限球状 / 凸形团块</td>
+<td>任意弯曲、环状或条带状流形</td>
+</tr>
+<tr>
+<td><strong>对离群点（Outliers）的处理</strong></td>
+<td>强行并入最近的簇（且会拉偏质心）</td>
+<td>自动识别并单独标记为 <code>-1</code>（噪声点）</td>
+</tr>
+<tr>
+<td><strong>核心敏感超参数</strong></td>
+<td>簇数 <span class="math-inline" data-tex="k">\(k\)</span></td>
+<td>邻域半径 <code>eps</code> 与最小样本数 <code>min_samples</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="练习-03b-1-探究邻域半径-eps-对-dbscan-的决定性影响">🏋️ 练习 03b-1：探究邻域半径 <code>eps</code> 对 DBSCAN 的决定性影响</h3>
+<p>保持 <code>min_samples=5</code> 不变，把上面半月形数据的 DBSCAN 参数 <code>eps</code> 分别改为 <code>0.05</code>（过小）和 <code>0.5</code>（过大）：</p>
+<ol>
+<li>每次打印识别出的有效簇数（不含 <code>-1</code>）和噪声点个数（<code>labels == -1</code>）；</li>
+<li>将 <code>eps = 0.05, 0.15, 0.5</code> 的三张聚类散点图并排画出来，解释为什么 <code>eps</code> 过小或过大都会导致聚类失效。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-分子指纹空间的聚类-tanimoto-距离与-taylor-butina-算法">4. 分子指纹空间的聚类：Tanimoto 距离与 Taylor-Butina 算法</h2>
+<h3 id="4-1-高维化学空间的距离分布-为什么绝大多数分子彼此-不像">4.1 高维化学空间的距离分布：为什么绝大多数分子彼此“不像”？</h3>
+<p>将聚类用于真实分子库时，最核心的问题是如何度量两个分子之间的“距离”。对于 2048 位 Morgan 指纹，化学信息学统一使用基于 <strong>Tanimoto 相似度</strong>（即 Jaccard 相似度）定义的 <strong>Tanimoto 距离</strong>：
+<div class="math-block" data-tex="d_{\text{Tanimoto}}(A, B) = 1 - S_{\text{Tanimoto}}(A, B) = 1 - \frac{|A \cap B|}{|A \cup B|} \in [0, 1]">\[d_{\text{Tanimoto}}(A, B) = 1 - S_{\text{Tanimoto}}(A, B) = 1 - \frac{|A \cap B|}{|A \cup B|} \in [0, 1]\]</div></p>
+<p>AqSolDB 共有 9,480 个分子，两两距离共有 <span class="math-inline" data-tex="\frac{9480 \times 9479}{2} \approx 4500">\(\frac{9480 \times 9479}{2} \approx 4500\)</span> 万对。为了快速演示，我们先随机抽取 2,000 个分子（约 200 万对距离），用 RDKit 的 <code>BulkTanimotoSimilarity</code> 算出完整的下三角距离数组，并画出距离分布直方图：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;data/solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">google.colab</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;请上传 solubility.csv&quot;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;找不到 solubility.csv，请确保它位于当前目录或 data/ 文件夹下&quot;</span><span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;SMILES&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">fp_gen</span> <span class="o">=</span> <span class="n">rdFingerprintGenerator</span><span class="o">.</span><span class="n">GetMorganGenerator</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fpSize</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+<span class="n">sub</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="mi">2000</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sub_fps</span> <span class="o">=</span> <span class="p">[</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">sub</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]]</span>
+
+<span class="c1"># 计算下三角距离向量：依次存放第 i 个分子与前 i 个分子的 Tanimoto 距离（Butina 算法要求的输入格式）</span>
+<span class="n">distances</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sub_fps</span><span class="p">)):</span>
+    <span class="n">sims</span> <span class="o">=</span> <span class="n">DataStructs</span><span class="o">.</span><span class="n">BulkTanimotoSimilarity</span><span class="p">(</span><span class="n">sub_fps</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">sub_fps</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">distances</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sims</span><span class="p">))</span>
+<span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;两两距离总数: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span><span class="si">}</span><span class="s2"> (= 2000 × 1999 / 2)&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">5.5</span><span class="p">,</span> <span class="mf">3.2</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Tanimoto Distance (1 - Similarity)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Number of Molecule Pairs&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Pairwise Tanimoto Distances (2,000 Molecules from AqSolDB)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tanimoto 距离 &lt; 0.4（即相似度 &gt; 0.6）的分子对仅占: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">distances</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.4</span><span class="p">)</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>直方图清晰展示了高维分子指纹空间的普遍统计特征：<strong>绝大部分分子对之间的 Tanimoto 距离都在 <code>0.85</code> 以上（相似度低于 <code>0.15</code>），距离小于 <code>0.4</code> 的高相似近亲只占万分之三（<code>0.03%</code>）！</strong></p>
+<h3 id="4-2-化学信息学标准工具-taylor-butina-球形排除聚类">4.2 化学信息学标准工具：Taylor-Butina 球形排除聚类</h3>
+<p>在如此稀疏的指纹空间里，如果强行用 K-means 把 2,000 个分子分成 10 个簇，大量毫无关系的分子会被硬塞进同一个簇，且算出的质心是无法对应任何真实分子的浮点数向量。</p>
+<p>因此，药物化学与材料信息学中最常使用 <strong>Taylor-Butina 聚类算法</strong>（RDKit 内置为 <code>Butina.ClusterData</code>）：</p>
+<ol>
+<li>设定一个最大距离阈值 <code>cutoff</code>（例如 <code>0.6</code>，对应 Tanimoto 相似度 <span class="math-inline" data-tex="\ge 0.4">\(\ge 0.4\)</span>），统计每个分子在距离 <code>cutoff</code> 以内有多少个邻居；</li>
+<li>挑出<strong>邻居数最多</strong>的那个真实分子作为第 1 个簇的<strong>中心代表分子（Centroid Molecule）</strong>，将它及其阈值内的所有邻居打包成第 1 个簇，并从待分配列表中移除；</li>
+<li>在剩余分子中重复第 2 步，直到所有分子分配完毕。</li>
+</ol>
+<p><strong>Butina 聚类的三大优势</strong>：不需要预设簇数 <span class="math-inline" data-tex="k">\(k\)</span>；保证簇内每个成员到中心分子的距离严格不超过 <code>cutoff</code>；每个簇的中心都是一个<strong>真实存在的代表性分子</strong>（非常适合从十万级化合物库中每个簇只挑中心分子进行高通量实验采购）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">cutoff</span> <span class="o">=</span> <span class="mf">0.6</span>   <span class="c1"># Tanimoto 距离阈值（即要求簇成员与中心分子的相似度 &gt;= 0.4）</span>
+<span class="n">clusters</span> <span class="o">=</span> <span class="n">Butina</span><span class="o">.</span><span class="n">ClusterData</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sub_fps</span><span class="p">),</span> <span class="n">cutoff</span><span class="p">,</span> <span class="n">isDistData</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sizes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clusters</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cutoff = </span><span class="si">{</span><span class="n">cutoff</span><span class="si">}</span><span class="s2">: 共生成 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个簇，其中包含 </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">sizes</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个单分子孤立簇（Singletons）&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;前 5 大簇的成员数量:&quot;</span><span class="p">,</span> <span class="n">sizes</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>2,000 个分子分出了 1,023 个簇，其中 698 个簇里只有 1 个分子（单分子簇 Singleton）。这不是算法出了问题，而是忠实反映了 AqSolDB 极高的结构多样性：那 698 个分子在子集中确实没有相似度超过 <code>0.4</code> 的近亲，Butina 拒绝把不相干的分子硬凑成一团。</p>
+<p>下面我们把规模最大的前 3 个簇画出来（每个簇的第 1 个分子 <code>members[0]</code> 就是该簇的真实中心分子）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">largest</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">clusters</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="mi">3</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">rank</span><span class="p">,</span> <span class="n">members</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">largest</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">shown</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">members</span><span class="p">[:</span><span class="mi">6</span><span class="p">])</span>   <span class="c1"># members[0] 即为簇中心代表分子</span>
+    <span class="n">legends</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;Center | &quot;</span> <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;logS = </span><span class="si">{</span><span class="n">sub</span><span class="p">[</span><span class="s1">&#39;Solubility&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">shown</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">Draw</span><span class="o">.</span><span class="n">MolsToGridImage</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">sub</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">shown</span><span class="p">],</span>
+        <span class="n">molsPerRow</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+        <span class="n">subImgSize</span><span class="o">=</span><span class="p">(</span><span class="mi">185</span><span class="p">,</span> <span class="mi">150</span><span class="p">),</span>
+        <span class="n">legends</span><span class="o">=</span><span class="n">legends</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;第 </span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2"> 大簇（共 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个分子）：&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>前三大簇分别对应数据集中高频出现的三个典型同系物家族：</p>
+<ol>
+<li><strong>第 1 大簇</strong>：长链脂肪酸及其羧酸酯；</li>
+<li><strong>第 2 大簇</strong>：氯代苯与多氯联苯（PCBs，经典持久性环境污染物）；</li>
+<li><strong>第 3 大簇</strong>：直链烷基胺、脂肪醇、季铵盐与直链烷烃。</li>
+</ol>
+<p>注意观察第 3 大簇中各个分子的 <code>logS</code>：从 <code>+1.3</code>（极易溶的短链/极性头基分子）一直跨到 <code>-8.3</code>（极难溶的超长链烷烃），整整跨越了近 10 个数量级！这再次呼应了 <code>03a</code> 的结论：<strong>二值 Morgan 指纹只记录“有哪些局部碎片”，长碳链的重复 <code>-CH2-</code> 碎片让它们在 Tanimoto 距离下聚为一簇，但链长与端基电荷却彻底改变了水溶性。</strong></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-03b-2-盲测未知分子库的家族数量与化学身份">🏋️ 练习 03b-2：盲测未知分子库的家族数量与化学身份</h3>
+<p><code>data/unknown_clusters.csv</code> 中存放了 900 个未标明类别的分子 SMILES。请你用无监督聚类揭开它们的真实身份：</p>
+<ol>
+<li>读取 <code>data/unknown_clusters.csv</code>，计算 2048 位 Morgan 指纹并转为布尔型 NumPy 数组 <code>X_unknown</code>（<code>dtype=bool</code>）；</li>
+<li>对 <span class="math-inline" data-tex="k = 2, \dots, 8">\(k = 2, \dots, 8\)</span> 依次运行 <code>KMeans(n_clusters=k, n_init=10, random_state=42)</code>，画出 Inertia 曲线和基于 Jaccard（即 Tanimoto）距离的轮廓系数曲线 <code>silhouette_score(X_unknown, labels, metric=&quot;jaccard&quot;)</code>；</li>
+<li>根据曲线选出最合理的簇数 <code>best_k</code>，从每个簇中随机抽取 5 个分子用 <code>Draw.MolsToGridImage</code> 画出来，用肉眼辨认这几个簇分别属于什么化学大类（提示：观察重复单元是氨基酸肽键、糖环还是合成高分子链？）；</li>
+<li>读取真实标签 <code>data/unknown_clusters_labels.csv</code> 的 <code>label</code> 列，用**调整兰德指数（Adjusted Rand Index, <code>adjusted_rand_score(truth, labels)</code>）**定量评估你的无监督聚类与真实分类的一致性（<code>ARI = 1.0</code> 代表 100% 完美吻合，<code>0.0</code> 代表随机胡猜）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-实战应用-用聚类划分-cluster-split-严格检验模型外推能力">5. 实战应用：用聚类划分（Cluster Split）严格检验模型外推能力</h2>
+<p>在第二讲 <code>02b</code> 中我们学过交叉验证与适用域：如果使用普通的随机划分（Random Split / <code>KFold</code>），像上面看到的多氯联苯、长链脂肪酸等包含几十个同系物的家族，会被随机打散到训练集和测试集中。这样一来，测试集里的分子在训练集里总能找到结构极其相似的“同胞兄弟”，测出来的 RMSE 反映的其实是**同系物内部插值（Interpolation）**的精度，往往过于乐观。</p>
+<p>如果我们的目标是评估模型<strong>面对从未见过的全新分子家族时的外推能力（Extrapolation）</strong>，就可以利用聚类来进行<strong>按簇分组交叉验证（Cluster Split / <code>GroupKFold</code>）</strong>：</p>
+<ol>
+<li>先用 <code>PCA(50)</code> + <code>KMeans(n_clusters=50)</code> 将全部 9,480 个分子按指纹划分为 50 个结构簇；</li>
+<li>将簇编号 <code>groups</code> 传给 <code>GroupKFold(n_splits=5)</code>：<strong>保证同一个簇的所有分子要么全部进训练集，要么全部进测试集</strong>，绝不跨集拆分；</li>
+<li>对比随机 5 折（Random 5-Fold）与按簇 5 折（Cluster 5-Fold）下随机森林回归器的测试 RMSE：</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">feature_cols</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;MolMR&quot;</span><span class="p">,</span> <span class="s2">&quot;HeavyAtomCount&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHAcceptors&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHDonors&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumHeteroatoms&quot;</span><span class="p">,</span> <span class="s2">&quot;NumRotatableBonds&quot;</span><span class="p">,</span> <span class="s2">&quot;NumValenceElectrons&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumSaturatedRings&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAliphaticRings&quot;</span><span class="p">,</span> <span class="s2">&quot;RingCount&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">,</span> <span class="s2">&quot;LabuteASA&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BalabanJ&quot;</span><span class="p">,</span> <span class="s2">&quot;BertzCT&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+<span class="n">fps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprintAsNumPy</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<span class="n">fp_50</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">fps</span><span class="p">)</span>
+<span class="n">groups</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">fp_50</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;50 个指纹簇的规模范围: 最小簇 </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">}</span><span class="s2"> 个分子 | 最大簇 </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">}</span><span class="s2"> 个分子</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">rf</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">splits</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Random 5-Fold&quot;</span><span class="p">:</span>  <span class="n">KFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">),</span>
+    <span class="s2">&quot;Cluster 5-Fold&quot;</span><span class="p">:</span> <span class="n">GroupKFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">groups</span><span class="p">),</span>
+<span class="p">}</span>
+<span class="n">cv_results</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">split</span> <span class="ow">in</span> <span class="n">splits</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="o">-</span><span class="n">cross_val_score</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">split</span><span class="p">),</span> <span class="n">scoring</span><span class="o">=</span><span class="s2">&quot;neg_root_mean_squared_error&quot;</span><span class="p">)</span>
+    <span class="n">cv_results</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">scores</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">15s</span><span class="si">}</span><span class="s2">: 各折 RMSE </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> -&gt; 平均 </span><span class="si">{</span><span class="n">scores</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">scores</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>对比结果非常直观：</p>
+<ul>
+<li>在 <strong>Random 5-Fold</strong> 下，5 折的平均 RMSE 为 <strong><code>1.14 ± 0.03</code></strong>，各折之间极其平稳；</li>
+<li>切换到 <strong>Cluster 5-Fold</strong> 后，一旦禁止测试集分子在训练集里拥有同簇近亲，平均 RMSE 立刻恶化到 <strong><code>1.27 ± 0.15</code></strong>（最难的一折甚至高达 <code>1.51</code>）！</li>
+</ul>
+<p>这就是为什么现在高水平的 AI for Materials / AI for Chemistry 论文在汇报模型性能时，除了报告随机划分（Random Split），往往必须同时报告 <strong>Cluster Split</strong> 或 <strong>Scaffold Split（骨架划分）</strong>：两者的差距越大，说明模型越依赖对局部相似结构的“死记硬背”，向全新化学空间外推时的衰减就越明显。</p>
+<h3 id="练习-03b-3-聚类粒度-簇数-n_clusters-如何影响-cluster-split-的难度">🏋️ 练习 03b-3：聚类粒度（簇数 <code>n_clusters</code>）如何影响 Cluster Split 的难度？</h3>
+<p>把上面 <code>KMeans</code> 的簇数分别改为 <code>n_clusters = 10</code>（粗粒度大簇）和 <code>n_clusters = 500</code>（细粒度小簇），重新运行 <code>GroupKFold(n_splits=5)</code> 交叉验证并对比平均 RMSE。</p>
+<ul>
+<li>思考：为什么簇数越多（例如分成 500 个小簇甚至每个分子单独一簇），Cluster Split 的 RMSE 就越接近随机划分？</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="小结">小结</h2>
+<table>
+<thead>
+<tr>
+<th>方法与概念</th>
+<th>核心要点与适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>K-means (<code>KMeans</code>)</strong></td>
+<td>交替执行“就近分配”与“均值更新质心”；只能切分凸形球状簇，易陷于局部最优，需配合 <code>k-means++</code> 与多次重启 <code>n_init=10</code></td>
+</tr>
+<tr>
+<td><strong>簇数选择 (<span class="math-inline" data-tex="k">\(k\)</span>)</strong></td>
+<td>结合惯性曲线肘部（Elbow）与轮廓系数（Silhouette Score）；真实化学数据往往连续过渡，需结合领域知识定夺</td>
+</tr>
+<tr>
+<td><strong>DBSCAN (<code>DBSCAN</code>)</strong></td>
+<td>基于局部密度连通性（<code>eps</code>, <code>min_samples</code>）；无需预设簇数，可识别任意弯曲流形并将孤立异常点标为 <code>-1</code></td>
+</tr>
+<tr>
+<td><strong>Tanimoto 距离与 Butina 聚类</strong></td>
+<td>分子指纹空间极度稀疏（绝大多数分子对距离 &gt; 0.8）；<code>Butina.ClusterData</code> 以真实分子为簇中心，确保簇内距离严格小于阈值</td>
+</tr>
+<tr>
+<td><strong>按簇划分 (<code>GroupKFold</code>)</strong></td>
+<td>将整个结构簇整体留作测试，阻断同系物近亲泄漏，真实评估模型向未知化学家族的外推性能</td>
+</tr>
+</tbody>
+</table>
+<p><strong>下一节预告（<code>03c_pd_dimer_discovery.ipynb</code>）</strong>：掌握了降维和聚类这两件工具后，我们将复现一篇发表在 <em>Science</em> 上的真实催化材料发现案例——当全世界的实验积累只有 <strong>4 个正例</strong>、连量子化学 DFT 计算都无法解释反应规律时，如何用最朴素的 K-means 共识聚类从 348 个膦配体中精准筛出 8 个全新的双核钯催化剂？</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/03-unsupervised-learning/03b_clustering.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/03-unsupervised-learning.html">返回模块 03</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">03a — 降维：把高维化学空间画在二维平面上（Dimensionality Reduction）</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">03c — 科研实战案例：用无监督共识聚类发现新型双核钯(I)催化剂</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-环境准备">0. 环境准备</a></li>      <li class="toc-l2"><a href="#1-k-means-聚类-迭代机制与局部最优陷阱">1. K-means 聚类：迭代机制与局部最优陷阱</a></li>      <li class="toc-l3"><a href="#1-1-从二维玩具数据看清楚算法在做什么">1.1 从二维玩具数据看清楚算法在做什么</a></li>      <li class="toc-l3"><a href="#1-2-手写-10-行代码拆解-k-means-的迭代步骤">1.2 手写 10 行代码拆解 K-means 的迭代步骤</a></li>      <li class="toc-l3"><a href="#1-3-局部最优陷阱与多次初始化-n_init-k-means">1.3 局部最优陷阱与多次初始化（n_init &amp; k-means++）</a></li>      <li class="toc-l2"><a href="#2-如何确定簇数-k-肘部法则与轮廓系数">2. 如何确定簇数 \(k\)？肘部法则与轮廓系数</a></li>      <li class="toc-l2"><a href="#3-k-means-的凸形假设盲区与基于密度的聚类-dbscan">3. K-means 的凸形假设盲区与基于密度的聚类（DBSCAN）</a></li>      <li class="toc-l3"><a href="#练习-03b-1-探究邻域半径-eps-对-dbscan-的决定性影响">🏋️ 练习 03b-1：探究邻域半径 eps 对 DBSCAN 的决定性影响</a></li>      <li class="toc-l2"><a href="#4-分子指纹空间的聚类-tanimoto-距离与-taylor-butina-算法">4. 分子指纹空间的聚类：Tanimoto 距离与 Taylor-Butina 算法</a></li>      <li class="toc-l3"><a href="#4-1-高维化学空间的距离分布-为什么绝大多数分子彼此-不像">4.1 高维化学空间的距离分布：为什么绝大多数分子彼此“不像”？</a></li>      <li class="toc-l3"><a href="#4-2-化学信息学标准工具-taylor-butina-球形排除聚类">4.2 化学信息学标准工具：Taylor-Butina 球形排除聚类</a></li>      <li class="toc-l3"><a href="#练习-03b-2-盲测未知分子库的家族数量与化学身份">🏋️ 练习 03b-2：盲测未知分子库的家族数量与化学身份</a></li>      <li class="toc-l2"><a href="#5-实战应用-用聚类划分-cluster-split-严格检验模型外推能力">5. 实战应用：用聚类划分（Cluster Split）严格检验模型外推能力</a></li>      <li class="toc-l3"><a href="#练习-03b-3-聚类粒度-簇数-n_clusters-如何影响-cluster-split-的难度">🏋️ 练习 03b-3：聚类粒度（簇数 n_clusters）如何影响 Cluster Split 的难度？</a></li>      <li class="toc-l2"><a href="#小结">小结</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

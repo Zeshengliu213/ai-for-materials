@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 09c · 材料显微图像超分辨率与去噪扩散概率模型（DDPM）入门 在 09a 与 09b 中，我们围绕一维化学序列（SELFIES / SMILES）探讨了变分自编码器（VAE）与目标导向的分子逆向设计。然而回顾 07b（材料显微图像 CNN），材料科学的另一大支柱是 二维与三维空间微结" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="09c · 材料显微图像超分辨率与去噪扩散概率模型（DDPM）入门 | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 09c · 材料显微图像超分辨率与去噪扩散概率模型（DDPM）入门 在 09a 与 09b 中，我们围绕一维化学序列（SELFIES / SMILES）探讨了变分自编码器（VAE）与目标导向的分子逆向设计。然而回顾 07b（材料显微图像 CNN），材料科学的另一大支柱是 二维与三维空间微结" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/09-generative-models/09c_microscopy_diffusion_sr.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/09-generative-models/09c_microscopy_diffusion_sr.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>09c · 材料显微图像超分辨率与去噪扩散概率模型（DDPM）入门 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09a_vae_selfies.html"
+           data-progress-mark="notebooks/09-generative-models/09a_vae_selfies.html"
+>📓 09a_vae_selfies.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09b_goal_directed_generation.html"
+           data-progress-mark="notebooks/09-generative-models/09b_goal_directed_generation.html"
+>📓 09b_goal_directed_generation.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+           data-progress-mark="notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+class="active">📓 09c_microscopy_diffusion_sr.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/09-generative-models/09d_exercises.html"
+           data-progress-mark="notebooks/09-generative-models/09d_exercises.html"
+>🏋️ 09d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/09-generative-models.html">模块 09：生成模型：分子设计到电镜超分</a> /  <span>09c_microscopy_diffusion_sr.ipynb</span>
+</div>
+<h1>09c · 材料显微图像超分辨率与去噪扩散概率模型（DDPM）入门</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>09c_microscopy_diffusion_sr.ipynb</code>（36.7 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/09%20-%20Generative%20Models/09c_microscopy_diffusion_sr.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/833b1afb110a-09c_microscopy_diffusion_sr.ipynb" download="09c_microscopy_diffusion_sr.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/09-generative-models/09_generative_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/09%20-%20Generative%20Models/09c_microscopy_diffusion_sr.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>09c · 材料显微图像超分辨率与去噪扩散概率模型（DDPM）入门</h1>
+<p>在 <code>09a</code> 与 <code>09b</code> 中，我们围绕一维化学序列（<code>SELFIES</code> / <code>SMILES</code>）探讨了变分自编码器（VAE）与目标导向的分子逆向设计。然而回顾 <code>07b</code>（材料显微图像 CNN），材料科学的另一大支柱是<strong>二维与三维空间微结构（Microstructure）的表征与设计</strong>。在这一领域，生成式深度学习正在解决两个长期困扰实验材料学家的核心痛点：</p>
+<ol>
+<li><strong>低剂量/快扫电镜图像的超分辨率重建（Super-Resolution, SR）</strong>：
+在扫描电镜（SEM）或透射电镜（TEM）表征钙钛矿薄膜、固态电解质界面（SEI）或高分子共混物时，高放大倍率、高电子束流虽然能拍出清晰的相界，但极易造成**电子束辐照损伤（Beam Damage）**且单张扫描耗时长达数分钟。如果改用低剂量、大步长快速扫描，得到的则是低分辨率（Low-Resolution, LR）且伴随散粒噪声的模糊图像。如何训练一个残差卷积网络，将模糊的低分辨率电镜图还原为相界锐利的高分辨率（High-Resolution, HR）微结构图？</li>
+<li><strong>去噪扩散概率模型（Denoising Diffusion Probabilistic Models, DDPM）与定向微结构生成</strong>：
+在 <code>09a</code> 中我们看到，单步解码的 VAE 在高维潜空间中面临严重的<strong>先验空洞（Prior Hole）</strong>——编码器很难在一步之内把复杂数据分布严丝合缝地对齐到标准正态分布 <span class="math-inline" data-tex="\mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathcal{N}(\mathbf{0}, \mathbf{I})\)</span>。<strong>扩散模型（Diffusion Models；Ho et al., 2020）<strong>彻底换了一种思路：先通过一个无需学习的</strong>前向扩散过程（Forward Diffusion）</strong>，分 <span class="math-inline" data-tex="T">\(T\)</span> 个微小时间步向真实图像逐步注入高斯噪声，直至第 <span class="math-inline" data-tex="T">\(T\)</span> 步严格收敛为纯粹的各向同性高斯白噪声 <span class="math-inline" data-tex="\mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathcal{N}(\mathbf{0}, \mathbf{I})\)</span>（从数学上根除了先验空洞！）；随后训练一个条件 U-Net 神经网络学习<strong>逆向去噪过程（Reverse Denoising）</strong>，从白噪声一步步雕刻出符合目标相体积分数 <span class="math-inline" data-tex="\phi">\(\phi\)</span> 的双相微结构。</li>
+</ol>
+<p>本节我们将亲手构建这两个模型，并配备预训练好的轻量级权重 <code>data/micro_sr_ddpm.pt</code>，使所有实验在普通 CPU 上均可在数秒内流畅完成。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;09 - Generative Models&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_filter</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+
+<span class="n">SEED</span> <span class="o">=</span> <span class="mi">42</span>
+<span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">SEED</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">SEED</span><span class="p">)</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">SEED</span><span class="p">)</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using device:&quot;</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>课程统一绘图风格</strong>：下方单元加载 <code>ai4m.mplstyle</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-电镜图像退化物理模型与双三次插值-bicubic-基线">1. 电镜图像退化物理模型与双三次插值（Bicubic）基线</h2>
+<h3 id="1-1-构建可控体积分数的双相共连续微结构数据集">1.1 构建可控体积分数的双相共连续微结构数据集</h3>
+<p>在合金调幅分解（Spinodal Decomposition，Cahn-Hilliard 方程）或聚合物共混相分离中，双相微结构表现为两个互穿共连续相。我们通过高斯随机场滤波与双曲正切界面函数生成 800 张 <span class="math-inline" data-tex="32 \times 32">\(32 \times 32\)</span> 的高分辨率双相显微图 <span class="math-inline" data-tex="\mathbf{I}_{\text{HR}} \in [0, 1]^{1 \times 32 \times 32}">\(\mathbf{I}_{\text{HR}} \in [0, 1]^{1 \times 32 \times 32}\)</span>，每张图具有精确控制的亮相体积分数（在二维截面上即面积分数 <span class="math-inline" data-tex="\phi \in [0.25, 0.75]">\(\phi \in [0.25, 0.75]\)</span>）。</p>
+<p>同时，我们模拟低剂量快扫电镜的物理退化过程：
+<div class="math-block" data-tex="\mathbf{I}_{\text{LR}} = \text{Clamp}_{[0,1]}\!\left((K_{\text{PSF}} * \mathbf{I}_{\text{HR}}) \downarrow_{2\times} + \boldsymbol{\eta}\right), \qquad \boldsymbol{\eta} \sim \mathcal{N}(\mathbf{0}, \sigma_{\text{det}}^2 \mathbf{I})">\[\mathbf{I}_{\text{LR}} = \text{Clamp}_{[0,1]}\!\left((K_{\text{PSF}} * \mathbf{I}_{\text{HR}}) \downarrow_{2\times} + \boldsymbol{\eta}\right), \qquad \boldsymbol{\eta} \sim \mathcal{N}(\mathbf{0}, \sigma_{\text{det}}^2 \mathbf{I})\]</div>
+即先经过 <span class="math-inline" data-tex="2 \times 2">\(2 \times 2\)</span> 空间平均池化降采样至 <span class="math-inline" data-tex="16 \times 16">\(16 \times 16\)</span>（像素总数减少为原来的 <span class="math-inline" data-tex="1/4">\(1/4\)</span>，对应扫描时间缩短 <span class="math-inline" data-tex="75\%">\(75\%\)</span>），再叠加标准差 <span class="math-inline" data-tex="\sigma_{\text{det}} = 0.05">\(\sigma_{\text{det}} = 0.05\)</span> 的探测器电子噪声。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">generate_two_phase_microstructures</span><span class="p">(</span><span class="n">n_samples</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span> <span class="n">img_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;生成具有不同相体积分数 phi 的双相共连续微结构高分辨率图像 (N, 1, H, W)。&quot;&quot;&quot;</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">hr_imgs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_samples</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_size</span><span class="p">,</span> <span class="n">img_size</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">phis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_samples</span><span class="p">):</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">img_size</span><span class="p">,</span> <span class="n">img_size</span><span class="p">)</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">1.8</span><span class="p">,</span> <span class="mf">2.6</span><span class="p">)</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;wrap&quot;</span><span class="p">)</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="p">(</span><span class="n">field</span> <span class="o">-</span> <span class="n">field</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+        <span class="n">target_phi</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">)</span>
+        <span class="n">thresh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">target_phi</span><span class="p">)</span>
+        <span class="n">phase</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">((</span><span class="n">field</span> <span class="o">-</span> <span class="n">thresh</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.18</span><span class="p">))</span>
+        <span class="n">hr_imgs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">phase</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">phis</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">((</span><span class="n">phase</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">hr_imgs</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">phis</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">degrade_sem_images</span><span class="p">(</span><span class="n">hr_tensor</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">123</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;模拟电镜 2x 降采样快扫与探测器高斯噪声 (32x32 -&gt; 16x16)。&quot;&quot;&quot;</span>
+    <span class="n">lr_clean</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">avg_pool2d</span><span class="p">(</span><span class="n">hr_tensor</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">gen</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span><span class="p">()</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">noise</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">lr_clean</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">gen</span><span class="p">)</span> <span class="o">*</span> <span class="n">noise_std</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">lr_clean</span> <span class="o">+</span> <span class="n">noise</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+
+<span class="n">hr_all</span><span class="p">,</span> <span class="n">phi_all</span> <span class="o">=</span> <span class="n">generate_two_phase_microstructures</span><span class="p">(</span><span class="n">n_samples</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span> <span class="n">img_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">lr_all</span> <span class="o">=</span> <span class="n">degrade_sem_images</span><span class="p">(</span><span class="n">hr_all</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">123</span><span class="p">)</span>
+
+<span class="n">train_hr</span><span class="p">,</span> <span class="n">test_hr</span> <span class="o">=</span> <span class="n">hr_all</span><span class="p">[:</span><span class="mi">640</span><span class="p">],</span> <span class="n">hr_all</span><span class="p">[</span><span class="mi">640</span><span class="p">:]</span>
+<span class="n">train_lr</span><span class="p">,</span> <span class="n">test_lr</span> <span class="o">=</span> <span class="n">lr_all</span><span class="p">[:</span><span class="mi">640</span><span class="p">],</span> <span class="n">lr_all</span><span class="p">[</span><span class="mi">640</span><span class="p">:]</span>
+<span class="n">train_phi</span><span class="p">,</span> <span class="n">test_phi</span> <span class="o">=</span> <span class="n">phi_all</span><span class="p">[:</span><span class="mi">640</span><span class="p">],</span> <span class="n">phi_all</span><span class="p">[</span><span class="mi">640</span><span class="p">:]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High-Res (HR) shape: </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="n">train_hr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2"> | Low-Res (LR) shape: </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="n">train_lr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="1-2-图像超分辨率的定量评价指标-峰值信噪比-psnr">1.2 图像超分辨率的定量评价指标：峰值信噪比（PSNR）</h3>
+<p>在图像重建与电镜超分任务中，衡量重建图像 <span class="math-inline" data-tex="\hat{\mathbf{I}} \in [0, 1]">\(\hat{\mathbf{I}} \in [0, 1]\)</span> 与真实高分辨率图像 <span class="math-inline" data-tex="\mathbf{I}_{\text{HR}} \in [0, 1]">\(\mathbf{I}_{\text{HR}} \in [0, 1]\)</span> 接近程度的标准指标是<strong>峰值信噪比（Peak Signal-to-Noise Ratio, PSNR，单位 dB）</strong>：</p>
+<div class="math-block" data-tex="\text{MSE} = \frac{1}{H W}\sum_{i=1}^{H}\sum_{j=1}^{W} \left(\hat{I}_{i,j} - I_{\text{HR}, i, j}\right)^2, \qquad \text{PSNR} = 10 \log_{10}\!\left(\frac{1^2}{\text{MSE}}\right) = -10 \log_{10}(\text{MSE})">\[\text{MSE} = \frac{1}{H W}\sum_{i=1}^{H}\sum_{j=1}^{W} \left(\hat{I}_{i,j} - I_{\text{HR}, i, j}\right)^2, \qquad \text{PSNR} = 10 \log_{10}\!\left(\frac{1^2}{\text{MSE}}\right) = -10 \log_{10}(\text{MSE})\]</div>
+<p>由于是对数刻度，PSNR 每提升 <span class="math-inline" data-tex="3\text{ dB}">\(3\text{ dB}\)</span> 意味着均方误差 <span class="math-inline" data-tex="\text{MSE}">\(\text{MSE}\)</span> 降低了一半。在传统图像处理软件中，放大低分辨率图像最常用的无学习基线是<strong>双三次插值（Bicubic Interpolation）</strong>——它用周围 <span class="math-inline" data-tex="4 \times 4">\(4 \times 4\)</span> 邻域像素的三次多项式拟合中间像素，无法凭空恢复被低通滤波抹除的高频陡峭相界。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-残差超分辨率卷积网络-sr-rescnn-从低剂量快扫还原清晰相界">2. 残差超分辨率卷积网络（SR-ResCNN）：从低剂量快扫还原清晰相界</h2>
+<p>为了恢复陡峭的两相界面并滤除探测器散粒噪声，我们构建一个轻量级<strong>残差超分辨率卷积网络（<code>MicrostructureSRNet</code>）</strong>。其核心架构设计遵循两条物理直觉：</p>
+<ol>
+<li><strong>先插值对齐空间网格</strong>：先将 <span class="math-inline" data-tex="16 \times 16">\(16 \times 16\)</span> 的低分辨率输入 <span class="math-inline" data-tex="\mathbf{I}_{\text{LR}}">\(\mathbf{I}_{\text{LR}}\)</span> 通过双三次插值放大到 <span class="math-inline" data-tex="32 \times 32">\(32 \times 32\)</span> 的初猜场 <span class="math-inline" data-tex="\mathbf{I}_{\text{bicubic}}">\(\mathbf{I}_{\text{bicubic}}\)</span>；</li>
+<li><strong>残差高频学习（Residual Learning）</strong>：由于 <span class="math-inline" data-tex="\mathbf{I}_{\text{bicubic}}">\(\mathbf{I}_{\text{bicubic}}\)</span> 已经包含了正确的低频相分布轮廓，卷积主干网络无需从零画起，只需专门预测<strong>高频相界修正残差</strong> <span class="math-inline" data-tex="\Delta \mathbf{I} = f_\theta(\mathbf{I}_{\text{bicubic}})">\(\Delta \mathbf{I} = f_\theta(\mathbf{I}_{\text{bicubic}})\)</span>，最终输出 <span class="math-inline" data-tex="\hat{\mathbf{I}}_{\text{HR}} = \text{Clamp}_{[0,1]}(\mathbf{I}_{\text{bicubic}} + \Delta \mathbf{I})">\(\hat{\mathbf{I}}_{\text{HR}} = \text{Clamp}_{[0,1]}(\mathbf{I}_{\text{bicubic}} + \Delta \mathbf{I})\)</span>。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MicrostructureSRNet</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;残差超分辨率卷积网络：在双三次插值初猜场上学习高频相界残差。&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="mi">32</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_lr</span><span class="p">):</span>
+        <span class="n">x_up</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">x_lr</span><span class="p">,</span> <span class="n">scale_factor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;bicubic&quot;</span><span class="p">,</span> <span class="n">align_corners</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">x_up</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">x_up</span> <span class="o">+</span> <span class="n">res</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+
+<span class="n">DATA_DIR</span> <span class="o">=</span> <span class="s2">&quot;data&quot;</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;data/micro_sr_ddpm.pt&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;course/09 - Generative Models/data&quot;</span>
+<span class="n">ckpt_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;micro_sr_ddpm.pt&quot;</span><span class="p">)</span>
+<span class="n">TRAIN_SR_FROM_SCRATCH</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="n">sr_net</span> <span class="o">=</span> <span class="n">MicrostructureSRNet</span><span class="p">(</span><span class="n">channels</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ckpt_path</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">TRAIN_SR_FROM_SCRATCH</span><span class="p">:</span>
+    <span class="n">ckpt_09c</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">ckpt_path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">sr_net</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">ckpt_09c</span><span class="p">[</span><span class="s2">&quot;sr_state_dict&quot;</span><span class="p">])</span>
+    <span class="n">sr_history</span> <span class="o">=</span> <span class="n">ckpt_09c</span><span class="p">[</span><span class="s2">&quot;sr_history&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded pretrained MicrostructureSRNet from </span><span class="si">{</span><span class="n">ckpt_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">opt_sr</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">sr_net</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">2e-3</span><span class="p">)</span>
+    <span class="n">sr_history</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">26</span><span class="p">):</span>
+        <span class="n">sr_net</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">perm_sr</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train_hr</span><span class="p">))</span>
+        <span class="n">ep_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_hr</span><span class="p">),</span> <span class="mi">64</span><span class="p">):</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">perm_sr</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">64</span><span class="p">]</span>
+            <span class="n">bx</span><span class="p">,</span> <span class="n">by</span> <span class="o">=</span> <span class="n">train_lr</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">),</span> <span class="n">train_hr</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">sr_net</span><span class="p">(</span><span class="n">bx</span><span class="p">),</span> <span class="n">by</span><span class="p">)</span>
+            <span class="n">opt_sr</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">opt_sr</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">ep_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+        <span class="n">sr_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ep_loss</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_hr</span><span class="p">))</span>
+<span class="n">sr_net</span><span class="o">.</span><span class="n">eval</span><span class="p">();</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 对比测试集上双三次插值 (Bicubic) 与 SR-ResCNN 的 PSNR 及体视学面积分数误差</span>
+<span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+    <span class="n">bic_test</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">test_lr</span><span class="p">,</span> <span class="n">scale_factor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;bicubic&quot;</span><span class="p">,</span> <span class="n">align_corners</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">sr_test</span> <span class="o">=</span> <span class="n">sr_net</span><span class="p">(</span><span class="n">test_lr</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">calc_psnr_batch</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+    <span class="n">mse_per_img</span> <span class="o">=</span> <span class="p">((</span><span class="n">pred</span> <span class="o">-</span> <span class="n">target</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="mf">10.0</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">mse_per_img</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+<span class="n">psnr_bic</span> <span class="o">=</span> <span class="n">calc_psnr_batch</span><span class="p">(</span><span class="n">bic_test</span><span class="p">,</span> <span class="n">test_hr</span><span class="p">)</span>
+<span class="n">psnr_sr</span> <span class="o">=</span> <span class="n">calc_psnr_batch</span><span class="p">(</span><span class="n">sr_test</span><span class="p">,</span> <span class="n">test_hr</span><span class="p">)</span>
+
+<span class="c1"># 测量二值化阈值分割后的亮相面积分数绝对误差 (MAE of Phase Fraction phi)</span>
+<span class="n">phi_true</span> <span class="o">=</span> <span class="p">(</span><span class="n">test_hr</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">phi_bic</span> <span class="o">=</span> <span class="p">(</span><span class="n">bic_test</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">phi_sr</span> <span class="o">=</span> <span class="p">(</span><span class="n">sr_test</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="n">mae_phi_bic</span> <span class="o">=</span> <span class="p">(</span><span class="n">phi_bic</span> <span class="o">-</span> <span class="n">phi_true</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="mf">100.0</span>
+<span class="n">mae_phi_sr</span> <span class="o">=</span> <span class="p">(</span><span class="n">phi_sr</span> <span class="o">-</span> <span class="n">phi_true</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="mf">100.0</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Test Set PSNR               | Bicubic: </span><span class="si">{</span><span class="n">psnr_bic</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB  --&gt;  SR-ResCNN: </span><span class="si">{</span><span class="n">psnr_sr</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB (+</span><span class="si">{</span><span class="n">psnr_sr</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">psnr_bic</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Phase Fraction MAE (% area) | Bicubic: </span><span class="si">{</span><span class="n">mae_phi_bic</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%    --&gt;  SR-ResCNN: </span><span class="si">{</span><span class="n">mae_phi_sr</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 可视化对比：低分辨率输入、双三次插值、SR-ResCNN 重建与真实高分辨率图像 + 残差场</span>
+<span class="n">sample_id</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">12.5</span><span class="p">,</span> <span class="mf">2.8</span><span class="p">))</span>
+<span class="n">panels</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="n">test_lr</span><span class="p">[</span><span class="n">sample_id</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;16x16 Noisy LR Input&quot;</span><span class="p">,</span> <span class="s2">&quot;gray&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">bic_test</span><span class="p">[</span><span class="n">sample_id</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;Bicubic (</span><span class="si">{</span><span class="n">psnr_bic</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB)&quot;</span><span class="p">,</span> <span class="s2">&quot;gray&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">sr_test</span><span class="p">[</span><span class="n">sample_id</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;SR-ResCNN (</span><span class="si">{</span><span class="n">psnr_sr</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB)&quot;</span><span class="p">,</span> <span class="s2">&quot;gray&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">test_hr</span><span class="p">[</span><span class="n">sample_id</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;32x32 Ground Truth HR&quot;</span><span class="p">,</span> <span class="s2">&quot;gray&quot;</span><span class="p">),</span>
+    <span class="p">((</span><span class="n">sr_test</span><span class="p">[</span><span class="n">sample_id</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">bic_test</span><span class="p">[</span><span class="n">sample_id</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span> <span class="s2">&quot;Learned Edge Residual&quot;</span><span class="p">,</span> <span class="s2">&quot;RdBu_r&quot;</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">cmap_name</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">panels</span><span class="p">):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap_name</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mf">9.5</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>观察上方最右侧的第 5 张图（<code>Learned Edge Residual</code>，即网络学到的残差场 <span class="math-inline" data-tex="\Delta \mathbf{I} = \hat{\mathbf{I}}_{\text{SR}} - \mathbf{I}_{\text{bicubic}}">\(\Delta \mathbf{I} = \hat{\mathbf{I}}_{\text{SR}} - \mathbf{I}_{\text{bicubic}}\)</span>）：网络自动在相界内侧涂上正残差（红色加亮），在相界外侧涂上负残差（蓝色压暗），同时在平坦相内部抵消了散粒噪声，从而将测试集平均 PSNR 提升了超过 <strong>5 dB</strong>，并将下游体视学相面积分数的测量误差削减了一半以上！</p>
+<h3 id="练习-09c-1-构建-sobel-边缘梯度损失-edge-gradient-loss-评估相界清晰度">练习 09c-1：构建 Sobel 边缘梯度损失（Edge Gradient Loss）评估相界清晰度</h3>
+<p>仅用像素均方误差（MSE）训练超分网络时，模型为了最小化平均平方误差，往往倾向于在相界处取折中的模糊灰度值。在材料金相超分中，研究者常在损失函数中额外加入利用 <code>07b</code> 讲过的 <strong>Sobel 算子</strong>提取的<strong>一阶空间梯度误差</strong>，强制模型还原锐利的相边界：</p>
+<div class="math-block" data-tex="\mathcal{L}_{\text{Sobel}}(\hat{\mathbf{I}}, \mathbf{I}) = \|\mathbf{K}_x * \hat{\mathbf{I}} - \mathbf{K}_x * \mathbf{I}\|_1 + \|\mathbf{K}_y * \hat{\mathbf{I}} - \mathbf{K}_y * \mathbf{I}\|_1">\[\mathcal{L}_{\text{Sobel}}(\hat{\mathbf{I}}, \mathbf{I}) = \|\mathbf{K}_x * \hat{\mathbf{I}} - \mathbf{K}_x * \mathbf{I}\|_1 + \|\mathbf{K}_y * \hat{\mathbf{I}} - \mathbf{K}_y * \mathbf{I}\|_1\]</div>
+<p>请在下方实现函数 <code>sobel_gradient_loss(pred, target)</code>，并用它对比 <code>bic_test</code> 与 <code>sr_test</code> 在测试集上的相界梯度误差（验证 <code>sr_test</code> 的相界梯度误差显著低于双三次插值）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 09c-1：在此使用 F.conv2d 实现 Sobel 梯度损失并对比 bic_test 与 sr_test</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sobel_gradient_loss</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+    <span class="c1"># TODO:</span>
+    <span class="c1"># 1. 定义 3x3 水平与垂直 Sobel 卷积核 K_x, K_y</span>
+    <span class="c1"># 2. 用 F.conv2d(..., padding=1) 提取 pred 与 target 的水平和垂直梯度图</span>
+    <span class="c1"># 3. 返回 L1 梯度损失均值</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-去噪扩散概率模型-ddpm-核心数学-前向加噪与逆向去噪">3. 去噪扩散概率模型（DDPM）核心数学：前向加噪与逆向去噪</h2>
+<p>在前半节中，超分辨率网络解决的是“一对一映射”的图像恢复问题。现在我们转向真正的<strong>从零生成新微结构</strong>：如何训练一个生成模型，不仅不存在 <code>09a</code> 变分自编码器的“先验空洞”，还能按照工程师指定的目标相体积分数 <span class="math-inline" data-tex="\phi_{\text{target}}">\(\phi_{\text{target}}\)</span> 合成全新的二维双相组织？</p>
+<h3 id="3-1-前向扩散过程-forward-diffusion-process-与一步闭合跳步公式">3.1 前向扩散过程（Forward Diffusion Process）与一步闭合跳步公式</h3>
+<p>设真实微结构图像（线性缩放到 <span class="math-inline" data-tex="[-1, 1]">\([-1, 1]\)</span> 区间）为 <span class="math-inline" data-tex="\mathbf{x}_0">\(\mathbf{x}_0\)</span>。<strong>前向扩散过程</strong>是一个固定的、不含任何可学习参数的马尔可夫链：在时间步 <span class="math-inline" data-tex="t = 1, 2, \dots, T">\(t = 1, 2, \dots, T\)</span>，按预设的微小方差调度 <span class="math-inline" data-tex="\beta_1 &lt; \beta_2 &lt; \dots &lt; \beta_T \in (0, 1)">\(\beta_1 &lt; \beta_2 &lt; \dots &lt; \beta_T \in (0, 1)\)</span> 逐步混入标准高斯白噪声：</p>
+<div class="math-block" data-tex="q(\mathbf{x}_t \mid \mathbf{x}_{t-1}) = \mathcal{N}\!\left(\mathbf{x}_t;\; \sqrt{1 - \beta_t}\,\mathbf{x}_{t-1},\; \beta_t \mathbf{I}\right)">\[q(\mathbf{x}_t \mid \mathbf{x}_{t-1}) = \mathcal{N}\!\left(\mathbf{x}_t;\; \sqrt{1 - \beta_t}\,\mathbf{x}_{t-1},\; \beta_t \mathbf{I}\right)\]</div>
+<p>记 <span class="math-inline" data-tex="\alpha_t = 1 - \beta_t">\(\alpha_t = 1 - \beta_t\)</span>，以及累积信号保留率 <span class="math-inline" data-tex="\bar{\alpha}_t = \prod_{s=1}^{t} \alpha_s">\(\bar{\alpha}_t = \prod_{s=1}^{t} \alpha_s\)</span>。利用高斯分布独立可加的性质（与 <code>09a</code> 的重参数化技巧同源），我们<strong>不需要在训练时真的循环迭代 <span class="math-inline" data-tex="t">\(t\)</span> 步</strong>，而是可以用一个极其优美的闭合公式，从干净图像 <span class="math-inline" data-tex="\mathbf{x}_0">\(\mathbf{x}_0\)</span> 一步直接跳到任意噪声时刻 <span class="math-inline" data-tex="t">\(t\)</span>：</p>
+<div class="math-block" data-tex="q(\mathbf{x}_t \mid \mathbf{x}_0) = \mathcal{N}\!\left(\mathbf{x}_t;\; \sqrt{\bar{\alpha}_t}\,\mathbf{x}_0,\; (1 - \bar{\alpha}_t)\mathbf{I}\right) \quad \Longleftrightarrow \quad \mathbf{x}_t = \sqrt{\bar{\alpha}_t}\,\mathbf{x}_0 + \sqrt{1 - \bar{\alpha}_t}\,\boldsymbol{\epsilon}, \quad \boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})">\[q(\mathbf{x}_t \mid \mathbf{x}_0) = \mathcal{N}\!\left(\mathbf{x}_t;\; \sqrt{\bar{\alpha}_t}\,\mathbf{x}_0,\; (1 - \bar{\alpha}_t)\mathbf{I}\right) \quad \Longleftrightarrow \quad \mathbf{x}_t = \sqrt{\bar{\alpha}_t}\,\mathbf{x}_0 + \sqrt{1 - \bar{\alpha}_t}\,\boldsymbol{\epsilon}, \quad \boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})\]</div>
+<p>当步数 <span class="math-inline" data-tex="T">\(T\)</span> 足够且 <span class="math-inline" data-tex="\bar{\alpha}_T \to 0">\(\bar{\alpha}_T \to 0\)</span> 时，终点状态 <span class="math-inline" data-tex="\mathbf{x}_T \approx \boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathbf{x}_T \approx \boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})\)</span> 精确退化为纯粹的标准正态分布。这就从数学根源上解释了<strong>为什么扩散模型没有 VAE 的先验空洞</strong>：VAE 靠一个容量有限的编码器一步硬把数据塞进 <span class="math-inline" data-tex="\mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathcal{N}(\mathbf{0}, \mathbf{I})\)</span> 往往塞不满，而扩散模型的前向过程用解析高斯混合直接把数据精确溶解成了标准正态白噪声！</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 定义 T=40 步的线性噪声调度，并可视化一张双相微结构在前向扩散过程中的渐进溶解</span>
+<span class="n">x0_16</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">avg_pool2d</span><span class="p">(</span><span class="n">hr_all</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mf">2.0</span> <span class="o">-</span> <span class="mf">1.0</span>  <span class="c1"># (800, 1, 16, 16) in [-1, 1]</span>
+
+<span class="n">T_STEPS</span> <span class="o">=</span> <span class="mi">40</span>
+<span class="n">betas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">,</span> <span class="n">T_STEPS</span><span class="p">)</span>
+<span class="n">alphas</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">betas</span>
+<span class="n">alphas_bar</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cumprod</span><span class="p">(</span><span class="n">alphas</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">q_sample</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">t_idx</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;前向扩散闭合公式：一步生成时刻 t_idx 的加噪图像 x_t。&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">noise</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
+    <span class="n">ab_t</span> <span class="o">=</span> <span class="n">alphas_bar</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">x0</span><span class="o">.</span><span class="n">device</span><span class="p">)[</span><span class="n">t_idx</span><span class="p">][:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ab_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">x0</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">ab_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">noise</span><span class="p">,</span> <span class="n">noise</span>
+
+<span class="n">demo_x0</span> <span class="o">=</span> <span class="n">x0_16</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">show_steps</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">39</span><span class="p">]</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">show_steps</span><span class="p">),</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mf">2.3</span><span class="p">))</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">show_steps</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">xt_vis</span> <span class="o">=</span> <span class="n">demo_x0</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">xt_vis</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">q_sample</span><span class="p">(</span><span class="n">demo_x0</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">step</span><span class="p">]))</span>
+        <span class="n">xt_vis</span> <span class="o">=</span> <span class="n">xt_vis</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">xt_vis</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;t = </span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2"> (ᾱ_t=</span><span class="si">{</span><span class="n">alphas_bar</span><span class="p">[</span><span class="n">step</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Forward Diffusion Process q(x_t | x_0): Microstructure Dissolving into Gaussian Noise&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.03</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-09c-2-验证前向扩散信噪比-snr-衰减与终端先验对齐">练习 09c-2：验证前向扩散信噪比（SNR）衰减与终端先验对齐</h3>
+<p>定义时刻 <span class="math-inline" data-tex="t">\(t\)</span> 的**信噪比（Signal-to-Noise Ratio, SNR）**为信号方差权重与噪声方差权重之比：</p>
+<div class="math-block" data-tex="\text{SNR}(t) = \frac{\bar{\alpha}_t}{1 - \bar{\alpha}_t}">\[\text{SNR}(t) = \frac{\bar{\alpha}_t}{1 - \bar{\alpha}_t}\]</div>
+<p>请在下方编写代码：</p>
+<ol>
+<li>计算 <span class="math-inline" data-tex="t = 0, 1, \dots, T-1">\(t = 0, 1, \dots, T-1\)</span> 的 <span class="math-inline" data-tex="\text{SNR}(t)">\(\text{SNR}(t)\)</span>（以分贝 <span class="math-inline" data-tex="10\log_{10}\text{SNR}(t)">\(10\log_{10}\text{SNR}(t)\)</span> 表示）；</li>
+<li>对全部 800 张真实微结构 <code>x0_16</code> 在终点 <span class="math-inline" data-tex="t = T - 1">\(t = T - 1\)</span> 执行 <code>q_sample</code>，计算生成的 <code>x_T</code> 的像素均值、标准差以及模长中位数 <span class="math-inline" data-tex="\|\mathbf{x}_T\|_2">\(\|\mathbf{x}_T\|_2\)</span>，并与纯高斯白噪声 <code>torch.randn_like(x0_16)</code> 的模长中位数对比，验证两者高度重合（无先验空洞）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 09c-2：在此计算 SNR(t) 衰减并对比 x_T 与 N(0,I) 的模长分布</span>
+<span class="c1"># TODO:</span>
+<span class="c1"># 1. 计算 snr_db = 10 * torch.log10(alphas_bar / (1 - alphas_bar))</span>
+<span class="c1"># 2. 对 x0_16 在 t = T_STEPS - 1 采样 x_T，对比 x_T.flatten(1).norm(dim=1).median() 与标准正态白噪声</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-条件扩散模型-conditional-ddpm-按目标体积分数定制双相微结构">4. 条件扩散模型（Conditional DDPM）：按目标体积分数定制双相微结构</h2>
+<h3 id="4-1-噪声预测网络-conditionalmicrounet-与简化训练目标">4.1 噪声预测网络 <code>ConditionalMicroUNet</code> 与简化训练目标</h3>
+<p>既然前向过程是不断加噪，那么生成新微结构的<strong>逆向过程（Reverse Process）<strong>就是从纯白噪声 <span class="math-inline" data-tex="\mathbf{x}_T \sim \mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathbf{x}_T \sim \mathcal{N}(\mathbf{0}, \mathbf{I})\)</span> 出发，按 <span class="math-inline" data-tex="t = T-1, T-2, \dots, 0">\(t = T-1, T-2, \dots, 0\)</span> 逐步减去噪声。Ho 等人（2020）证明：与其让神经网络直接预测去噪后的图像，不如让一个以当前加噪图 <span class="math-inline" data-tex="\mathbf{x}_t">\(\mathbf{x}_t\)</span>、时间步 <span class="math-inline" data-tex="t">\(t\)</span> 以及条件变量 <span class="math-inline" data-tex="\phi">\(\phi\)</span>（目标亮相体积分数）为输入的 U-Net 网络 <span class="math-inline" data-tex="\hat{\boldsymbol{\epsilon}}_\theta(\mathbf{x}_t, t, \phi)">\(\hat{\boldsymbol{\epsilon}}_\theta(\mathbf{x}_t, t, \phi)\)</span>，直接预测</strong>当初混入的那份标准正态噪声 <span class="math-inline" data-tex="\boldsymbol{\epsilon}">\(\boldsymbol{\epsilon}\)</span></strong>！</p>
+<p>训练目标函数由此简化为极其稳定的均方误差（Simple Noise-Prediction MSE）：</p>
+<div class="math-block" data-tex="\mathcal{L}_{\text{DDPM}}(\theta) = \mathbb{E}_{\mathbf{x}_0,\, t,\, \boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0},\mathbf{I})}\!\left[\left\|\boldsymbol{\epsilon} - \hat{\boldsymbol{\epsilon}}_\theta\!\left(\sqrt{\bar{\alpha}_t}\,\mathbf{x}_0 + \sqrt{1 - \bar{\alpha}_t}\,\boldsymbol{\epsilon},\; t,\; \phi\right)\right\|_2^2\right]">\[\mathcal{L}_{\text{DDPM}}(\theta) = \mathbb{E}_{\mathbf{x}_0,\, t,\, \boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0},\mathbf{I})}\!\left[\left\|\boldsymbol{\epsilon} - \hat{\boldsymbol{\epsilon}}_\theta\!\left(\sqrt{\bar{\alpha}_t}\,\mathbf{x}_0 + \sqrt{1 - \bar{\alpha}_t}\,\boldsymbol{\epsilon},\; t,\; \phi\right)\right\|_2^2\right]\]</div>
+<p>一旦训练好噪声预测器 <span class="math-inline" data-tex="\hat{\boldsymbol{\epsilon}}_\theta">\(\hat{\boldsymbol{\epsilon}}_\theta\)</span>，在推理采样时，每一步从 <span class="math-inline" data-tex="\mathbf{x}_t">\(\mathbf{x}_t\)</span> 退火到 <span class="math-inline" data-tex="\mathbf{x}_{t-1}">\(\mathbf{x}_{t-1}\)</span> 的逆向更新公式为：</p>
+<div class="math-block" data-tex="\mathbf{x}_{t-1} = \frac{1}{\sqrt{\alpha_t}}\left(\mathbf{x}_t - \frac{\beta_t}{\sqrt{1 - \bar{\alpha}_t}}\,\hat{\boldsymbol{\epsilon}}_\theta(\mathbf{x}_t, t, \phi)\right) + \sqrt{\beta_t}\,\mathbf{z}, \qquad \mathbf{z} \sim \mathcal{N}(\mathbf{0}, \mathbf{I}) \; (t &gt; 0)">\[\mathbf{x}_{t-1} = \frac{1}{\sqrt{\alpha_t}}\left(\mathbf{x}_t - \frac{\beta_t}{\sqrt{1 - \bar{\alpha}_t}}\,\hat{\boldsymbol{\epsilon}}_\theta(\mathbf{x}_t, t, \phi)\right) + \sqrt{\beta_t}\,\mathbf{z}, \qquad \mathbf{z} \sim \mathcal{N}(\mathbf{0}, \mathbf{I}) \; (t &gt; 0)\]</div>
+<p>下面我们定义带跳跃连接（Skip Connection）与 <span class="math-inline" data-tex="(t, \phi)">\((t, \phi)\)</span> 条件注入的轻量级 U-Net <code>ConditionalMicroUNet</code>，并加载预训练权重。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ConditionalMicroUNet</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;以扩散步 t 和目标相体积分数 phi 为条件的轻量级微结构去噪 U-Net。&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_ch</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="mi">40</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="n">T</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cond_mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">base_ch</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">SiLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">base_ch</span><span class="p">,</span> <span class="n">base_ch</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enc1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">base_ch</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">GroupNorm</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">base_ch</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">SiLU</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">down</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">base_ch</span><span class="p">,</span> <span class="n">base_ch</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mid</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">base_ch</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">base_ch</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">GroupNorm</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">base_ch</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">SiLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">base_ch</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">base_ch</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">GroupNorm</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">base_ch</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">SiLU</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">up</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ConvTranspose2d</span><span class="p">(</span><span class="n">base_ch</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">base_ch</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">base_ch</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">base_ch</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">GroupNorm</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">base_ch</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">SiLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">base_ch</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_t</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">phi</span><span class="p">):</span>
+        <span class="n">t_norm</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">phi_col</span> <span class="o">=</span> <span class="n">phi</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">cond</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cond_mlp</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">t_norm</span><span class="p">,</span> <span class="n">phi_col</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="n">h1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">enc1</span><span class="p">(</span><span class="n">x_t</span><span class="p">)</span> <span class="o">+</span> <span class="n">cond</span>
+        <span class="n">h2</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">silu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">down</span><span class="p">(</span><span class="n">h1</span><span class="p">))</span>
+        <span class="n">h_mid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mid</span><span class="p">(</span><span class="n">h2</span><span class="p">)</span>
+        <span class="n">h_up</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">up</span><span class="p">(</span><span class="n">h_mid</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_conv</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">h_up</span><span class="p">,</span> <span class="n">h1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+
+<span class="n">ddpm_net</span> <span class="o">=</span> <span class="n">ConditionalMicroUNet</span><span class="p">(</span><span class="n">base_ch</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T_STEPS</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">TRAIN_DDPM_FROM_SCRATCH</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ckpt_path</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">TRAIN_DDPM_FROM_SCRATCH</span><span class="p">:</span>
+    <span class="n">ddpm_net</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">ckpt_09c</span><span class="p">[</span><span class="s2">&quot;ddpm_state_dict&quot;</span><span class="p">])</span>
+    <span class="n">ddpm_history</span> <span class="o">=</span> <span class="n">ckpt_09c</span><span class="p">[</span><span class="s2">&quot;ddpm_history&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded pretrained ConditionalMicroUNet from </span><span class="si">{</span><span class="n">ckpt_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">opt_ddpm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span><span class="n">ddpm_net</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">3e-3</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">x0_dev</span><span class="p">,</span> <span class="n">phi_dev</span><span class="p">,</span> <span class="n">ab_dev</span> <span class="o">=</span> <span class="n">x0_16</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">),</span> <span class="n">phi_all</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">),</span> <span class="n">alphas_bar</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">ddpm_history</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">61</span><span class="p">):</span>
+        <span class="n">ddpm_net</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">perm_d</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x0_dev</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">ep_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">x0_dev</span><span class="p">),</span> <span class="mi">64</span><span class="p">):</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">perm_d</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">64</span><span class="p">]</span>
+            <span class="n">bx0</span><span class="p">,</span> <span class="n">bphi</span> <span class="o">=</span> <span class="n">x0_dev</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">phi_dev</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">bt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">T_STEPS</span><span class="p">,</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">),),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">noise</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">bx0</span><span class="p">)</span>
+            <span class="n">ab_t</span> <span class="o">=</span> <span class="n">ab_dev</span><span class="p">[</span><span class="n">bt</span><span class="p">][:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+            <span class="n">x_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ab_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">bx0</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">ab_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">noise</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">ddpm_net</span><span class="p">(</span><span class="n">x_t</span><span class="p">,</span> <span class="n">bt</span><span class="p">,</span> <span class="n">bphi</span><span class="p">),</span> <span class="n">noise</span><span class="p">)</span>
+            <span class="n">opt_ddpm</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">opt_ddpm</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">ep_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+        <span class="n">ddpm_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ep_loss</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">x0_dev</span><span class="p">))</span>
+<span class="n">ddpm_net</span><span class="o">.</span><span class="n">eval</span><span class="p">();</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="4-2-逆向去噪采样与相组织涌现过程可视化">4.2 逆向去噪采样与相组织涌现过程可视化</h3>
+<p>下面我们实现完整的逆向采样函数 <code>sample_ddpm_microstructures(model, target_phis)</code>：从纯随机高斯白噪声 <span class="math-inline" data-tex="\mathbf{x}_T \sim \mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathbf{x}_T \sim \mathcal{N}(\mathbf{0}, \mathbf{I})\)</span> 出发，观察模型如何在 40 个时间步内一步步抹去噪声、凝聚相界，并同时按给定目标体积分数 <span class="math-inline" data-tex="\phi_{\text{target}} \in \{0.30, 0.50, 0.70\}">\(\phi_{\text{target}} \in \{0.30, 0.50, 0.70\}\)</span> 定制出不同相比例的微结构（最后还可串联第 2 节的 <code>sr_net</code> 直接放大为 <span class="math-inline" data-tex="32 \times 32">\(32 \times 32\)</span> 高清微结构！）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_ddpm_microstructures</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">target_phis</span><span class="p">,</span> <span class="n">record_trajectory</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">7</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;按给定目标相体积分数向量 target_phis 执行 DDPM 逆向采样。&quot;&quot;&quot;</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_phis</span><span class="p">)</span>
+    <span class="n">phi_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">target_phis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="n">traj</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">T_STEPS</span><span class="p">)):</span>
+        <span class="n">t_batch</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">n</span><span class="p">,),</span> <span class="n">step</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">pred_noise</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t_batch</span><span class="p">,</span> <span class="n">phi_t</span><span class="p">)</span>
+        <span class="n">alpha_t</span> <span class="o">=</span> <span class="n">alphas</span><span class="p">[</span><span class="n">step</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">ab_t</span> <span class="o">=</span> <span class="n">alphas_bar</span><span class="p">[</span><span class="n">step</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">beta_t</span> <span class="o">=</span> <span class="n">betas</span><span class="p">[</span><span class="n">step</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="n">mean</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">alpha_t</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="p">(</span><span class="n">beta_t</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">ab_t</span><span class="p">))</span> <span class="o">*</span> <span class="n">pred_noise</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">step</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">mean</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">beta_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">z</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">mean</span>
+        <span class="k">if</span> <span class="n">record_trajectory</span> <span class="ow">and</span> <span class="n">step</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">39</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">traj</span><span class="p">[</span><span class="n">step</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">x</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+
+    <span class="n">imgs_01</span> <span class="o">=</span> <span class="p">((</span><span class="n">x</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">imgs_01</span><span class="p">,</span> <span class="n">traj</span><span class="p">)</span> <span class="k">if</span> <span class="n">record_trajectory</span> <span class="k">else</span> <span class="n">imgs_01</span>
+
+
+<span class="c1"># 1. 展示单个微结构从 t=39 (白噪声) 到 t=0 (清晰双相结构) 的逆向涌现轨迹</span>
+<span class="n">_</span><span class="p">,</span> <span class="n">traj_dict</span> <span class="o">=</span> <span class="n">sample_ddpm_microstructures</span><span class="p">(</span><span class="n">ddpm_net</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.50</span><span class="p">],</span> <span class="n">record_trajectory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+<span class="n">traj_steps</span> <span class="o">=</span> <span class="p">[</span><span class="mi">39</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">traj_steps</span><span class="p">),</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mf">2.3</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">st</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">traj_steps</span><span class="p">):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">traj_dict</span><span class="p">[</span><span class="n">st</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reverse Step t = </span><span class="si">{</span><span class="n">st</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mf">9.5</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Reverse Denoising Trajectory p_θ(x_{t-1} | x_t): Phase Morphology Emerging from Pure Noise&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.03</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 2. 按不同目标体积分数 phi_target = 0.30, 0.50, 0.70 定向生成微结构，并用 SR-ResCNN 超分至 32x32</span>
+<span class="n">target_list</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.30</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">,</span> <span class="mf">0.50</span><span class="p">,</span> <span class="mf">0.50</span><span class="p">,</span> <span class="mf">0.70</span><span class="p">,</span> <span class="mf">0.70</span><span class="p">]</span>
+<span class="n">gen_16</span> <span class="o">=</span> <span class="n">sample_ddpm_microstructures</span><span class="p">(</span><span class="n">ddpm_net</span><span class="p">,</span> <span class="n">target_list</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">21</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+    <span class="n">gen_32_sr</span> <span class="o">=</span> <span class="n">sr_net</span><span class="p">(</span><span class="n">gen_16</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">12.5</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">axes</span><span class="p">):</span>
+    <span class="n">measured_phi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">((</span><span class="n">gen_32_sr</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">gen_32_sr</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Target φ=</span><span class="si">{</span><span class="n">target_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="se">\n</span><span class="s2">Actual φ̂=</span><span class="si">{</span><span class="n">measured_phi</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Conditional DDPM + SR-ResCNN: Goal-Directed Microstructure Synthesis&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.05</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-09c-3-条件扩散微结构生成的体视学校准曲线-target-phi-vs-measured-hat-phi">练习 09c-3：条件扩散微结构生成的体视学校准曲线（Target <span class="math-inline" data-tex="\phi">\(\phi\)</span> vs. Measured <span class="math-inline" data-tex="\hat{\phi}">\(\hat{\phi}\)</span>）</h3>
+<p>为了定量验证条件扩散模型是否真正听懂了输入的连续条件参数 <span class="math-inline" data-tex="\phi_{\text{target}}">\(\phi_{\text{target}}\)</span>，请在下方编写代码：</p>
+<ol>
+<li>对四个目标体积分数档位 <span class="math-inline" data-tex="\phi_{\text{target}} \in \{0.30, 0.45, 0.55, 0.70\}">\(\phi_{\text{target}} \in \{0.30, 0.45, 0.55, 0.70\}\)</span>，每个档位各条件生成 20 张微结构图像（共 80 张）；</li>
+<li>以 <code>0.5</code> 为阈值对生成图像二值化，统计每张图的实际亮相面积分数 <span class="math-inline" data-tex="\hat{\phi} = \text{mean}(I &gt; 0.5)">\(\hat{\phi} = \text{mean}(I &gt; 0.5)\)</span>；</li>
+<li>计算每个档位下实测 <span class="math-inline" data-tex="\hat{\phi}">\(\hat{\phi}\)</span> 的均值与标准差，并绘制 <span class="math-inline" data-tex="\phi_{\text{target}}">\(\phi_{\text{target}}\)</span> vs. <span class="math-inline" data-tex="\hat{\phi}">\(\hat{\phi}\)</span> 校准对比图。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 练习 09c-3：在此批量生成不同目标体积分数的微结构并验证实测面积分数校准度</span>
+<span class="c1"># TODO: 对 [0.30, 0.45, 0.55, 0.70] 每个档位生成 20 张微结构，计算实测面积分数均值与标准差</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-本节小结与模块全景对比">5. 本节小结与模块全景对比</h2>
+<p>至此，我们完成了第 08 讲与第 09 讲涵盖的全部三大类主流生成模型。将它们的核心机制与材料科学适用场景总结如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">生成模型家族</th>
+<th style="text-align:left">核心数学机制</th>
+<th style="text-align:left">优势</th>
+<th style="text-align:left">局限与防坑要点</th>
+<th style="text-align:left">典型材料/化学应用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>自回归序列模型</strong><br>（LSTM / Transformer，<code>08a</code>–<code>08c</code>）</td>
+<td style="text-align:left">链式法则分解 <span class="math-inline" data-tex="P(x_1, \dots, x_T) = \prod_t P(x_t \mid x_{&lt;t})">\(P(x_1, \dots, x_T) = \prod_t P(x_t \mid x_{&lt;t})\)</span></td>
+<td style="text-align:left">序列分布保真度高，天然契合变长 SMILES 与反应翻译</td>
+<td style="text-align:left">无固定维度全局连续潜坐标；长序列逐 token 解码较慢</td>
+<td style="text-align:left">有机小分子从头生成、小样本迁移微调、正向/逆合成反应预测</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>变分自编码器</strong><br>（<span class="math-inline" data-tex="\beta">\(\beta\)</span>-VAE，<code>09a</code>）</td>
+<td style="text-align:left">编码对角高斯后验 <span class="math-inline" data-tex="q_\phi(\mathbf{z}\mid\mathbf{x})">\(q_\phi(\mathbf{z}\mid\mathbf{x})\)</span> + 重参数化 + KL 先验正则</td>
+<td style="text-align:left">提供显式固定维度连续潜向量 <span class="math-inline" data-tex="\mathbf{z}">\(\mathbf{z}\)</span>，支持球面插值（Slerp）与局部邻域搜索</td>
+<td style="text-align:left">一步压缩易产生<strong>先验空洞（Prior Hole）</strong>；全局先验采样易偏离训练流形</td>
+<td style="text-align:left">分子潜空间插值、种子分子局部结构演化</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>去噪扩散概率模型</strong><br>（DDPM，<code>09c</code>）</td>
+<td style="text-align:left">前向解析加噪至纯高斯白噪声 <span class="math-inline" data-tex="\mathcal{N}(\mathbf{0}, \mathbf{I})">\(\mathcal{N}(\mathbf{0}, \mathbf{I})\)</span> + 逆向迭代预测噪声 <span class="math-inline" data-tex="\hat{\boldsymbol{\epsilon}}_\theta(\mathbf{x}_t, t, c)">\(\hat{\boldsymbol{\epsilon}}_\theta(\mathbf{x}_t, t, c)\)</span></td>
+<td style="text-align:left"><strong>彻底消除先验空洞</strong>，条件控制精准，三维/二维空间结构生成质量极高</td>
+<td style="text-align:left">逆向采样需要迭代数十至数百步 U-Net/GNN 前向传播</td>
+<td style="text-align:left">电镜微结构生成与修复、三维晶体结构生成（DiffCSP / MatterGen）与三维分子构象生成</td>
+</tr>
+</tbody>
+</table>
+<p>在下一讲（也是本课程的压轴模块 <strong>10 · 图神经网络与机器学习原子间势函数</strong>）中，我们将彻底告别把分子当作字符串或二维像素网格的间接表示，直接将分子与晶体表示为<strong>三维空间中的图（Graphs：节点 = 原子，边 = 化学键/邻域距离）</strong>，亲手构建消息传递图神经网络（MPNN / Chemprop D-MPNN）、晶体图卷积网络（CGCNN）以及驱动现代原子尺度分子动力学模拟的等变机器学习势函数（MACE）。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/09-generative-models/09c_microscopy_diffusion_sr.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/09-generative-models.html">返回模块 09</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/09-generative-models/09b_goal_directed_generation.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">09b · 目标导向的分子逆向设计：迁移微调、代理模型欺骗与可合成性评估</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/09-generative-models/09d_exercises.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">09d · 基础习题集：SELFIES、变分自编码器、代理模型防坑与扩散模型</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#1-电镜图像退化物理模型与双三次插值-bicubic-基线">1. 电镜图像退化物理模型与双三次插值（Bicubic）基线</a></li>      <li class="toc-l3"><a href="#1-1-构建可控体积分数的双相共连续微结构数据集">1.1 构建可控体积分数的双相共连续微结构数据集</a></li>      <li class="toc-l3"><a href="#1-2-图像超分辨率的定量评价指标-峰值信噪比-psnr">1.2 图像超分辨率的定量评价指标：峰值信噪比（PSNR）</a></li>      <li class="toc-l2"><a href="#2-残差超分辨率卷积网络-sr-rescnn-从低剂量快扫还原清晰相界">2. 残差超分辨率卷积网络（SR-ResCNN）：从低剂量快扫还原清晰相界</a></li>      <li class="toc-l3"><a href="#练习-09c-1-构建-sobel-边缘梯度损失-edge-gradient-loss-评估相界清晰度">练习 09c-1：构建 Sobel 边缘梯度损失（Edge Gradient Loss）评估相界清晰度</a></li>      <li class="toc-l2"><a href="#3-去噪扩散概率模型-ddpm-核心数学-前向加噪与逆向去噪">3. 去噪扩散概率模型（DDPM）核心数学：前向加噪与逆向去噪</a></li>      <li class="toc-l3"><a href="#3-1-前向扩散过程-forward-diffusion-process-与一步闭合跳步公式">3.1 前向扩散过程（Forward Diffusion Process）与一步闭合跳步公式</a></li>      <li class="toc-l3"><a href="#练习-09c-2-验证前向扩散信噪比-snr-衰减与终端先验对齐">练习 09c-2：验证前向扩散信噪比（SNR）衰减与终端先验对齐</a></li>      <li class="toc-l2"><a href="#4-条件扩散模型-conditional-ddpm-按目标体积分数定制双相微结构">4. 条件扩散模型（Conditional DDPM）：按目标体积分数定制双相微结构</a></li>      <li class="toc-l3"><a href="#4-1-噪声预测网络-conditionalmicrounet-与简化训练目标">4.1 噪声预测网络 ConditionalMicroUNet 与简化训练目标</a></li>      <li class="toc-l3"><a href="#4-2-逆向去噪采样与相组织涌现过程可视化">4.2 逆向去噪采样与相组织涌现过程可视化</a></li>      <li class="toc-l3"><a href="#练习-09c-3-条件扩散微结构生成的体视学校准曲线-target-phi-vs-measured-hat-phi">练习 09c-3：条件扩散微结构生成的体视学校准曲线（Target \(\phi\) vs. Measured \(\hat{\phi}\)）</a></li>      <li class="toc-l2"><a href="#5-本节小结与模块全景对比">5. 本节小结与模块全景对比</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="04c — 第四讲基础习题：高斯过程回归与贝叶斯优化巩固练习 本套习题帮助你一步步巩固第四讲（04a–04b）中高斯过程回归（GPR）、核函数、预测不确定性量化以及贝叶斯优化采集函数（UCB / EI）的核心操作。每道题只需填写 2–5 行代码 ，并附有预期数值提示供你自查。完成后可对照 solutions/04 ex" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="04c — 第四讲基础习题：高斯过程回归与贝叶斯优化巩固练习 | AI for Materials Science" />
+  <meta property="og:description" content="04c — 第四讲基础习题：高斯过程回归与贝叶斯优化巩固练习 本套习题帮助你一步步巩固第四讲（04a–04b）中高斯过程回归（GPR）、核函数、预测不确定性量化以及贝叶斯优化采集函数（UCB / EI）的核心操作。每道题只需填写 2–5 行代码 ，并附有预期数值提示供你自查。完成后可对照 solutions/04 ex" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/04-bayesian-optimization/04c_exercises.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/04-bayesian-optimization/04c_exercises.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>04c — 第四讲基础习题：高斯过程回归与贝叶斯优化巩固练习 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/04-bayesian-optimization/04a_gaussian_processes.html"
+           data-progress-mark="notebooks/04-bayesian-optimization/04a_gaussian_processes.html"
+>📓 04a_gaussian_processes.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/04-bayesian-optimization/04b_bayesian_optimization.html"
+           data-progress-mark="notebooks/04-bayesian-optimization/04b_bayesian_optimization.html"
+>📓 04b_bayesian_optimization.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/04-bayesian-optimization/04c_exercises.html"
+           data-progress-mark="notebooks/04-bayesian-optimization/04c_exercises.html"
+class="active">🏋️ 04c_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/04-bayesian-optimization.html">模块 04：贝叶斯优化与主动实验设计</a> /  <a href="../../exercises.html">习题</a> /  <span>04c_exercises.ipynb</span>
+</div>
+<h1><span class="kind-badge kind-exercise">习题</span> 04c — 第四讲基础习题：高斯过程回归与贝叶斯优化巩固练习</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    习题文件：<code>04c_exercises.ipynb</code>（11.9 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/04%20-%20Bayesian%20Optimization/04c_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/769ef8ec26f3-04c_exercises.ipynb" download="04c_exercises.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/04-bayesian-optimization/04_exercises_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/04-bayesian-optimization/04c_exercises.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>本套习题帮助你一步步巩固第四讲（<code>04a</code>–<code>04b</code>）中高斯过程回归（GPR）、核函数、预测不确定性量化以及贝叶斯优化采集函数（UCB / EI）的核心操作。每道题只需填写 <strong>2–5 行代码</strong>，并附有预期数值提示供你自查。完成后可对照 <code>solutions/04_exercises_solutions.ipynb</code> 查看完整解答。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="0-公共环境准备">0. 公共环境准备</h2>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.gaussian_process</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianProcessRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.gaussian_process.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">RBF</span><span class="p">,</span> <span class="n">Matern</span><span class="p">,</span> <span class="n">WhiteKernel</span><span class="p">,</span> <span class="n">ConstantKernel</span> <span class="k">as</span> <span class="n">C</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第一部分-核函数与高斯过程回归基础-对应-04a">第一部分：核函数与高斯过程回归基础（对应 <code>04a</code>）</h2>
+<h3 id="习题-1-计算一维点集的-rbf-核协方差矩阵">🏋️ 习题 1：计算一维点集的 RBF 核协方差矩阵</h3>
+<p>给定三个退火温度点 <code>X_pts = np.array([[1.0], [2.0], [5.0]])</code>（单位：归一化温度），根据 RBF 核公式：
+<div class="math-block" data-tex="k(x_i, x_j) = \exp\left(-\frac{(x_i - x_j)^2}{2\ell^2}\right)">\[k(x_i, x_j) = \exp\left(-\frac{(x_i - x_j)^2}{2\ell^2}\right)\]</div>
+请使用 <code>RBF(length_scale=1.0)</code>（可直接调用 <code>kernel(X_pts)</code>）计算这 3 个点之间的 <span class="math-inline" data-tex="3 \times 3">\(3 \times 3\)</span> 协方差矩阵 <code>K_mat</code> 并打印（保留 3 位小数）。</p>
+<ul>
+<li><strong>预期输出</strong>：对角线全为 <code>1.000</code>；<code>x=1.0</code> 与 <code>x=2.0</code> 的相关系数为 <code>0.607</code>；<code>x=1.0</code> 与 <code>x=5.0</code> 的相关系数为 <code>0.000</code>。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">X_pts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">5.0</span><span class="p">]])</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-2-使用-gaussianprocessregressor-输出预测均值与标准差">🏋️ 习题 2：使用 <code>GaussianProcessRegressor</code> 输出预测均值与标准差</h3>
+<p>下方给出了某钙钛矿薄膜在 5 个旋涂转速 <code>X_obs</code> 下测得的发光量子产率 <code>y_obs</code>。</p>
+<ol>
+<li>实例化 <code>GaussianProcessRegressor(kernel=C(1.0) * RBF(1.0), alpha=1e-4, random_state=0)</code> 并在 <code>(X_obs, y_obs)</code> 上拟合；</li>
+<li>调用 <code>gp.predict(X_test_pts, return_std=True)</code> 预测两个待测点 <code>X_test_pts = np.array([[2.1], [6.0]])</code> 的均值 <code>mu</code> 和标准差 <code>std</code> 并打印。</li>
+</ol>
+<ul>
+<li><strong>思考</strong>：为什么 <code>x = 2.1</code>（紧挨着已测点 <code>2.0</code>）的预测标准差极小（约 <code>0.04</code>），而 <code>x = 6.0</code>（处在空白区中央）的预测标准差很大（约 <code>0.56</code>）？</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">X_obs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">8.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">9.5</span><span class="p">]])</span>
+<span class="n">y_obs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.45</span><span class="p">,</span> <span class="mf">0.78</span><span class="p">,</span> <span class="mf">0.62</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
+<span class="n">X_test_pts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">2.1</span><span class="p">],</span> <span class="p">[</span><span class="mf">6.0</span><span class="p">]])</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-3-绘制-gpr-的预测均值曲线与-95-置信区间">🏋️ 习题 3：绘制 GPR 的预测均值曲线与 95% 置信区间</h3>
+<p>延续上一题训练好的 <code>gp</code> 模型：</p>
+<ol>
+<li>在密集网格 <code>X_grid = np.linspace(0, 10, 200).reshape(-1, 1)</code> 上调用 <code>gp.predict(X_grid, return_std=True)</code> 得到 <code>mu_grid, std_grid</code>；</li>
+<li>画出预测均值曲线 <code>plt.plot(X_grid, mu_grid)</code>，用 <code>plt.fill_between(X_grid.ravel(), mu_grid - 1.96 * std_grid, mu_grid + 1.96 * std_grid, alpha=0.2)</code> 画出 95% 置信区间，并用红点标出已测点 <code>(X_obs, y_obs)</code>。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">X_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># 在下方填写你的绘图代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-4-用-whitekernel-从带噪实验数据中自动估计测量误差">🏋️ 习题 4：用 <code>WhiteKernel</code> 从带噪实验数据中自动估计测量误差</h3>
+<p>下方生成了 20 个带有真实噪声标准差 <code>0.20</code>（即方差 <code>noise_level = 0.04</code>）的实验观测点 <code>(X_noisy, y_noisy)</code>。
+请使用复合核 <code>kernel = C(1.0) * RBF(1.0) + WhiteKernel(noise_level=0.05)</code> 拟合 <code>GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=5, random_state=0)</code>，并打印拟合后的核参数 <code>gp_noisy.kernel_</code>。</p>
+<ul>
+<li><strong>预期输出</strong>：<code>WhiteKernel</code> 学到的 <code>noise_level</code> 约为 <code>0.036</code>（对应的标准差 <span class="math-inline" data-tex="\sqrt{0.036} \approx 0.19">\(\sqrt{0.036} \approx 0.19\)</span>，与真实噪声 <code>0.20</code> 非常吻合）。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">X_noisy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">y_noisy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">X_noisy</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span> <span class="o">+</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第二部分-贝叶斯优化采集函数与主动推荐-对应-04b">第二部分：贝叶斯优化采集函数与主动推荐（对应 <code>04b</code>）</h2>
+<h3 id="习题-5-手写-ucb-采集函数并在-3-个候选方案中做出选择">🏋️ 习题 5：手写 UCB 采集函数并在 3 个候选方案中做出选择</h3>
+<p>假设我们已经用 GPR 对三个未测候选配方的产率进行了预测，得到的预测均值与标准差分别为：</p>
+<ul>
+<li><strong>配方 A（稳健高均值）</strong>：<code>mu = 82.0%</code>, <code>std = 2.0%</code></li>
+<li><strong>配方 B（中等均值、中等不确定性）</strong>：<code>mu = 78.0%</code>, <code>std = 6.0%</code></li>
+<li><strong>配方 C（全新结构盲区、极高不确定性）</strong>：<code>mu = 72.0%</code>, <code>std = 12.0%</code></li>
+</ul>
+<p>请根据公式 <span class="math-inline" data-tex="\text{UCB} = \mu + \kappa \cdot \sigma">\(\text{UCB} = \mu + \kappa \cdot \sigma\)</span>，分别计算当：1) <code>kappa = 0.5</code>（偏向利用）和 2) <code>kappa = 2.0</code>（偏向探索）时三个配方的 UCB 得分，看看各自会推荐哪个配方。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;配方 A&quot;</span><span class="p">,</span> <span class="s2">&quot;配方 B&quot;</span><span class="p">,</span> <span class="s2">&quot;配方 C&quot;</span><span class="p">]</span>
+<span class="n">mu</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">82.0</span><span class="p">,</span> <span class="mf">78.0</span><span class="p">,</span> <span class="mf">72.0</span><span class="p">])</span>
+<span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">2.0</span><span class="p">,</span>  <span class="mf">6.0</span><span class="p">,</span>  <span class="mf">12.0</span><span class="p">])</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-6-计算期望提升-expected-improvement-ei-并推荐下一个温度点">🏋️ 习题 6：计算期望提升（Expected Improvement, EI）并推荐下一个温度点</h3>
+<p>延续习题 2 和习题 3 中的 <code>gp</code> 模型（当前已测 5 个点的最高量子产率为 <code>y_best = y_obs.max() = 0.78</code>）：</p>
+<ol>
+<li>使用下方已定义好的 <code>acq_ei(mu_grid, std_grid, y_best)</code> 计算网格 <code>X_grid</code> 上每个点的 EI 值；</li>
+<li>找出使 EI 最大的网格点坐标 <code>next_x = X_grid[np.argmax(ei_vals), 0]</code>，对比它与纯利用（Greedy，<code>X_grid[np.argmax(mu_grid), 0]</code>）推荐的位置。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">acq_ei</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">y_best</span><span class="p">,</span> <span class="n">xi</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
+        <span class="n">imp</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">y_best</span> <span class="o">-</span> <span class="n">xi</span>
+        <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">std</span> <span class="o">&gt;</span> <span class="mf">1e-9</span><span class="p">,</span> <span class="n">imp</span> <span class="o">/</span> <span class="n">std</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">std</span> <span class="o">&gt;</span> <span class="mf">1e-9</span><span class="p">,</span> <span class="n">imp</span> <span class="o">*</span> <span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span> <span class="o">+</span> <span class="n">std</span> <span class="o">*</span> <span class="n">norm</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">Z</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-7-计算分子指纹的-tanimoto-相似度核矩阵">🏋️ 习题 7：计算分子指纹的 Tanimoto 相似度核矩阵</h3>
+<p>下方给出了三个简单分子的 8 位示意二值指纹矩阵 <code>F</code>（3 行 8 列）：</p>
+<ul>
+<li>第 0 行：<code>[1, 1, 0, 0, 1, 0, 0, 0]</code></li>
+<li>第 1 行：<code>[1, 1, 1, 0, 1, 0, 0, 0]</code></li>
+<li>第 2 行：<code>[0, 0, 0, 1, 0, 1, 1, 1]</code></li>
+</ul>
+<p>请根据向量化公式 <span class="math-inline" data-tex="K(A, B) = \frac{A B^T}{\|A\|^2 + \|B\|^2 - A B^T}">\(K(A, B) = \frac{A B^T}{\|A\|^2 + \|B\|^2 - A B^T}\)</span> 计算 <span class="math-inline" data-tex="3 \times 3">\(3 \times 3\)</span> 的 Tanimoto 核矩阵并打印。</p>
+<ul>
+<li><strong>预期输出</strong>：分子 0 与分子 1 的相似度为 <code>0.75</code>，分子 0 与分子 2 的相似度为 <code>0.00</code>。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+    <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+<span class="p">])</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-8-在-buchwald-hartwig-偶联反应子集上执行-10-步贝叶斯优化">🏋️ 习题 8：在 Buchwald–Hartwig 偶联反应子集上执行 10 步贝叶斯优化</h3>
+<p>下方代码从 <code>data/bh-reactions.csv</code> 中取出了前 300 个反应構成候选池 <code>(X_sub, y_sub)</code>（最高产率为 <code>99.9%</code>），并指定了 3 个初始反应 <code>obs = [0, 10, 20]</code>（初始最高产率仅 <code>45.7%</code>）。
+请补全 <code>for step in range(10):</code> 循环内的 4 行核心代码：在 <code>X_sub[obs], y_sub[obs]</code> 上拟合 <code>gp</code>，对未测反应 <code>X_sub[unseen]</code> 预测 <code>mu, std</code>，用 <code>acq_ucb(mu, std, kappa=2.0)</code> 选出最高分反应加入 <code>obs</code>。</p>
+<ul>
+<li><strong>预期输出</strong>：经过 10 步主动推荐后，找到的最高反应产率从 <code>45.7%</code> 跃升至 <strong><code>98.0%</code></strong> 以上！</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;data/bh-reactions.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;../data/bh-reactions.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;bh-reactions.csv&quot;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+        <span class="n">bh</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">break</span>
+
+<span class="n">X_all</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">bh</span><span class="p">[[</span><span class="s2">&quot;ligand&quot;</span><span class="p">,</span> <span class="s2">&quot;additive&quot;</span><span class="p">,</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="s2">&quot;aryl halide&quot;</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+<span class="n">X_sub</span> <span class="o">=</span> <span class="n">X_all</span><span class="p">[:</span><span class="mi">300</span><span class="p">]</span>
+<span class="n">y_sub</span> <span class="o">=</span> <span class="n">bh</span><span class="p">[</span><span class="s2">&quot;yield&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:</span><span class="mi">300</span><span class="p">]</span>
+
+<span class="n">obs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;初始 3 个反应的最高产率: </span><span class="si">{</span><span class="n">y_sub</span><span class="p">[</span><span class="n">obs</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">% (子集全局最高: </span><span class="si">{</span><span class="n">y_sub</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">11</span><span class="p">):</span>
+    <span class="n">unseen</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y_sub</span><span class="p">))</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">obs</span><span class="p">]</span>
+    <span class="n">gp</span> <span class="o">=</span> <span class="n">GaussianProcessRegressor</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">C</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">RBF</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">+</span> <span class="n">WhiteKernel</span><span class="p">(</span><span class="mf">1.0</span><span class="p">),</span> <span class="n">normalize_y</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># 在下方补全拟合、预测与选点代码（约 3~4 行）：</span>
+    
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;10 步 BO 后找到的最高产率: </span><span class="si">{</span><span class="n">y_sub</span><span class="p">[</span><span class="n">obs</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/04-bayesian-optimization/04c_exercises.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/04-bayesian-optimization.html">返回模块 04</a>  <a class="btn btn-secondary" href="../../exercises.html">全部习题汇总</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/04-bayesian-optimization/04b_bayesian_optimization.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">04b — 贝叶斯优化（下）：主动实验设计与合成配方寻优</span>
+  </a>  <a class="pager-link pager-next" href="../../modules/05-feature-engineering-and-molecular-informatics.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">模块 05 · 特征工程、SHAP 与 3D 分子</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-公共环境准备">0. 公共环境准备</a></li>      <li class="toc-l2"><a href="#第一部分-核函数与高斯过程回归基础-对应-04a">第一部分：核函数与高斯过程回归基础（对应 04a）</a></li>      <li class="toc-l3"><a href="#习题-1-计算一维点集的-rbf-核协方差矩阵">🏋️ 习题 1：计算一维点集的 RBF 核协方差矩阵</a></li>      <li class="toc-l3"><a href="#习题-2-使用-gaussianprocessregressor-输出预测均值与标准差">🏋️ 习题 2：使用 GaussianProcessRegressor 输出预测均值与标准差</a></li>      <li class="toc-l3"><a href="#习题-3-绘制-gpr-的预测均值曲线与-95-置信区间">🏋️ 习题 3：绘制 GPR 的预测均值曲线与 95% 置信区间</a></li>      <li class="toc-l3"><a href="#习题-4-用-whitekernel-从带噪实验数据中自动估计测量误差">🏋️ 习题 4：用 WhiteKernel 从带噪实验数据中自动估计测量误差</a></li>      <li class="toc-l2"><a href="#第二部分-贝叶斯优化采集函数与主动推荐-对应-04b">第二部分：贝叶斯优化采集函数与主动推荐（对应 04b）</a></li>      <li class="toc-l3"><a href="#习题-5-手写-ucb-采集函数并在-3-个候选方案中做出选择">🏋️ 习题 5：手写 UCB 采集函数并在 3 个候选方案中做出选择</a></li>      <li class="toc-l3"><a href="#习题-6-计算期望提升-expected-improvement-ei-并推荐下一个温度点">🏋️ 习题 6：计算期望提升（Expected Improvement, EI）并推荐下一个温度点</a></li>      <li class="toc-l3"><a href="#习题-7-计算分子指纹的-tanimoto-相似度核矩阵">🏋️ 习题 7：计算分子指纹的 Tanimoto 相似度核矩阵</a></li>      <li class="toc-l3"><a href="#习题-8-在-buchwald-hartwig-偶联反应子集上执行-10-步贝叶斯优化">🏋️ 习题 8：在 Buchwald–Hartwig 偶联反应子集上执行 10 步贝叶斯优化</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

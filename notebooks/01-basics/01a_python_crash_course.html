@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="01a · Python 与 Jupyter 基础速成 这门课后面的内容——从数据清洗、性质预测，到分子生成与图神经网络——都会用 Python 来完成。作为第一节课，我们不需要深究复杂的编程理论，先把后面最常打交道的语法和工具过一遍：能够看懂代码逻辑、修改现成代码里的参数、写出几行简单的数据处理脚本，就已经足够应付上" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="01a · Python 与 Jupyter 基础速成 | AI for Materials Science" />
+  <meta property="og:description" content="01a · Python 与 Jupyter 基础速成 这门课后面的内容——从数据清洗、性质预测，到分子生成与图神经网络——都会用 Python 来完成。作为第一节课，我们不需要深究复杂的编程理论，先把后面最常打交道的语法和工具过一遍：能够看懂代码逻辑、修改现成代码里的参数、写出几行简单的数据处理脚本，就已经足够应付上" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/01-basics/01a_python_crash_course.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/01-basics/01a_python_crash_course.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>01a · Python 与 Jupyter 基础速成 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01a_python_crash_course.html"
+           data-progress-mark="notebooks/01-basics/01a_python_crash_course.html"
+class="active">📓 01a_python_crash_course.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01b_pandas.html"
+           data-progress-mark="notebooks/01-basics/01b_pandas.html"
+>📓 01b_pandas.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01c_plotting.html"
+           data-progress-mark="notebooks/01-basics/01c_plotting.html"
+>📓 01c_plotting.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01d_rdkit_basics.html"
+           data-progress-mark="notebooks/01-basics/01d_rdkit_basics.html"
+>📓 01d_rdkit_basics.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/01-basics/01e_exercises.html"
+           data-progress-mark="notebooks/01-basics/01e_exercises.html"
+>🏋️ 01e_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/01-basics.html">模块 01：Python 与化学/材料数据基础</a> /  <span>01a_python_crash_course.ipynb</span>
+</div>
+<h1>01a · Python 与 Jupyter 基础速成</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>01a_python_crash_course.ipynb</code>（41.1 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/01%20-%20Basics/01a_python_crash_course.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/9b36b76786b0-01a_python_crash_course.ipynb" download="01a_python_crash_course.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/01-basics/01_basics_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/01-basics/01a_python_crash_course.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>这门课后面的内容——从数据清洗、性质预测，到分子生成与图神经网络——都会用 Python 来完成。作为第一节课，我们不需要深究复杂的编程理论，先把后面最常打交道的语法和工具过一遍：能够看懂代码逻辑、修改现成代码里的参数、写出几行简单的数据处理脚本，就已经足够应付上半学期的实战了。</p>
+<p>这一节贯穿的例子来自<strong>有机电子材料</strong>（比如并五苯、红荧烯、噻吩等有机半导体），数值大多是用来演示语法的近似值。</p>
+<h3 id="本节内容">本节内容</h3>
+<ol>
+<li>熟悉 Jupyter Notebook</li>
+<li>变量、数据类型与算术运算</li>
+<li>字符串与格式化输出</li>
+<li>容器：列表、元组与字典</li>
+<li>条件判断（<code>if</code>）</li>
+<li>循环（<code>for</code> / <code>while</code>）与列表推导式</li>
+<li>函数（<code>def</code>）</li>
+<li>导入科学计算库（<code>import</code> 与 <code>numpy</code>）</li>
+<li>读懂报错信息</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-熟悉-jupyter-notebook">1. 熟悉 Jupyter Notebook</h2>
+<p>你现在打开的这个 <code>.ipynb</code> 文件叫做 <strong>Jupyter Notebook</strong>。它把“实验记录本”和“代码运行环境”合在了一起，由两种格子（Cell）上下拼接而成：</p>
+<ul>
+<li><strong>文字格（Markdown）</strong>：用来写说明文字、数学公式和图表（双击可以编辑，按 <code>Shift + Enter</code> 恢复排版）。</li>
+<li><strong>代码格（Code）</strong>：带有浅色背景，里面写的是可执行的 Python 代码。</li>
+</ul>
+<p>平时用得最多的几个快捷键：</p>
+<ul>
+<li><code>Shift + Enter</code>：运行当前格子，并跳到下一格</li>
+<li><code>Ctrl + Enter</code>：运行当前格子，光标停在原地</li>
+<li>先按 <code>Esc</code> 退出编辑状态，再按 <code>B</code>（Below）在下方新建一格，按 <code>A</code>（Above）在上方新建一格，连按两次 <code>D</code> 删除当前格。</li>
+</ul>
+<p>先选中下面这个代码格，按 <code>Shift + Enter</code> 跑一下：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hello, organic electronics!&quot;</span><span class="p">)</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">Hello, organic electronics!
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><code>print(...)</code> 的作用是把括号里的内容打印到屏幕上。代码里的 <code>#</code> 代表<strong>注释</strong>，从 <code>#</code> 开始到这一行末尾的文字都是写给人看的，Python 运行时会直接跳过。</p>
+<p>你可以试着把下面引号里的内容改成你自己的研究方向，再按 <code>Shift + Enter</code> 运行：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;我的研究方向是：有机场效应晶体管 (OFET)&quot;</span><span class="p">)</span>   <span class="c1"># 试着改改引号里的字</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">我的研究方向是：有机场效应晶体管 (OFET)
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>在 Jupyter 里还有一个偷懒的习惯：如果代码格的<strong>最后一行</strong>是一个算式或变量，就算不写 <code>print()</code>，Notebook 也会自动把它的结果展示出来。比如：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 直接当计算器用，最后一行会自动输出结果</span>
+<span class="mi">1240</span> <span class="o">/</span> <span class="mf">1.8</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-text">688.8888888888889</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><blockquote>
+<p><strong>新手最容易踩的一个坑</strong>：Notebook 记住变量的顺序取决于你<strong>运行格子的先后顺序</strong>（看代码格左侧方括号里的数字 <code>[1]</code>、<code>[2]</code>），而不是格子在页面上从上到下的位置。如果改着改着发现结果不对劲，点击顶部菜单的 <strong>Restart &amp; Run All（重启内核并全部运行）</strong>，让它从头到尾干净地跑一遍。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-变量-数据类型与算术运算">2. 变量、数据类型与算术运算</h2>
+<h3 id="2-1-用变量保存数据">2.1 用变量保存数据</h3>
+<p>只把算式算出来还不够，我们通常需要把数据存下来留着后面用。在 Python 里，用等号 <code>=</code> 给数据起个名字，就叫做定义一个<strong>变量</strong>。</p>
+<p>注意编程里的 <code>=</code> 不是数学上的“相等”，而是<strong>赋值</strong>——意思是“把右边算出来的结果，存到左边这个名字名下”。</p>
+<p>下面我们用经典的 p 型有机半导体**并五苯（pentacene）**来举例：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;pentacene&quot;</span>     <span class="c1"># 字符串 (str)：文本内容，必须用单引号或双引号包起来</span>
+<span class="n">homo</span> <span class="o">=</span> <span class="o">-</span><span class="mf">5.0</span>            <span class="c1"># 浮点数 (float)：带小数点的数，这里表示 HOMO 能级 (eV)</span>
+<span class="n">lumo</span> <span class="o">=</span> <span class="o">-</span><span class="mf">3.2</span>            <span class="c1"># 浮点数 (float)：LUMO 能级 (eV)</span>
+<span class="n">n_rings</span> <span class="o">=</span> <span class="mi">5</span>            <span class="c1"># 整数 (int)：并五苯由 5 个苯环并在一起组成</span>
+<span class="n">is_p_type</span> <span class="o">=</span> <span class="kc">True</span>       <span class="c1"># 布尔值 (bool)：逻辑真假，只有 True 和 False 两个值（首字母大写）</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">homo</span><span class="p">,</span> <span class="n">lumo</span><span class="p">,</span> <span class="n">n_rings</span><span class="p">,</span> <span class="n">is_p_type</span><span class="p">)</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">pentacene -5.0 -3.2 5 True
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>如果不确定某个变量里存的是什么类型的数据，可以用内置函数 <code>type()</code> 查看：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">homo</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">n_rings</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">is_p_type</span><span class="p">))</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">&lt;class &#x27;str&#x27;&gt;
+&lt;class &#x27;float&#x27;&gt;
+&lt;class &#x27;int&#x27;&gt;
+&lt;class &#x27;bool&#x27;&gt;
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>上面这四种（<code>str</code>、<code>float</code>、<code>int</code>、<code>bool</code>）是 Python 里最基础的单值类型。给变量起名字时，习惯用清晰的英文单词加下划线（比如 <code>n_rings</code>、<code>band_gap</code>），注意两点：</p>
+<ol>
+<li>变量名只能包含字母、数字和下划线 <code>_</code>，且<strong>不能以数字开头</strong>（写 <code>3ht = ...</code> 会报错，可以写 <code>mol_3ht</code>）。</li>
+<li><strong>严格区分大小写</strong>：<code>homo</code> 和 <code>HOMO</code> 在 Python 看来是两个毫无关系的变量。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="2-2-算术运算">2.2 算术运算</h3>
+<p>定义好变量之后，就可以直接拿变量名来做数学计算。先看一个最直接的例子——用刚才定义的 <code>lumo</code> 和 <code>homo</code> 计算并五苯的能隙（Band Gap）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">gap</span> <span class="o">=</span> <span class="n">lumo</span> <span class="o">-</span> <span class="n">homo</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">gap</span><span class="p">)</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">1.7999999999999998
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>你可能会注意到，<code>-3.2 - (-5.0)</code> 打印出来居然是 <code>1.7999999999999998</code>，而不是干干净净的 <code>1.8</code>。这不是你的代码写错了，而是因为计算机底层用二进制存储小数，绝大多数十进制小数转换成二进制时都会有一点点截断误差（在大概小数点后第 16 位）。平时计算完全不用管它，如果希望打印出来好看，可以用 <code>round(gap, 2)</code> 四舍五入保留两位小数。</p>
+<p>除了加减乘除，Python 还支持乘方、整除和取余运算：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">wavelength</span> <span class="o">=</span> <span class="mi">1240</span> <span class="o">/</span> <span class="n">gap</span>     <span class="c1"># 除法 /：把能隙 (eV) 换算成吸收边波长 (nm)，结果永远是浮点数</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;吸收边波长 (nm):&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+<span class="c1"># 并苯 (acene) 通式是 C_(4n+2)H_(2n+4)，用 n_rings = 5 算一下并五苯的碳原子数：</span>
+<span class="n">n_carbons</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">n_rings</span> <span class="o">+</span> <span class="mi">2</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;碳原子数:&quot;</span><span class="p">,</span> <span class="n">n_carbons</span><span class="p">)</span>
+
+<span class="c1"># 其他常用算术运算符：</span>
+<span class="nb">print</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">10</span><span class="p">)</span>   <span class="c1"># 乘方 **：2 的 10 次方（注意不是 ^，在 Python 里 ^ 是按位异或）</span>
+<span class="nb">print</span><span class="p">(</span><span class="mi">17</span> <span class="o">//</span> <span class="mi">5</span><span class="p">)</span>   <span class="c1"># 整除 //：只保留商的整数部分，结果是 3</span>
+<span class="nb">print</span><span class="p">(</span><span class="mi">17</span> <span class="o">%</span> <span class="mi">5</span><span class="p">)</span>    <span class="c1"># 取余 %：17 除以 5 的余数，结果是 2</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">吸收边波长 (nm): 688.9
+碳原子数: 22
+1024
+3
+2
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>有时我们需要在变量原有数值的基础上加减，比如统计总原子数时加上氢原子。可以写成 <code>n_atoms = n_atoms + 14</code>，也可以用简写 <code>+=</code>：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">n_atoms</span> <span class="o">=</span> <span class="n">n_carbons</span>     <span class="c1"># 先算上 22 个碳原子</span>
+<span class="n">n_atoms</span> <span class="o">+=</span> <span class="mi">14</span>           <span class="c1"># 等价于 n_atoms = n_atoms + 14（加上 14 个氢原子）</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;并五苯总原子数:&quot;</span><span class="p">,</span> <span class="n">n_atoms</span><span class="p">)</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">并五苯总原子数: 36
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-字符串与格式化输出">3. 字符串与格式化输出</h2>
+<h3 id="3-1-用-f-string-拼接文字与数值">3.1 用 f-string 拼接文字与数值</h3>
+<p>刚才我们算出了 <code>homo</code>、<code>lumo</code> 和 <code>gap</code>，如果想像写实验报告一样输出一句完整的话，用逗号一个个隔开 <code>print</code> 会显得很零碎。Python 里最舒服的做法是用 <strong>f-string</strong>：在引号前面加个字母 <code>f</code>，然后在字符串里直接用花括号 <code>{变量名}</code> 把变量填进去：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> 的 HOMO = </span><span class="si">{</span><span class="n">homo</span><span class="si">}</span><span class="s2"> eV，LUMO = </span><span class="si">{</span><span class="n">lumo</span><span class="si">}</span><span class="s2"> eV，能隙约为 </span><span class="si">{</span><span class="n">gap</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> eV&quot;</span><span class="p">)</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">pentacene 的 HOMO = -5.0 eV，LUMO = -3.2 eV，能隙约为 1.80 eV
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>花括号里的 <code>:.2f</code> 是格式说明符，意思是“按浮点数（float）格式显示，并保留小数点后 2 位”。这样连 <code>round()</code> 都省了，后面打印模型误差、画图写标题时几乎天天都会用到。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="3-2-字符串的下标-切片与常用操作">3.2 字符串的下标、切片与常用操作</h3>
+<p>在化学和材料信息学里，字符串除了用来存名称，最重要的用途是表示分子结构——也就是 <strong>SMILES</strong>（用一行字符把分子的原子和成键方式写出来，第 <code>01d</code> 节会专门讲）。比如导电高分子 P3HT 的基本单元是<strong>噻吩（thiophene）</strong>，它的 SMILES 写作 <code>&quot;c1ccsc1&quot;</code>（小写字母代表芳香环上的原子，<code>c</code> 是碳，<code>s</code> 是硫）。</p>
+<p>我们可以把字符串看作一排按顺序排好的字符，用方括号 <code>[]</code> 按位置提取其中的部分：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">thiophene</span> <span class="o">=</span> <span class="s2">&quot;c1ccsc1&quot;</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;字符串长度:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">thiophene</span><span class="p">))</span>   <span class="c1"># len() 返回一共有几个字符</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;第 1 个字符:&quot;</span><span class="p">,</span> <span class="n">thiophene</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>    <span class="c1"># 注意：Python 从 0 开始数！下标 0 才是第一个</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;最后 1 个字符:&quot;</span><span class="p">,</span> <span class="n">thiophene</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="c1"># 负数下标表示倒着数，-1 就是倒数第一个</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;切片 [1:4]:&quot;</span><span class="p">,</span> <span class="n">thiophene</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">4</span><span class="p">])</span>   <span class="c1"># 取出下标 1、2、3 的字符（包含起点 1，不包含终点 4）</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">字符串长度: 7
+第 1 个字符: c
+最后 1 个字符: 1
+切片 [1:4]: 1cc
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><blockquote>
+<p><strong>记住这两条铁律</strong>：</p>
+<ol>
+<li>Python 的编号（下标 / Index）永远<strong>从 0 开始</strong>。</li>
+<li>切片 <code>[a:b]</code> 永远是<strong>左闭右开</strong>——包含位置 <code>a</code>，但不包含位置 <code>b</code>。</li>
+</ol>
+<p>后面学列表、NumPy 数组和 Pandas 表格时，全都是同一套规则。</p>
+</blockquote>
+<p>除了按位置取字符，字符串还自带很多实用的操作工具（写在字符串变量后面，加个点 <code>.</code> 调用）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">hexyl</span> <span class="o">=</span> <span class="s2">&quot;CCCCCC&quot;</span>                     <span class="c1"># 正己基侧链的 SMILES</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">hexyl</span> <span class="o">+</span> <span class="n">thiophene</span><span class="p">)</span>             <span class="c1"># 用 + 把两个字符串首尾拼起来（3-己基噻吩）</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;s&quot;</span> <span class="ow">in</span> <span class="n">thiophene</span><span class="p">)</span>              <span class="c1"># 用 in 检查里面包不包含某个子串（是否含硫原子）</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">thiophene</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;c&quot;</span><span class="p">))</span>          <span class="c1"># .count() 数一数出现了几个芳香碳 &#39;c&#39;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">thiophene</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>             <span class="c1"># .upper() 全部转成大写</span>
+
+<span class="c1"># 读实验数据文件时最常用的两个清洗操作：.strip() 和 .split()</span>
+<span class="n">raw_line</span> <span class="o">=</span> <span class="s2">&quot;  pentacene, -5.0, -3.2 </span><span class="se">\n</span><span class="s2">&quot;</span>
+<span class="n">clean_line</span> <span class="o">=</span> <span class="n">raw_line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>        <span class="c1"># 去掉首尾多余的空格和换行符 \n</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">clean_line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">))</span>         <span class="c1"># 按逗号切开，变成一串独立的字段</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">CCCCCCc1ccsc1
+True
+4
+C1CCSC1
+[&#x27;pentacene&#x27;, &#x27; -5.0&#x27;, &#x27; -3.2&#x27;]
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-容器-列表-元组与字典">4. 容器：列表、元组与字典</h2>
+<p>单个变量一次只能存一个数据。但实际做研究时，我们手头往往是一批分子、一组平行实验测出的迁移率，或者一个分子的多项性质。Python 提供了几种“容器”把它们组织起来。</p>
+<h3 id="4-1-列表-list-按顺序排列的一组数据">4.1 列表（<code>list</code>）：按顺序排列的一组数据</h3>
+<p>列表用方括号 <code>[]</code> 表示，里面的元素用逗号隔开。它就像一列编好号的格子，既可以按下标取值，也可以随时往里添减内容：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 并苯系列：苯、萘、蒽、并四苯</span>
+<span class="n">acenes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;naphthalene&quot;</span><span class="p">,</span> <span class="s2">&quot;anthracene&quot;</span><span class="p">,</span> <span class="s2">&quot;tetracene&quot;</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">acenes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>              <span class="c1"># 取第一个：benzene</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">acenes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>             <span class="c1"># 取最后一个：tetracene</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">acenes</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span>            <span class="c1"># 切片：取下标 1 和 2，得到子列表</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">acenes</span><span class="p">))</span>            <span class="c1"># 列表里有几个元素</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pentacene&quot;</span> <span class="ow">in</span> <span class="n">acenes</span><span class="p">)</span>  <span class="c1"># 检查并五苯在不在列表里</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">benzene
+tetracene
+[&#x27;naphthalene&#x27;, &#x27;anthracene&#x27;]
+4
+False
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>刚才检查发现 <code>&quot;pentacene&quot;</code> 还不在列表里。我们可以用 <code>.append()</code> 把它追加到列表末尾，或者直接修改某个位置的元素：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">acenes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;pentacene&quot;</span><span class="p">)</span>    <span class="c1"># 在列表末尾追加一个新元素</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;追加后:&quot;</span><span class="p">,</span> <span class="n">acenes</span><span class="p">)</span>
+
+<span class="n">acenes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Benzene&quot;</span>         <span class="c1"># 直接修改第 0 个位置的元素</span>
+<span class="n">acenes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;benzene&quot;</span>         <span class="c1"># 改回来</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>如果列表里装的都是数字（比如同一批次 5 个器件测出的载流子迁移率），可以直接用内置函数求最大值、最小值、总和，或者用 <code>sorted()</code> 排序：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">mobilities</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">]</span>   <span class="c1"># 迁移率 cm²/(V·s)，示意值</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;最高:&quot;</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">mobilities</span><span class="p">),</span> <span class="s2">&quot;最低:&quot;</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">mobilities</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;平均值:&quot;</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">mobilities</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">mobilities</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;从小到大:&quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">mobilities</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;从大到小:&quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">mobilities</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="4-2-元组-tuple-不可修改的固定组合">4.2 元组（<code>tuple</code>）：不可修改的固定组合</h3>
+<p>元组用圆括号 <code>()</code> 表示。它和列表几乎一样，唯一的区别是<strong>一旦创建就不能修改</strong>（不能 <code>.append()</code>，也不能改里面的值）。因此它常用来存放一组固定搭配的数据，比如晶胞的三个晶格常数 <span class="math-inline" data-tex="(a, b, c)">\((a, b, c)\)</span>、原子的三维坐标 <span class="math-inline" data-tex="(x, y, z)">\((x, y, z)\)</span>，或者神经网络里矩阵的维度。</p>
+<p>元组还有一个很顺手的写法叫<strong>拆包（unpacking）</strong>，可以把里面的值一次性赋给多个变量：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">lattice</span> <span class="o">=</span> <span class="p">(</span><span class="mf">5.9</span><span class="p">,</span> <span class="mf">7.6</span><span class="p">,</span> <span class="mf">15.6</span><span class="p">)</span>   <span class="c1"># 并五苯薄膜相晶格参数 a, b, c (Å)</span>
+
+<span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">lattice</span>            <span class="c1"># 拆包：把三个数分别赋给 a, b, c</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;a = </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2"> Å, b = </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2"> Å, c = </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2"> Å&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="4-3-字典-dict-按-名称-查找的键值对">4.3 字典（<code>dict</code>）：按“名称”查找的键值对</h3>
+<p>如果我们要记录一个分子的好几项信息——名称、SMILES、HOMO、LUMO、导电类型——用列表装成 <code>[&quot;pentacene&quot;, -5.0, -3.2, &quot;p&quot;]</code> 会很不直观，过两天自己都忘了 <code>-5.0</code> 和 <code>-3.2</code> 哪个是 HOMO。</p>
+<p><strong>字典</strong>就是为了解决这个问题：它用花括号 <code>{}</code> 表示，里面存的是一对对的 <strong><code>键: 值</code>（<code>key: value</code>）</strong>。查找数据时不用记位置下标，直接报名字（键）就行：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [16] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">pentacene</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;pentacene&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;smiles&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;homo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">5.0</span><span class="p">,</span>
+    <span class="s2">&quot;lumo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">3.2</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;p&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;HOMO 能级:&quot;</span><span class="p">,</span> <span class="n">pentacene</span><span class="p">[</span><span class="s2">&quot;homo&quot;</span><span class="p">])</span>       <span class="c1"># 用方括号 + 键名取值</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;有迁移率数据吗?&quot;</span><span class="p">,</span> <span class="s2">&quot;mobility&quot;</span> <span class="ow">in</span> <span class="n">pentacene</span><span class="p">)</span>
+
+<span class="c1"># 新增或修改条目，语法完全一样：</span>
+<span class="n">pentacene</span><span class="p">[</span><span class="s2">&quot;mobility&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>                  <span class="c1"># 原来没有 &quot;mobility&quot;，就新增一项</span>
+<span class="n">pentacene</span><span class="p">[</span><span class="s2">&quot;homo&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">4.9</span>                     <span class="c1"># 原来有 &quot;homo&quot;，就更新它的值</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;当前包含的键:&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">pentacene</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pentacene</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>把<strong>列表</strong>和<strong>字典</strong>结合起来——每个分子是一个字典，再把好几个分子装进一个列表里——这就构成了一张微型的数据表（下一节 <code>01b</code> 要学的 <code>pandas.DataFrame</code> 本质上就是它的强化版）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">molecules</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;pentacene&quot;</span><span class="p">,</span> <span class="s2">&quot;homo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="s2">&quot;lumo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">3.2</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;rubrene&quot;</span><span class="p">,</span>   <span class="s2">&quot;homo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">5.4</span><span class="p">,</span> <span class="s2">&quot;lumo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">3.1</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;C60&quot;</span><span class="p">,</span>       <span class="s2">&quot;homo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">6.1</span><span class="p">,</span> <span class="s2">&quot;lumo&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">4.0</span><span class="p">},</span>
+<span class="p">]</span>
+
+<span class="c1"># 先用 [0] 取出第一个分子的字典，再用 [&quot;name&quot;] 取出它的名字</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">molecules</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">],</span> <span class="s2">&quot;的 HOMO 是&quot;</span><span class="p">,</span> <span class="n">molecules</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;homo&quot;</span><span class="p">],</span> <span class="s2">&quot;eV&quot;</span><span class="p">)</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">pentacene 的 HOMO 是 -5.0 eV
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-01a-1">🏋️ 练习 01a-1</h3>
+<p>从上面的 <code>molecules</code> 列表中取出**红荧烯（rubrene）**的数据，算出它的能隙（<code>lumo - homo</code>），并用 f-string 打印出来（保留两位小数）。预期输出格式如下：</p>
+<pre><code><div class="highlight"><pre><span></span>rubrene 的能隙是 2.30 eV
+</pre></div>
+</code></pre>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里写你的代码</span>
+<span class="n">lumo_rubrene</span><span class="o">=</span><span class="n">molecules</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;lumo&#39;</span><span class="p">]</span>
+<span class="n">homo_rubrene</span><span class="o">=</span><span class="n">molecules</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;homo&#39;</span><span class="p">]</span>
+
+<span class="n">gap_rubrene</span> <span class="o">=</span> <span class="n">lumo_rubrene</span> <span class="o">-</span> <span class="n">homo_rubrene</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">gap_rubrene</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">2.3
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-条件判断-if">5. 条件判断（<code>if</code>）</h2>
+<p>写程序筛选材料时，我们经常要设定门槛：比如“能隙小于 2.0 eV <strong>而且</strong> 迁移率大于 0.5 cm²/(V·s)”。</p>
+<h3 id="5-1-比较与逻辑运算">5.1 比较与逻辑运算</h3>
+<p>我们先看看怎么用 Python 写出判断条件。比较两个数的大小或是否相等，得到的结果永远是布尔值（<code>True</code> 或 <code>False</code>）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [19] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">gap</span> <span class="o">=</span> <span class="mf">1.8</span>
+<span class="n">mobility</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">gap</span> <span class="o">&lt;</span> <span class="mf">2.0</span><span class="p">)</span>        <span class="c1"># 小于（大于 &gt;，小于等于 &lt;=，大于等于 &gt;=）</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">n_rings</span> <span class="o">==</span> <span class="mi">5</span><span class="p">)</span>     <span class="c1"># 判断是否相等要用两个等号 ==（单个 = 是赋值！）</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">n_rings</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">)</span>     <span class="c1"># 不等于 !=</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>如果要同时满足多个条件，或者满足其一即可，用 <code>and</code>（并且）、<code>or</code>（或者）、<code>not</code>（取反）连接：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [20] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">gap</span> <span class="o">&lt;</span> <span class="mf">2.0</span> <span class="ow">and</span> <span class="n">mobility</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span>   <span class="c1"># 两个条件都满足才为 True</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">gap</span> <span class="o">&gt;</span> <span class="mf">3.0</span> <span class="ow">or</span> <span class="n">mobility</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span>    <span class="c1"># 只要有一个满足就为 True</span>
+<span class="nb">print</span><span class="p">(</span><span class="ow">not</span> <span class="n">is_p_type</span><span class="p">)</span>                  <span class="c1"># 把 True 变成 False</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="5-2-if-elif-else-分支结构">5.2 <code>if / elif / else</code> 分支结构</h3>
+<p>有了判断条件，就可以用 <code>if</code> 让程序根据不同情况执行不同的代码。语法上有两条硬性规定：</p>
+<ol>
+<li>每个条件行的末尾必须写<strong>冒号 <code>:</code></strong>。</li>
+<li>隶属于这个条件的代码块必须往右<strong>缩进 4 个空格</strong>（按一下键盘上的 <code>Tab</code> 键）。Python 没有 C 语言或 Java 里的花括号 <code>{}</code>，全靠缩进对齐来识别哪些代码归哪个分支管。</li>
+</ol>
+<p>试着改一改下面第一行 <code>gap</code> 的数值，看看打印结果会走进哪个分支：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [21] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">gap</span> <span class="o">=</span> <span class="mf">1.8</span>    <span class="c1"># 试试改成 0.8、2.5 或 3.5 再运行</span>
+
+<span class="k">if</span> <span class="n">gap</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;窄带隙材料：吸收延伸至近红外区&quot;</span><span class="p">)</span>
+<span class="k">elif</span> <span class="n">gap</span> <span class="o">&lt;</span> <span class="mf">3.0</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;中等带隙材料：主要吸收可见光&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;宽带隙材料：可见光区透明，仅吸收紫外光&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="6-循环与列表推导式">6. 循环与列表推导式</h2>
+<h3 id="6-1-for-循环-把容器里的元素挨个处理一遍">6.1 <code>for</code> 循环：把容器里的元素挨个处理一遍</h3>
+<p>在练习 01a-1 里，我们手动取出了 <code>molecules[1]</code> 来算能隙。如果列表里有成百上千个分子，总不能手写一千行代码。<code>for</code> 循环会依次把列表里的每一个元素取出来，交给循环体里的代码去处理：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [22] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">molecules</span><span class="p">:</span>
+    <span class="n">gap</span> <span class="o">=</span> <span class="n">mol</span><span class="p">[</span><span class="s2">&quot;lumo&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">mol</span><span class="p">[</span><span class="s2">&quot;homo&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mol</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">10s</span><span class="si">}</span><span class="s2">  gap = </span><span class="si">{</span><span class="n">gap</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> eV&quot;</span><span class="p">)</span>   <span class="c1"># :10s 表示字符串占 10 个字符宽度，方便对齐</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>写 <code>for</code> 循环时，有三个内置小工具经常配合出场：</p>
+<ul>
+<li><code>range(n)</code>：生成从 <code>0</code> 到 <code>n-1</code> 的整数序列，适合“把某件事重复做 <span class="math-inline" data-tex="n">\(n\)</span> 次”。</li>
+<li><code>enumerate(列表)</code>：遍历列表时，同时把<strong>元素下标</strong>和<strong>元素本身</strong>一起拿出来。</li>
+<li><code>zip(列表1, 列表2)</code>：像拉链一样，把两个等长的列表一对一配对遍历。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [23] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">n_rings_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--- 使用 enumerate 同时获取序号和名称 ---&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">acenes</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;第 </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> 号: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- 使用 zip 配对遍历两个列表 ---&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">acenes</span><span class="p">,</span> <span class="n">n_rings_list</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> 含有 </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> 个苯环&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="6-2-列表推导式-list-comprehension">6.2 列表推导式（List Comprehension）</h3>
+<p>数据处理中最常见的套路是：“遍历一个列表，把每个元素算一下，放进一个新列表里”。用普通的 <code>for</code> 循环写出来需要四行，而 Python 提供了一种浓缩成一行的优雅写法，叫做<strong>列表推导式</strong>：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [24] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 传统写法：先建空列表，再循环 append</span>
+<span class="n">gaps</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">molecules</span><span class="p">:</span>
+    <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">mol</span><span class="p">[</span><span class="s2">&quot;lumo&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">mol</span><span class="p">[</span><span class="s2">&quot;homo&quot;</span><span class="p">],</span> <span class="mi">2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;传统循环结果:&quot;</span><span class="p">,</span> <span class="n">gaps</span><span class="p">)</span>
+
+<span class="c1"># 列表推导式：一行搞定，逻辑完全等价</span>
+<span class="n">gaps</span> <span class="o">=</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="n">mol</span><span class="p">[</span><span class="s2">&quot;lumo&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">mol</span><span class="p">[</span><span class="s2">&quot;homo&quot;</span><span class="p">],</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">molecules</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;列表推导式结果:&quot;</span><span class="p">,</span> <span class="n">gaps</span><span class="p">)</span>
+
+<span class="c1"># 还可以在末尾加 if 条件顺手做筛选：只挑出能隙小于 2.2 eV 的分子名称</span>
+<span class="n">low_gap_mols</span> <span class="o">=</span> <span class="p">[</span><span class="n">mol</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">molecules</span> <span class="k">if</span> <span class="p">(</span><span class="n">mol</span><span class="p">[</span><span class="s2">&quot;lumo&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">mol</span><span class="p">[</span><span class="s2">&quot;homo&quot;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mf">2.2</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;窄带隙分子:&quot;</span><span class="p">,</span> <span class="n">low_gap_mols</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="6-3-while-循环-按条件重复直到达标">6.3 <code>while</code> 循环：按条件重复直到达标</h3>
+<p><code>for</code> 循环适合事先知道要遍历哪些元素的情况；而有时候我们不知道要循环多少步，只知道“只要还没达到目标条件，就继续往下算”（比如量子化学里的结构弛豫、神经网络的迭代训练）。这时候就用 <code>while</code> 循环。</p>
+<p>下面用一个简单的例子示意：从苯环（<code>n = 1</code>）开始逐个并环，假设每增加一个环能隙大约降低 0.75 eV，看看要并到几个环能隙才会降到 2.0 eV 以下：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [25] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">gap</span> <span class="o">=</span> <span class="mf">4.8</span>   <span class="c1"># 单苯环的示意能隙 (eV)</span>
+
+<span class="k">while</span> <span class="n">gap</span> <span class="o">&gt;=</span> <span class="mf">2.0</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> 个环时，gap ≈ </span><span class="si">{</span><span class="n">gap</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> eV（仍 &gt;= 2.0 eV，继续并环）&quot;</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">gap</span> <span class="o">-=</span> <span class="mf">0.75</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;--&gt; 到 </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> 个环时，gap 降到了 </span><span class="si">{</span><span class="n">gap</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> eV，循环结束。&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><blockquote>
+<p>写 <code>while</code> 循环时一定要确保循环体里有更新变量的语句（如上面的 <code>gap -= 0.75</code>）。如果条件永远为 <code>True</code>，程序就会陷入停不下来的“死循环”——万一遇到了，点击工具栏上的 <strong>■（停止 / Interrupt）</strong> 按钮即可强行终止。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-01a-2">🏋️ 练习 01a-2</h3>
+<p><code>measured</code> 列表里记录了 8 个 OFET 器件测得的迁移率（单位 cm²/(V·s)）。</p>
+<ol>
+<li>请用 <code>for</code> 循环配合 <code>if</code> 判断，数一数其中<strong>严格大于 1.0</strong> 的器件有几个。</li>
+<li>算出来之后，再试试能不能用列表推导式一行写出来。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [26] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">measured</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">5.1</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">11.0</span><span class="p">]</span>
+
+<span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="7-函数-def">7. 函数（<code>def</code>）</h2>
+<p>回顾一下从第 2 节到现在，算能隙 <code>lumo - homo</code> 和换算波长 <code>1240 / gap</code> 的公式我们已经重复写了好几遍。如果某天你想把常数 <code>1240</code> 改成更精确的 <code>1239.84</code>，难道要翻遍整个脚本去逐个修改吗？</p>
+<p>更好的办法是把这段计算逻辑打包成一个<strong>函数（Function）</strong>：用 <code>def</code> 给它起个名字、指定需要输入的<strong>参数</strong>，最后用 <code>return</code> 把算好的结果交出来。以后不管在哪里用，直接喊它的名字就行：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [27] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">gap_to_wavelength</span><span class="p">(</span><span class="n">gap_ev</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;将能隙 (eV) 换算为光吸收边波长 (nm)。&quot;&quot;&quot;</span>
+    <span class="n">wavelength_nm</span> <span class="o">=</span> <span class="mf">1239.84</span> <span class="o">/</span> <span class="n">gap_ev</span>
+    <span class="k">return</span> <span class="n">wavelength_nm</span>
+
+<span class="c1"># 定义好之后，可以拿不同的数值反复调用：</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">gap_to_wavelength</span><span class="p">(</span><span class="mf">1.8</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">gap_to_wavelength</span><span class="p">(</span><span class="mf">3.0</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>函数下面第一行用三引号 <code>&quot;&quot;&quot;...&quot;&quot;&quot;</code> 写的文字叫做文档字符串（docstring），用来简要说明这个函数的用途和参数单位。</p>
+<p>函数可以接收多个参数，还可以给参数设定<strong>默认值</strong>（调用时不传该参数，就自动使用默认值）：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [28] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">summarize_molecule</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">homo</span><span class="p">,</span> <span class="n">lumo</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;eV&quot;</span><span class="p">):</span>
+    <span class="n">gap</span> <span class="o">=</span> <span class="n">lumo</span> <span class="o">-</span> <span class="n">homo</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: HOMO = </span><span class="si">{</span><span class="n">homo</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">, LUMO = </span><span class="si">{</span><span class="n">lumo</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">, gap = </span><span class="si">{</span><span class="n">gap</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="c1"># 按位置顺序传入参数（unit 不传，默认就是 &quot;eV&quot;）</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">summarize_molecule</span><span class="p">(</span><span class="s2">&quot;pentacene&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.2</span><span class="p">))</span>
+
+<span class="c1"># 也可以明确写出“参数名=值”，这样顺序打乱也没关系</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">summarize_molecule</span><span class="p">(</span><span class="n">homo</span><span class="o">=-</span><span class="mf">6.1</span><span class="p">,</span> <span class="n">lumo</span><span class="o">=-</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;C60&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-01a-3">🏋️ 练习 01a-3</h3>
+<p>把第 5.2 节的带隙分类逻辑封装成一个函数 <code>classify_gap(gap)</code>：</p>
+<ul>
+<li>当 <code>gap &lt; 1.0</code> 时，返回字符串 <code>&quot;narrow&quot;</code></li>
+<li>当 <code>1.0 &lt;= gap &lt; 3.0</code> 时，返回字符串 <code>&quot;medium&quot;</code></li>
+<li>其他情况返回 <code>&quot;wide&quot;</code></li>
+</ul>
+<p>写好后：</p>
+<ol>
+<li>用 <code>for</code> 循环遍历 <code>molecules</code>，打印出每个分子的名字和它的带隙类别。</li>
+<li>分别调用 <code>classify_gap(0.5)</code>、<code>classify_gap(1.0)</code>、<code>classify_gap(3.4)</code>，检查边界值 <code>1.0</code> 是否落在了正确的类别里。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [29] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里写你的代码</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="8-导入科学计算库-import-与-numpy">8. 导入科学计算库（<code>import</code> 与 <code>numpy</code>）</h2>
+<p>Python 之所以能成为科学计算和人工智能领域的通用语言，是因为全世界的研究者和开发者把各自领域的工具都写成了现成的<strong>代码库（Package / Library）</strong>。要用这些工具，只需要在代码开头用 <code>import</code> 导入。</p>
+<p>这门课接下来会陆续用到的核心库包括：</p>
+<ul>
+<li><strong><code>numpy</code></strong>：数组与矩阵运算（所有科学计算的底座）</li>
+<li><strong><code>pandas</code></strong>：表格数据读写与筛选（<code>01b</code> 讲）</li>
+<li><strong><code>matplotlib</code> / <code>seaborn</code></strong>：科研绘图与数据可视化（<code>01c</code> 讲）</li>
+<li><strong><code>rdkit</code> / <code>pymatgen</code></strong>：分子与晶体结构处理（<code>01d</code>、第 6 章讲）</li>
+<li><strong><code>scikit-learn</code> / <code>torch</code></strong>：经典机器学习与深度学习（第 2 章、第 7 章起讲）</li>
+</ul>
+<p>我们先来看看 Python 自带的 <code>math</code> 库是怎么导入的：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [30] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;根号 2:&quot;</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;圆周率:&quot;</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+<span class="c1"># 如果只想要库里的某一个函数，可以用 from ... import ...</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">log10</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;log10(0.001) =&quot;</span><span class="p">,</span> <span class="n">log10</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">))</span>   <span class="c1"># 1e-3 是科学计数法 1 × 10^-3</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="用-numpy-告别繁琐的循环">用 <code>numpy</code> 告别繁琐的循环</h3>
+<p>在前面的例子里，如果我们有两个列表 <code>homos = [-5.0, -5.4, -6.1]</code> 和 <code>lumos = [-3.2, -3.1, -4.0]</code>，想把它们对应相减算出能隙，直接写 <code>lumos - homos</code> 是会报错的——因为普通列表不支持按元素相减，必须写 <code>for</code> 循环或列表推导式。</p>
+<p>而 <strong><code>numpy</code></strong>（大家约定俗成简写为 <code>np</code>）提供了专门的<strong>数组（<code>ndarray</code>）</strong>。一旦把列表转换成 NumPy 数组，加减乘除就会自动对数组里的每一个元素同时进行（叫做<strong>向量化运算</strong>），不仅代码简短，底层用 C 语言执行的速度也比 Python 循环快成百上千倍：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [31] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">homos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.4</span><span class="p">,</span> <span class="o">-</span><span class="mf">6.1</span><span class="p">])</span>
+<span class="n">lumos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">3.2</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.1</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.0</span><span class="p">])</span>
+
+<span class="n">gaps</span> <span class="o">=</span> <span class="n">lumos</span> <span class="o">-</span> <span class="n">homos</span>                 <span class="c1"># 不用写循环，直接对应位置相减！</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;三个分子的能隙:&quot;</span><span class="p">,</span> <span class="n">gaps</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;对应的吸收波长:&quot;</span><span class="p">,</span> <span class="mi">1240</span> <span class="o">/</span> <span class="n">gaps</span><span class="p">)</span>  <span class="c1"># 每个元素同时被 1240 除</span>
+
+<span class="c1"># 数组自带常用的统计方法，以及不带括号的属性：</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;均值:&quot;</span><span class="p">,</span> <span class="n">gaps</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="s2">&quot;标准差:&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">gaps</span><span class="o">.</span><span class="n">std</span><span class="p">(),</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;数组形状 (shape):&quot;</span><span class="p">,</span> <span class="n">gaps</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="c1"># 还可以直接把条件塞进方括号里做筛选（布尔索引）：</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;小于 2.2 eV 的能隙:&quot;</span><span class="p">,</span> <span class="n">gaps</span><span class="p">[</span><span class="n">gaps</span> <span class="o">&lt;</span> <span class="mf">2.2</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><blockquote>
+<p><strong>顺便理清一个常见困惑：为什么有的后面带括号 <code>()</code>，有的不带？</strong>
+在读上面的代码时，你会看到三种写法：</p>
+<ol>
+<li><code>len(gaps)</code>、<code>round(x, 2)</code>：独立的<strong>函数</strong>，把数据塞进括号里处理。</li>
+<li><code>gaps.mean()</code>、<code>acenes.append(...)</code>：对象自带的<strong>方法（Method）</strong>，本质上也是函数（要执行一个动作或计算），所以末尾必须带括号 <code>()</code>。</li>
+<li><code>gaps.shape</code>、<code>math.pi</code>：对象自带的<strong>属性（Attribute）</strong>，它只是一个现成存好的数值或尺寸信息，不需要执行计算动作，所以<strong>不带括号</strong>。下一节用 Pandas 时你会经常看到 <code>df.shape</code>（看表格几行几列，不带括号）和 <code>df.head()</code>（取前几行，带括号）。</li>
+</ol>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="9-读懂报错信息">9. 读懂报错信息</h2>
+<p>刚开始写代码，屏幕弹出一大片红色的报错（Traceback）是家常便饭。报错不可怕，它是 Python 在帮你定位问题。</p>
+<p>看报错的诀窍只有一条：<strong>先直接滑到最底下看最后一行</strong>。最后一行永远写着 <strong><code>错误类型: 具体原因</code></strong>，往上看箭头 <code>---&gt;</code> 指着的那一行就是出错的位置。</p>
+<p>下面三个代码格是<strong>故意写错的</strong>，请依次运行它们，观察最后一行的提示：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [32] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">hom</span><span class="p">)</span>     <span class="c1"># 故意把 homo 少打了一个字母</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong><code>NameError: name 'hom' is not defined</code></strong>：找不到叫 <code>hom</code> 的变量。十有八九是<strong>变量名拼写错了</strong>（或者大小写没对上），还有一种可能是<strong>上面定义这个变量的那一格代码你还没运行过</strong>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [33] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;能隙是 &quot;</span> <span class="o">+</span> <span class="mf">1.8</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong><code>TypeError: can only concatenate str (not &quot;float&quot;) to str</code></strong>：数据类型不匹配。Python 不允许把字符串和数字直接用 <code>+</code> 拼在一起。遇到这种情况，直接改用 f-string <code>f&quot;能隙是 {1.8}&quot;</code> 就好。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [34] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">acenes</span><span class="p">[</span><span class="mi">10</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong><code>IndexError: list index out of range</code></strong>：下标越界了。<code>acenes</code> 列表里一共只有 5 个分子（合法下标是 <code>0</code> 到 <code>4</code>），伸手去拿第 10 号元素自然就扑空了。</p>
+<p>平时还会碰到的几个熟面孔：</p>
+<ul>
+<li><code>KeyError</code>：去字典里取了一个不存在的键（或者在 Pandas 里写错了列名）。</li>
+<li><code>SyntaxError</code>：语法写错了，最常见的是括号没配对、字符串引号没闭合、或者 <code>if</code> / <code>for</code> / <code>def</code> 末尾漏了冒号 <code>:</code>。</li>
+<li><code>IndentationError</code>：缩进没对齐。</li>
+<li><code>ModuleNotFoundError</code>：试图 <code>import</code> 一个当前环境还没安装的第三方库（可以在终端运行 <code>pip install 库名</code>，或在 Notebook 格子里运行 <code>!pip install 库名</code> 安装）。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="小结">小结</h2>
+<p>到这里，我们已经把 Python 最核心的语法构件都串了一遍：</p>
+<ul>
+<li>用<strong>变量</strong>存单个数值和文本（<code>int</code>, <code>float</code>, <code>str</code>, <code>bool</code>），用 <strong>f-string</strong> 把结果清晰地打印出来；</li>
+<li>用<strong>列表</strong>（<code>list</code>）存一串有序数据，用<strong>字典</strong>（<code>dict</code>）存键值对，二者结合就能表示一张小型数据表；</li>
+<li>用 <strong><code>if</code></strong> 做条件筛选，用 <strong><code>for</code> / 列表推导式</strong> 批量处理数据，再用 <strong><code>def</code> 函数</strong>把重复用到的计算逻辑封装起来；</li>
+<li>最后通过 <strong><code>import numpy as np</code></strong> 体验了向量化数组运算。</li>
+</ul>
+<p><strong>下一节（<code>01b_pandas.ipynb</code>）</strong>：我们将离开手动拼凑的三五个分子，用 <code>pandas</code> 读入一个包含近万个真实化合物的水溶解度数据库（AqSolDB），看看怎样用几行代码完成真实科研数据的清洗、筛选与分组统计。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/01-basics/01a_python_crash_course.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/01-basics.html">返回模块 01</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../modules/01-basics.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">模块 01 · Python 与化学/材料数据基础</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/01-basics/01b_pandas.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">01b · 文件读写与 Pandas 表格处理</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l3"><a href="#本节内容">本节内容</a></li>      <li class="toc-l2"><a href="#1-熟悉-jupyter-notebook">1. 熟悉 Jupyter Notebook</a></li>      <li class="toc-l2"><a href="#2-变量-数据类型与算术运算">2. 变量、数据类型与算术运算</a></li>      <li class="toc-l3"><a href="#2-1-用变量保存数据">2.1 用变量保存数据</a></li>      <li class="toc-l3"><a href="#2-2-算术运算">2.2 算术运算</a></li>      <li class="toc-l2"><a href="#3-字符串与格式化输出">3. 字符串与格式化输出</a></li>      <li class="toc-l3"><a href="#3-1-用-f-string-拼接文字与数值">3.1 用 f-string 拼接文字与数值</a></li>      <li class="toc-l3"><a href="#3-2-字符串的下标-切片与常用操作">3.2 字符串的下标、切片与常用操作</a></li>      <li class="toc-l2"><a href="#4-容器-列表-元组与字典">4. 容器：列表、元组与字典</a></li>      <li class="toc-l3"><a href="#4-1-列表-list-按顺序排列的一组数据">4.1 列表（list）：按顺序排列的一组数据</a></li>      <li class="toc-l3"><a href="#4-2-元组-tuple-不可修改的固定组合">4.2 元组（tuple）：不可修改的固定组合</a></li>      <li class="toc-l3"><a href="#4-3-字典-dict-按-名称-查找的键值对">4.3 字典（dict）：按“名称”查找的键值对</a></li>      <li class="toc-l3"><a href="#练习-01a-1">🏋️ 练习 01a-1</a></li>      <li class="toc-l2"><a href="#5-条件判断-if">5. 条件判断（if）</a></li>      <li class="toc-l3"><a href="#5-1-比较与逻辑运算">5.1 比较与逻辑运算</a></li>      <li class="toc-l3"><a href="#5-2-if-elif-else-分支结构">5.2 if / elif / else 分支结构</a></li>      <li class="toc-l2"><a href="#6-循环与列表推导式">6. 循环与列表推导式</a></li>      <li class="toc-l3"><a href="#6-1-for-循环-把容器里的元素挨个处理一遍">6.1 for 循环：把容器里的元素挨个处理一遍</a></li>      <li class="toc-l3"><a href="#6-2-列表推导式-list-comprehension">6.2 列表推导式（List Comprehension）</a></li>      <li class="toc-l3"><a href="#6-3-while-循环-按条件重复直到达标">6.3 while 循环：按条件重复直到达标</a></li>      <li class="toc-l3"><a href="#练习-01a-2">🏋️ 练习 01a-2</a></li>      <li class="toc-l2"><a href="#7-函数-def">7. 函数（def）</a></li>      <li class="toc-l3"><a href="#练习-01a-3">🏋️ 练习 01a-3</a></li>      <li class="toc-l2"><a href="#8-导入科学计算库-import-与-numpy">8. 导入科学计算库（import 与 numpy）</a></li>      <li class="toc-l3"><a href="#用-numpy-告别繁琐的循环">用 numpy 告别繁琐的循环</a></li>      <li class="toc-l2"><a href="#9-读懂报错信息">9. 读懂报错信息</a></li>      <li class="toc-l2"><a href="#小结">小结</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

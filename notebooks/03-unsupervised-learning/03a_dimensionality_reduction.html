@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 03a — 降维：把高维化学空间画在二维平面上（Dimensionality Reduction） 在第二讲（02 Supervised Learning）中，每个分子都带有明确的实验测量标签 ，模型学习的任务是从分子特征 映射到性质 。 但在真实的材料与化学研发中，我们经常先面对一个 没" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="03a — 降维：把高维化学空间画在二维平面上（Dimensionality Reduction） | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 03a — 降维：把高维化学空间画在二维平面上（Dimensionality Reduction） 在第二讲（02 Supervised Learning）中，每个分子都带有明确的实验测量标签 ，模型学习的任务是从分子特征 映射到性质 。 但在真实的材料与化学研发中，我们经常先面对一个 没" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>03a — 降维：把高维化学空间画在二维平面上（Dimensionality Reduction） | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+class="active">📓 03a_dimensionality_reduction.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03b_clustering.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03b_clustering.html"
+>📓 03b_clustering.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03c_pd_dimer_discovery.html"
+>📓 03c_pd_dimer_discovery.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/03-unsupervised-learning/03d_exercises.html"
+           data-progress-mark="notebooks/03-unsupervised-learning/03d_exercises.html"
+>🏋️ 03d_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/03-unsupervised-learning.html">模块 03：无监督学习：化学空间与发现</a> /  <span>03a_dimensionality_reduction.ipynb</span>
+</div>
+<h1>03a — 降维：把高维化学空间画在二维平面上（Dimensionality Reduction）</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>03a_dimensionality_reduction.ipynb</code>（36.8 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03a_dimensionality_reduction.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/fd33d300e3cc-03a_dimensionality_reduction.ipynb" download="03a_dimensionality_reduction.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/03-unsupervised-learning/03_unsupervised_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03a_dimensionality_reduction.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>03a — 降维：把高维化学空间画在二维平面上（Dimensionality Reduction）</h1>
+<p>在第二讲（<code>02 - Supervised Learning</code>）中，每个分子都带有明确的实验测量标签 <span class="math-inline" data-tex="\log S">\(\log S\)</span>，模型学习的任务是从分子特征 <span class="math-inline" data-tex="X">\(X\)</span> 映射到性质 <span class="math-inline" data-tex="y">\(y\)</span>。</p>
+<p>但在真实的材料与化学研发中，我们经常先面对一个<strong>没有实验标签</strong>（或者只有极少数散落标签）的庞大候选分子库。此时我们首先要回答的是另一类问题：</p>
+<table>
+<thead>
+<tr>
+<th>典型科研问题</th>
+<th>对应的无监督学习方法</th>
+<th>本讲模块</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>这上万个分子在“化学空间”里是怎么分布的？有没有明显的家族聚集、数据偏倚或异常离群点？</td>
+<td><strong>降维与可视化（Dimensionality Reduction）</strong></td>
+<td><code>03a</code></td>
+</tr>
+<tr>
+<td>能不能不靠人工规则，让算法自动把结构相似的分子归成若干个家族？</td>
+<td><strong>聚类（Clustering）</strong></td>
+<td><code>03b</code></td>
+</tr>
+<tr>
+<td>手头只有 4 个已知有效的催化剂配体，无法训练监督模型，怎样从 300 多个候选配体里筛出下一批最值得合成的名单？</td>
+<td><strong>共识聚类与化学空间近邻筛选</strong></td>
+<td><code>03c</code></td>
+</tr>
+</tbody>
+</table>
+<p>这类不依赖标签 <span class="math-inline" data-tex="y">\(y\)</span>、直接从特征矩阵 <span class="math-inline" data-tex="X">\(X\)</span> 中挖掘数据内在几何结构与分布规律的方法，统称为<strong>无监督学习（Unsupervised Learning）</strong>。</p>
+<p>本节（<code>03a</code>）聚焦于<strong>降维（Dimensionality Reduction）</strong>：当每个分子由 17 个物理化学描述符（17 维空间）或 2048 位 Morgan 指纹（2048 维空间）表示时，人类无法直接观察超过三维的空间。降维算法的目标，就是在二维平面上找到一个“信息损失最小”的投影，让我们能直观地看到整片化学空间的地形图。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;03 - Unsupervised Learning&quot;</span><span class="p">))</span>
+    <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">run_line_magic</span><span class="p">(</span><span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install -q rdkit&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="0-环境准备与-aqsoldb-数据集介绍">0. 环境准备与 AqSolDB 数据集介绍</h2>
+<p>前两讲使用的 ESOL 数据集包含 1,128 个有机小分子。为了展示无监督学习在更大、更复杂分子库上的威力，本讲切换到 <strong>AqSolDB</strong>（Aqueous Solubility Database，Sorkun et al., <em>Sci. Data</em> 2019）：它整合了近万个化合物（包括有机小分子、药物、盐类、表面活性剂及工业化学品）的水溶解度数据，并预先计算好了 17 个 RDKit 分子描述符。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Descriptors</span><span class="p">,</span> <span class="n">Draw</span><span class="p">,</span> <span class="n">rdFingerprintGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.decomposition</span><span class="w"> </span><span class="kn">import</span> <span class="n">PCA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.neighbors</span><span class="w"> </span><span class="kn">import</span> <span class="n">NearestNeighbors</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.manifold</span><span class="w"> </span><span class="kn">import</span> <span class="n">TSNE</span>
+
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 本地运行默认读取 data/solubility.csv；在 Colab 上若找不到文件会提示上传</span>
+<span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;data/solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="n">DATA_FILE</span> <span class="o">=</span> <span class="s2">&quot;solubility.csv&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">google.colab</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;请上传 solubility.csv&quot;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;找不到 solubility.csv，请确保它位于当前目录或 data/ 文件夹下&quot;</span><span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">DATA_FILE</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;SMILES&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">feature_cols</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;MolMR&quot;</span><span class="p">,</span> <span class="s2">&quot;HeavyAtomCount&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHAcceptors&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHDonors&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumHeteroatoms&quot;</span><span class="p">,</span> <span class="s2">&quot;NumRotatableBonds&quot;</span><span class="p">,</span> <span class="s2">&quot;NumValenceElectrons&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumSaturatedRings&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAliphaticRings&quot;</span><span class="p">,</span> <span class="s2">&quot;RingCount&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">,</span> <span class="s2">&quot;LabuteASA&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BalabanJ&quot;</span><span class="p">,</span> <span class="s2">&quot;BertzCT&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;成功解析分子数: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> | 预置物理化学描述符数: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">feature_cols</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-降维的两种核心哲学-保留全局方差-vs-保留局部近邻">1. 降维的两种核心哲学：保留全局方差 vs 保留局部近邻</h2>
+<p>把高维空间（如 17 维或 2048 维）拍扁到二维平面，必然会丢失一部分几何信息。不同的降维算法对于“优先保留什么信息”有着截然不同的数学目标：</p>
+<ol>
+<li><strong>主成分分析（PCA, Principal Component Analysis）</strong>：<strong>线性投影</strong>，致力于保留全局**方差（Variance）**最大的方向——即原本在空间里散得最开的维度，投影到平面后依然散得最开；</li>
+<li><strong>t-SNE / UMAP</strong>：<strong>非线性流形降维</strong>，不追求保持远距离样本之间的全局比例，而是致力于保留<strong>局部近邻关系（Neighborhood）</strong>——即高维空间里彼此靠近的“邻居”分子，在二维图上也要聚成一团。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-主成分分析-pca-的几何直觉-从两个共线描述符说起">2. 主成分分析（PCA）的几何直觉：从两个共线描述符说起</h2>
+<p>为了看清 PCA 在做什么，我们先只取两个大家最熟悉的描述符：重原子数 <code>HeavyAtomCount</code> 和分子量 <code>MolWt</code>。</p>
+<p>在第一讲 <code>01c</code> 和第二讲 <code>02c</code> 中我们已经注意到，这两个特征高度正相关（重原子越多，分子量自然越大）。如果把它们先做 <code>StandardScaler</code> 标准化（消除量纲差异，使均值为 0、标准差为 1），再画在二维散点图上，数据点会沿着对角线方向拉成一条狭长的椭圆带：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">two</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">df</span><span class="p">[[</span><span class="s2">&quot;HeavyAtomCount&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">]])</span>
+<span class="n">pca2</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">two</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">5.2</span><span class="p">,</span> <span class="mf">5.2</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">two</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">two</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">length</span><span class="p">,</span> <span class="n">vector</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">pca2</span><span class="o">.</span><span class="n">explained_variance_</span><span class="p">,</span> <span class="n">pca2</span><span class="o">.</span><span class="n">components_</span><span class="p">):</span>
+    <span class="n">arrow</span> <span class="o">=</span> <span class="n">vector</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>   <span class="c1"># 箭头长度正比于该主成分方向上的标准差</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="n">arrow</span><span class="p">,</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s2">&quot;-&gt;&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;HeavyAtomCount (standardized)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;MolWt (standardized)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Two correlated descriptors and their principal axes&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;两个主成分各自解释的方差比例:&quot;</span><span class="p">,</span> <span class="n">pca2</span><span class="o">.</span><span class="n">explained_variance_ratio_</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>PCA 所做的事情，就是把原来的坐标轴旋转到一个新的正交坐标系（图中的两个红色箭头）：</p>
+<ul>
+<li><strong>第一主成分（PC1）</strong>：沿着数据点最“散开”（方差最大）的对角线方向，单独一个方向就解释了 <strong>96.5%</strong> 的方差，它的物理意义就是**“分子的整体尺寸”**；</li>
+<li><strong>第二主成分（PC2）</strong>：与 PC1 严格垂直，只占 <strong>3.5%</strong> 的方差，反映的是**“在重原子数相同的情况下，分子量偏大还是偏小”**（例如含有 Br、I 等重卤素原子的分子会偏离对角线）。</li>
+</ul>
+<p>如果我们只保留 <code>PC1</code> 而丢弃 <code>PC2</code>，就把二维数据压缩成了一维，同时保留了 96.5% 的原始方差信息。<strong>这就是 PCA 降维的本质：通过正交旋转消除特征间的线性冗余，只保留方差最大的前几个主轴。</strong></p>
+<blockquote>
+<p><strong>为什么 PCA 前必须做标准化？</strong>
+PCA 寻找的是数值方差最大的方向。如果不做 <code>StandardScaler</code>，<code>MolWt</code> 的数值范围是几百（方差上万），而 <code>NumHDonors</code> 的数值只有 <code>0 ~ 5</code>（方差约为 1），PCA 算出的 PC1 就会几乎 100% 等于 <code>MolWt</code>。因此，对不同量纲的物理化学描述符做 PCA 前，必须先标准化。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-对-17-个物理化学描述符做-pca-方差-载荷与化学意义">3. 对 17 个物理化学描述符做 PCA：方差、载荷与化学意义</h2>
+<h3 id="3-1-解释方差比-explained-variance-ratio-17-个描述符里有多少独立信息">3.1 解释方差比（Explained Variance Ratio）：17 个描述符里有多少独立信息？</h3>
+<p>现在我们把全部 17 个标准化后的描述符输入 <code>PCA()</code>，看看每个主成分各自承担了多少方差，以及需要几个主成分就能累计保留 90% 的信息：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">scaler</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">])</span>
+<span class="n">X_scaled</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">])</span>
+
+<span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)</span>   <span class="c1"># 不指定 n_components 时保留全部 17 个主成分</span>
+<span class="n">ratio</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">explained_variance_ratio_</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.2</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">18</span><span class="p">),</span> <span class="n">ratio</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;each PC&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">18</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">ratio</span><span class="p">),</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;cumulative&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;90% threshold&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Principal Component&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Explained Variance Ratio&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;PCA on 17 RDKit Descriptors&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;前 5 个主成分各自的解释方差比:&quot;</span><span class="p">,</span> <span class="n">ratio</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;前 2 个主成分累计解释方差比 :&quot;</span><span class="p">,</span> <span class="n">ratio</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;前 5 个主成分累计解释方差比 :&quot;</span><span class="p">,</span> <span class="n">ratio</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>结果非常清晰：</p>
+<ul>
+<li><strong>PC1 单独就占了 54.0% 的方差</strong>，前两个主成分（PC1 + PC2）合计占 <strong>68.4%</strong>，<strong>前 5 个主成分累计就超过了 90%</strong>！</li>
+<li>这从定量角度印证了我们在第二讲看到的共线性现象：表面上看我们算了 17 个不同的描述符，但其中 <code>MolWt</code>、<code>HeavyAtomCount</code>、<code>MolMR</code>（摩尔折射率）、<code>LabuteASA</code>（近似表面积）、<code>NumValenceElectrons</code>（价电子数）高度同源，本质上都在重复描述“分子体积/大小”。</li>
+</ul>
+<h3 id="3-2-主成分载荷-loadings-每个主成分代表什么物理化学属性">3.2 主成分载荷（Loadings）：每个主成分代表什么物理化学属性？</h3>
+<p>每个主成分都是原始 17 个标准化描述符的线性组合：
+<div class="math-block" data-tex="\text{PC}_k = w_{k,1} \tilde{x}_1 + w_{k,2} \tilde{x}_2 + \dots + w_{k,17} \tilde{x}_{17}">\[\text{PC}_k = w_{k,1} \tilde{x}_1 + w_{k,2} \tilde{x}_2 + \dots + w_{k,17} \tilde{x}_{17}\]</div>
+组合系数 <span class="math-inline" data-tex="w_{k,j}">\(w_{k,j}\)</span> 存储在 <code>pca.components_</code> 中，称为<strong>载荷（Loadings）</strong>。画出前三个主成分的载荷条形图，就能直接读出它们的物理化学含义：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">loadings</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">pca</span><span class="o">.</span><span class="n">components_</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">feature_cols</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;PC1&quot;</span><span class="p">,</span> <span class="s2">&quot;PC2&quot;</span><span class="p">,</span> <span class="s2">&quot;PC3&quot;</span><span class="p">])</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">13</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">),</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">pc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">loadings</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">loadings</span><span class="p">[</span><span class="n">pc</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;tab:blue&quot;</span><span class="p">,</span> <span class="s2">&quot;tab:orange&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="n">loadings</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">loadings</span><span class="p">[</span><span class="n">pc</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pc</span><span class="si">}</span><span class="s2"> Loadings (</span><span class="si">{</span><span class="n">ratio</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">pc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2"> var)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>从载荷图上可以清楚地总结出前三个正交主轴的化学身份：</p>
+<ol>
+<li><strong>PC1（54% 方差）—— 分子尺寸（Molecular Size）</strong>：几乎所有与原子数、分子量、电子数、表面积相关的描述符都具有一致的正载荷；</li>
+<li><strong>PC2（14% 方差）—— 疏水/亲油 vs 极性/亲水（Lipophilicity vs Polarity）</strong>：正向载荷最大的是 <code>MolLogP</code> 和 <code>NumRotatableBonds</code>（长疏水链），负向载荷最大的是极性表面积 <code>TPSA</code>、氢键受体/给体数（<code>NumHAcceptors</code>、<code>NumHDonors</code>）与杂原子数（<code>NumHeteroatoms</code>）；</li>
+<li><strong>PC3（9% 方差）—— 脂肪环/饱和环特征（Aliphatic Ring Character）</strong>：正向载荷集中在 <code>NumSaturatedRings</code> 和 <code>NumAliphaticRings</code>（如甾体、环烷烃类骨架）。</li>
+</ol>
+<h3 id="3-3-绘制二维-pca-化学空间地图并叠加溶解度">3.3 绘制二维 PCA 化学空间地图并叠加溶解度</h3>
+<p>既然 <code>PC1</code> 代表分子大小、<code>PC2</code> 代表亲油性 vs 极性，我们把 9,480 个分子投影到 <code>(PC1, PC2)</code> 二维平面上，并用实验水溶解度 <code>Solubility</code>（<span class="math-inline" data-tex="\log S">\(\log S\)</span>）给散点上色，看看会发生什么：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">pcs</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;PC1&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;PC2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pcs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">pcs</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.6</span><span class="p">,</span> <span class="mf">5.2</span><span class="p">))</span>
+<span class="n">sc</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">[</span><span class="s2">&quot;PC1&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;PC2&quot;</span><span class="p">],</span>
+    <span class="n">c</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">10</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">2</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Measured logS&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PC1 (</span><span class="si">{</span><span class="n">ratio</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">): Molecular Size&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PC2 (</span><span class="si">{</span><span class="n">ratio</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">): Lipophilic (+) vs Polar (-)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;AqSolDB in Descriptor PCA Space&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PC1 与 logS 的皮尔逊相关系数:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;PC1&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">])[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PC2 与 logS 的皮尔逊相关系数:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;PC2&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">])[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>可以看到：散点图的颜色渐变主要沿着纵轴 <strong>PC2（亲油 vs 极性）</strong> 方向展开（<span class="math-inline" data-tex="r = -0.49">\(r = -0.49\)</span>），越往上（越亲油）颜色越深（越难溶）；而沿着横轴 <strong>PC1（分子大小）</strong> 的相关性则弱得多（<span class="math-inline" data-tex="r = -0.28">\(r = -0.28\)</span>）。</p>
+<p><strong>这一点非常值得玩味</strong>：PCA 是一个纯粹的无监督算法，它在计算主成分时<strong>完全没有见过 <code>logS</code> 标签</strong>；但它仅凭分子描述符自身的协方差结构提取出的第二主轴（亲油 vs 极性），恰恰对应了 Yalkowsky 溶解度方程中最核心的热力学驱动力！</p>
+<p>当然，解读二维 PCA 图时也要保持谨慎：<code>PC1 + PC2</code> 合计只保留了 68% 的方差，还有 32% 的信息折叠在垂直于纸面的其余 15 个维度里，因此<strong>平面上看起来紧挨着的两个点，在 17 维全空间里不一定真的完全相同</strong>。</p>
+<h3 id="练习-03a-1-检视-pc2-两端的极端分子-兼谈降维用于异常数据排查">🏋️ 练习 03a-1：检视 PC2 两端的极端分子（兼谈降维用于异常数据排查）</h3>
+<p>用 <code>df.nlargest(5, &quot;PC2&quot;)</code> 和 <code>df.nsmallest(5, &quot;PC2&quot;)</code> 找出 <code>PC2</code> 最大（极度亲油）和最小（极度极性）的各 5 个分子，并用 <code>Draw.MolsToGridImage</code> 画出它们的结构式（图例标出 <code>Name</code> 和 <code>Solubility</code>）。观察：</p>
+<ol>
+<li>它们的结构符合“亲油 vs 极性”的化学解释吗？</li>
+<li>在 <code>PC2</code> 最大的一端，你能发现数据集中混入了什么“不太像常规有机小分子”的条目吗？</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-投影新分子与定量适用域检查-有机半导体分子落在哪里">4. 投影新分子与定量适用域检查：有机半导体分子落在哪里？</h2>
+<h3 id="4-1-用已拟合的-scaler-和-pca-投影新分子">4.1 用已拟合的 <code>scaler</code> 和 <code>pca</code> 投影新分子</h3>
+<p>PCA 学到的是一个固定的线性坐标变换矩阵。当我们拿到一批新的候选分子（例如前两讲反复出现的 9 个有机半导体结构单元与分子）时，<strong>绝不能把新分子混进原数据集重新 <code>fit</code></strong>（否则坐标系本身会发生偏移），而是直接调用在 AqSolDB 上拟合好的 <code>scaler.transform()</code> 和 <code>pca.transform()</code>，将它们投射到同一张化学空间底图上：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">candidates</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;thiophene&quot;</span><span class="p">:</span>        <span class="s2">&quot;c1ccsc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;EDOT&quot;</span><span class="p">:</span>             <span class="s2">&quot;C1COc2cscc2O1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;3-hexylthiophene&quot;</span><span class="p">:</span> <span class="s2">&quot;CCCCCCc1ccsc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;carbazole&quot;</span><span class="p">:</span>        <span class="s2">&quot;c1ccc2c(c1)[nH]c1ccccc12&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;triphenylamine&quot;</span><span class="p">:</span>   <span class="s2">&quot;c1ccc(cc1)N(c1ccccc1)c1ccccc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pentacene&quot;</span><span class="p">:</span>        <span class="s2">&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BTBT&quot;</span><span class="p">:</span>             <span class="s2">&quot;c1ccc2c(c1)sc1c3ccccc3sc21&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;C8-BTBT&quot;</span><span class="p">:</span>          <span class="s2">&quot;CCCCCCCCc1ccc2c(c1)sc1c3ccc(CCCCCCCC)cc3sc21&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rubrene&quot;</span><span class="p">:</span>          <span class="s2">&quot;c1ccc(cc1)-c1c2ccccc2c(-c2ccccc2)c2c(-c3ccccc3)c3ccccc3c(-c3ccccc3)c12&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">descriptor_row</span><span class="p">(</span><span class="n">smiles</span><span class="p">):</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">Descriptors</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="n">mol</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">feature_cols</span><span class="p">]</span>
+
+<span class="n">osc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">descriptor_row</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">candidates</span><span class="o">.</span><span class="n">values</span><span class="p">()],</span>
+    <span class="n">columns</span><span class="o">=</span><span class="n">feature_cols</span><span class="p">,</span>
+    <span class="n">index</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">candidates</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">osc_pcs</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">osc</span><span class="p">))</span>   <span class="c1"># 严格复用已有的 scaler 和 pca！</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">7.2</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;PC1&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;PC2&quot;</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightgray&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;AqSolDB&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">osc_pcs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">osc_pcs</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Organic Semiconductors&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">osc_pcs</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">textcoords</span><span class="o">=</span><span class="s2">&quot;offset points&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>   <span class="c1"># 聚焦主分布区（极少数超大分子离群点在此范围外）</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;PC1: Molecular Size&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;PC2: Lipophilic (+) vs Polar (-)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;lower right&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Where do Organic Semiconductors sit in AqSolDB PCA Space?&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="4-2-在-17-维全空间中定量测量最近邻距离-适用域诊断">4.2 在 17 维全空间中定量测量最近邻距离（适用域诊断）</h3>
+<p>前面提到，二维 PCA 图只保留了 68% 的方差，“图上看着在内部或边缘”可能受到维度折叠的误导。最严谨的做法是直接在 <strong>17 维标准化特征空间</strong>里用 <code>NearestNeighbors</code> 计算每个候选分子到 AqSolDB 最近邻分子的欧氏距离，并与 AqSolDB 内部点的最近邻距离分布（中位数与 95% 分位数）做对照：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">nn</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)</span>
+<span class="n">d_inside</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">kneighbors</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)[</span><span class="mi">0</span><span class="p">][:,</span> <span class="mi">1</span><span class="p">]</span>   <span class="c1"># 第 0 近邻是样本自身（距离为 0），取第 1 近邻</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AqSolDB 内部最近邻距离 —— 中位数: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">d_inside</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> | 95% 分位数: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">d_inside</span><span class="p">,</span><span class="w"> </span><span class="mi">95</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">d_osc</span><span class="p">,</span> <span class="n">i_osc</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">kneighbors</span><span class="p">(</span><span class="n">scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">osc</span><span class="p">),</span> <span class="n">n_neighbors</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;17D Distance to Nearest&quot;</span><span class="p">:</span> <span class="n">d_osc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+    <span class="s2">&quot;Nearest AqSolDB Molecule&quot;</span><span class="p">:</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i_osc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]],</span>
+<span class="p">},</span> <span class="n">index</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">candidates</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>这张定量距离表揭示了三个非常有启发性的现象：</p>
+<ol>
+<li><strong>常见砌块在适用域内</strong>：<code>thiophene</code> 和 <code>carbazole</code> 本身就收录在 AqSolDB 中（距离 <code>0.00</code>）；<code>EDOT</code>、<code>3-hexylthiophene</code> 和 <code>triphenylamine</code> 离最近邻的距离都在 <code>0.5</code> 以内，低于数据集内部中位数（<code>0.39</code>），处于数据密集的主体区域。</li>
+<li><strong>为什么并五苯（<code>pentacene</code>）的距离只有 <code>0.18</code>？</strong> 它的最近邻是<strong>二苯并[a,h]蒽（dibenz[a,h]anthracene）</strong>——一个与并五苯分子式完全相同（<span class="math-inline" data-tex="\text{C}_{22}\text{H}_{14}">\(\text{C}_{22}\text{H}_{14}\)</span>，五个稠合苯环）的<strong>同分异构体</strong>！在 17 个全局拓扑/物理化学描述符看来，线性并五苯和弯曲的二苯并蒽几乎一模一样（仅拓扑指数 <code>BalabanJ</code> 有细微差别）。但正如我们在 <code>02b</code> 所见，线性并五苯的晶格堆积更紧密、溶解度比弯曲异构体低得多——这再次暴露了全局 2D 描述符对“同分异构体空间构型差异”的盲区。</li>
+<li><strong>真正的域外大分子</strong>：<code>C8-BTBT</code>（距离 <code>1.85</code>）和红荧烯 <code>rubrene</code>（距离 <code>2.19</code>）的最近邻距离远超 AqSolDB 内部 95% 分位数（<code>1.34</code>），在 PCA 图上也处于右上角极度稀疏的边缘地带。对这类既大又极度疏水的共轭分子直接套用模型预测，外推风险极高。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-对-2048-维-morgan-指纹做-pca-为什么线性降维会失效">5. 对 2048 维 Morgan 指纹做 PCA：为什么线性降维会失效？</h2>
+<p>既然 17 个描述符用 5 个主成分就能概括 90% 的方差，那么如果我们把分子表征换成 2048 位的 <strong>Morgan 二值指纹（Bit Fingerprint）</strong>，再用 PCA 降维会怎样？</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fp_gen</span> <span class="o">=</span> <span class="n">rdFingerprintGenerator</span><span class="o">.</span><span class="n">GetMorganGenerator</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fpSize</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+<span class="n">fps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprintAsNumPy</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;指纹矩阵形状: </span><span class="si">{</span><span class="n">fps</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> | 平均每个分子点亮的比特数: </span><span class="si">{</span><span class="n">fps</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">pca_fp</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">fps</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;前 2 个主成分解释的方差比 :&quot;</span><span class="p">,</span> <span class="n">pca_fp</span><span class="o">.</span><span class="n">explained_variance_ratio_</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;前 50 个主成分累计解释方差:&quot;</span><span class="p">,</span> <span class="n">pca_fp</span><span class="o">.</span><span class="n">explained_variance_ratio_</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>前两个主成分加起来只解释了 <strong>9.3%</strong> 的方差，哪怕保留前 <strong>50 个主成分</strong>，累计解释方差也只有 <strong>45.2%</strong>（不到一半）！</p>
+<p><strong>原因在于指纹的高维稀疏性与非线性独立性</strong>：2048 位里平均每个分子只有约 22 位是 <code>1</code>，每一位对应一个极其具体的局部原子环境（例如“某个带氟的苯环片段”或“某个叔丁基片段”）。这些成百上千种局部子结构之间大多彼此独立，不存在像“分子量—重原子数—表面积”那样一条贯穿全局的线性主轴。面对这种高维稀疏数据，线性 PCA 无法在二维平面上有效展开化学空间。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="6-t-sne-保留-局部邻居-关系的非线性流形降维">6. t-SNE：保留“局部邻居”关系的非线性流形降维</h2>
+<h3 id="6-1-t-sne-的工作原理与标准预处理流水线">6.1 t-SNE 的工作原理与标准预处理流水线</h3>
+<p>既然线性投影行不通，<strong>t-SNE</strong>（t-Distributed Stochastic Neighbor Embedding）换了一种思路：<strong>放弃保持全局距离比例，专心让高维空间里互为近邻的分子在二维平面上也聚在一起。</strong></p>
+<p>它的核心步骤分为三步：</p>
+<ol>
+<li>在高维空间中，根据点对之间的距离计算每个点选择其他点作为“邻居”的条件概率分布（离得越近概率呈高斯衰减越大，有效邻居数由超参数 <code>perplexity</code> 控制，常取 <code>5 ~ 50</code>）；</li>
+<li>在二维平面上用自由度为 1 的重尾 <span class="math-inline" data-tex="t">\(t\)</span> 分布定义低维邻居概率分布（重尾分布能有效缓解高维球壳往二维挤压时的“拥挤问题 Crowding Problem”）；</li>
+<li>通过梯度下降最小化高维与低维概率分布之间的 KL 散度（Kullback-Leibler Divergence），不断移动二维点位置直到邻居关系吻合。</li>
+</ol>
+<blockquote>
+<p><strong>工程加速惯例</strong>：直接对 <span class="math-inline" data-tex="9480 \times 2048">\(9480 \times 2048\)</span> 的稀疏矩阵算两两距离非常耗时且易受哈希碰撞噪声干扰。标准做法是<strong>先用 <code>PCA(n_components=50)</code> 滤除高频噪声并压缩到 50 维，再输入 <code>TSNE</code></strong>（约需 30–60 秒）：</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fp_50</span> <span class="o">=</span> <span class="n">pca_fp</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">fps</span><span class="p">)</span>
+<span class="n">tsne</span> <span class="o">=</span> <span class="n">TSNE</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">perplexity</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="s2">&quot;pca&quot;</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">emb</span> <span class="o">=</span> <span class="n">tsne</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">fp_50</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;tSNE1&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;tSNE2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">emb</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">emb</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>为了看清 t-SNE 把哪些分子聚在了一起，我们先写一个简单的结构分类函数，把分子粗略分为 5 大结构类型（多组分盐/混合物、无环分子、纯脂肪环、含卤芳环、普通芳环），然后把按结构类型着色的 t-SNE 图与按 <code>logS</code> 着色的图并排对比：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">rough_class</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">smiles</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">in</span> <span class="n">smiles</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;salt / mixture&quot;</span>
+    <span class="k">if</span> <span class="n">mol</span><span class="o">.</span><span class="n">GetRingInfo</span><span class="p">()</span><span class="o">.</span><span class="n">NumRings</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;acyclic&quot;</span>
+    <span class="k">if</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">NumAromaticRings</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;aliphatic rings only&quot;</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">GetSymbol</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="s2">&quot;Cl&quot;</span><span class="p">,</span> <span class="s2">&quot;Br&quot;</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">mol</span><span class="o">.</span><span class="n">GetAtoms</span><span class="p">()):</span>
+        <span class="k">return</span> <span class="s2">&quot;aromatic + halogen&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;aromatic&quot;</span>
+
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;class&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">rough_class</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;SMILES&quot;</span><span class="p">])]</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;class&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">13</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">):</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">group</span><span class="p">[</span><span class="s2">&quot;tSNE1&quot;</span><span class="p">],</span> <span class="n">group</span><span class="p">[</span><span class="s2">&quot;tSNE2&quot;</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">markerscale</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;t-SNE of Morgan Fingerprints (Colored by Structural Class)&quot;</span><span class="p">)</span>
+
+<span class="n">sc</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">[</span><span class="s2">&quot;tSNE1&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;tSNE2&quot;</span><span class="p">],</span>
+    <span class="n">c</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">10</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">2</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Measured logS&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Same t-SNE Map (Colored by logS)&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axes</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="6-2-深入观察一个局部-岛屿-当指纹相似遇上性质突变-activity-cliff">6.2 深入观察一个局部“岛屿”：当指纹相似遇上性质突变（Activity Cliff）</h3>
+<p>与指纹的线性 PCA 不同，t-SNE 把 9,480 个分子清晰地分成了许多**“结构岛屿”<strong>：左图中同一结构大类的分子各自抱团，右图中大多数岛屿内部的颜色（溶解度 <code>logS</code>）也相当一致——这直观验证了</strong>“结构相似的分子往往具有相近的物理化学性质”**。</p>
+<p>但如果我们放大看某一个具体的岛屿（例如以第 <code>0</code> 号分子为中心，找出 t-SNE 图上离它最近的 8 个邻居），会发现一个非常有趣的化学现象：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [16] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">center</span> <span class="o">=</span> <span class="mi">0</span>   <span class="c1"># 可修改行号查看其他岛屿</span>
+<span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;tSNE1&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">center</span><span class="p">,</span> <span class="s2">&quot;tSNE1&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;tSNE2&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">center</span><span class="p">,</span> <span class="s2">&quot;tSNE2&quot;</span><span class="p">])</span>
+<span class="n">neighbours</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">nsmallest</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+<span class="n">Draw</span><span class="o">.</span><span class="n">MolsToGridImage</span><span class="p">(</span>
+    <span class="n">neighbours</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+    <span class="n">molsPerRow</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">subImgSize</span><span class="o">=</span><span class="p">(</span><span class="mi">220</span><span class="p">,</span> <span class="mi">180</span><span class="p">),</span>
+    <span class="n">legends</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;logS = </span><span class="si">{</span><span class="n">s</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">neighbours</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>第 <code>0</code> 号分子是<strong>十八烷基三甲基溴化铵</strong>（阳离子表面活性剂）。聚在它周围的邻居全是“一条长烷基链 + 季铵盐阳离子头基”，同时还混进了两个<strong>纯长链烷烃</strong>。</p>
+<p>为什么季铵盐表面活性剂（<span class="math-inline" data-tex="\log S">\(\log S\)</span> 在 <span class="math-inline" data-tex="-3.0 \sim -4.7">\(-3.0 \sim -4.7\)</span>，较易溶于水）会和完全不溶于水的纯长链烷烃（<span class="math-inline" data-tex="\log S">\(\log S\)</span> 在 <span class="math-inline" data-tex="-6.0 \sim -7.6">\(-6.0 \sim -7.6\)</span>，溶解度相差三四个数量级）在指纹空间里成为近邻？</p>
+<ul>
+<li>因为在 2048 位 Morgan 指纹中，长烷基链的 <code>-CH2-CH2-</code> 局部环境占据了绝大多数点亮的比特，而真正决定水溶性的<strong>带电荷季铵盐头基 <code>-N+(CH3)3</code></strong> 只改变了链端的少数几个比特！</li>
+<li>在药物化学与材料信息学中，这种**“分子表征空间距离极近、但目标性质发生剧烈跳变”<strong>的现象被称为</strong>活性悬崖 / 性质悬崖（Activity / Property Cliff）<strong>。它深刻提醒我们：</strong>“两个分子相不相似”完全取决于你采用的表征方式**。</li>
+</ul>
+<h3 id="6-3-解读-t-sne-图的四大避坑准则-兼谈-umap-与-tmap">6.3 解读 t-SNE 图的四大避坑准则（兼谈 UMAP 与 TMAP）</h3>
+<p>t-SNE 生成的聚类岛屿图非常美观，但在科研论文中解读 t-SNE 时必须谨记以下四条铁律（因此我们上面特意隐藏了坐标轴刻度 <code>set_xticks([])</code>）：</p>
+<ol>
+<li><strong>岛屿之间的远近距离没有全局定量意义</strong>：t-SNE 只保证局部近邻聚拢，两个岛在图上隔得很远，并不代表它们在化学上比相邻的两个岛差异更大；</li>
+<li><strong>岛屿的膨胀或收缩不代表真实方差大小</strong>：t-SNE 会自适应局部密度，原本稀疏的家族和紧凑的家族在图上可能被拉伸成差不多大小的团块；</li>
+<li><strong>拓扑形态依赖于超参数 <code>perplexity</code> 与随机种子</strong>：调整 <code>perplexity</code> 会改变岛屿分裂与合并的颗粒度；</li>
+<li><strong>不支持直接 <code>transform</code> 新样本</strong>：与 PCA 不同，标准 t-SNE 是非参数化的坐标优化过程，没有学到一个显式的映射函数 <span class="math-inline" data-tex="f(x)">\(f(x)\)</span>。如果要把新分子画进 t-SNE 图，只能把新老分子拼在一起<strong>重新运行 <code>fit_transform</code></strong>。</li>
+</ol>
+<blockquote>
+<p><strong>延伸工具</strong>：近年来在化学空间可视化中，<strong>UMAP</strong>（<code>umap-learn</code>）与 <strong>TMAP</strong>（Tree-Map）也很流行。UMAP 计算速度比 t-SNE 更快、对全局拓扑结构的保持更好，而且支持对新分子直接调用 <code>.transform()</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-03a-2-观察-perplexity-对-t-sne-局部与全局颗粒度的影响">🏋️ 练习 03a-2：观察 <code>perplexity</code> 对 t-SNE 局部与全局颗粒度的影响</h3>
+<p><code>perplexity</code>（困惑度）控制每个点在构建概率分布时关注的“有效近邻数量”。</p>
+<ol>
+<li>为了加快运行速度，先用 <code>sub_idx = np.random.RandomState(0).choice(len(df), 2000, replace=False)</code> 随机抽取 2,000 个分子的子集（取出对应的 <code>sub_df</code> 和 50 维 PCA 特征 <code>sub_50 = fp_50[sub_idx]</code>）；</li>
+<li>分别设置 <code>perplexity=5</code> 和 <code>perplexity=100</code> 运行 <code>TSNE(n_components=2, init=&quot;pca&quot;, random_state=42)</code>，将两张结果图按 <code>class</code> 着色并排画出来，对比它们的形态差异。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [17] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-03a-3-将有机半导体分子并入指纹空间做-t-sne-近邻分析">🏋️ 练习 03a-3：将有机半导体分子并入指纹空间做 t-SNE 近邻分析</h3>
+<p>由于 t-SNE 没有 <code>.transform()</code> 方法，请把第 4 节中 9 个有机半导体分子（<code>candidates</code>）的 50 维指纹 PCA 特征（<code>pca_fp.transform(osc_fps)</code>）<strong>拼接</strong>到练习 <code>03a-2</code> 的 2,000 个分子子集后面（共 2,009 行），用 <code>perplexity=30, random_state=42</code> 一起运行 t-SNE：</p>
+<ol>
+<li>将 2,000 个背景分子画成浅灰色散点，9 个有机半导体分子用红点标出并添加文字标注；</li>
+<li>观察：<code>pentacene</code>、<code>BTBT</code>、<code>rubrene</code> 是否落在了同一片芳香稠环区域？而带长烷基链的 <code>3-hexylthiophene</code> 和 <code>C8-BTBT</code> 被拉到了哪里？</li>
+<li>找出 t-SNE 图上离 <code>3-hexylthiophene</code> 最近的 5 个 AqSolDB 分子，打印它们的名称和 SMILES，体会“分子表征如何决定谁和谁相似”。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [18] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="小结">小结</h2>
+<table>
+<thead>
+<tr>
+<th>核心概念</th>
+<th>方法与代码要点</th>
+<th>物理化学与数据科学启示</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>线性降维 PCA</strong></td>
+<td>先 <code>StandardScaler</code>，再 <code>PCA(n_components=...)</code></td>
+<td>17 个描述符高度共线，前 5 个主成分占 &gt;90% 方差；PC1 反映分子大小，PC2 反映亲油 vs 极性（与 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 显著相关）</td>
+</tr>
+<tr>
+<td><strong>新样本投影与适用域</strong></td>
+<td>严格复用训练集 <code>scaler.transform</code> 和 <code>pca.transform</code>；用 <code>NearestNeighbors</code> 算全空间距离</td>
+<td>二维图仅保留部分方差，需在 17 维全空间核查最近邻距离；全局描述符难以区分并五苯与弯曲稠环同分异构体</td>
+</tr>
+<tr>
+<td><strong>高维稀疏指纹降维</strong></td>
+<td><code>PCA(50)</code> 预降维去噪 + <code>TSNE(perplexity=30)</code></td>
+<td>二值指纹维度间缺乏全局线性相关性，直接 PCA 仅保留 9% 方差；t-SNE 能还原局部结构岛屿，但岛间距离无定量意义且不支持直接 <code>.transform()</code></td>
+</tr>
+<tr>
+<td><strong>表征决定相似性</strong></td>
+<td>检视局部近邻分子与性质悬崖（Activity Cliff）</td>
+<td>Morgan 指纹被长碳链主导，会把带电季铵盐表面活性剂与疏水烷烃归为近邻，也会把 <code>C8-BTBT</code> 拉向长链分子区</td>
+</tr>
+</tbody>
+</table>
+<p><strong>下一节预告（<code>03b_clustering.ipynb</code>）</strong>：在 t-SNE 图上我们用肉眼看到了一个个分子“岛屿”，能不能不靠肉眼看二维图，直接让算法在高维空间里自动把分子分成若干个簇（Cluster），并利用聚类来构建更严格的模型外推测试集？</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/03-unsupervised-learning.html">返回模块 03</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../modules/03-unsupervised-learning.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">模块 03 · 无监督学习：化学空间与发现</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/03-unsupervised-learning/03b_clustering.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">03b — 聚类：让算法自动划分分子家族（Clustering）</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-环境准备与-aqsoldb-数据集介绍">0. 环境准备与 AqSolDB 数据集介绍</a></li>      <li class="toc-l2"><a href="#1-降维的两种核心哲学-保留全局方差-vs-保留局部近邻">1. 降维的两种核心哲学：保留全局方差 vs 保留局部近邻</a></li>      <li class="toc-l2"><a href="#2-主成分分析-pca-的几何直觉-从两个共线描述符说起">2. 主成分分析（PCA）的几何直觉：从两个共线描述符说起</a></li>      <li class="toc-l2"><a href="#3-对-17-个物理化学描述符做-pca-方差-载荷与化学意义">3. 对 17 个物理化学描述符做 PCA：方差、载荷与化学意义</a></li>      <li class="toc-l3"><a href="#3-1-解释方差比-explained-variance-ratio-17-个描述符里有多少独立信息">3.1 解释方差比（Explained Variance Ratio）：17 个描述符里有多少独立信息？</a></li>      <li class="toc-l3"><a href="#3-2-主成分载荷-loadings-每个主成分代表什么物理化学属性">3.2 主成分载荷（Loadings）：每个主成分代表什么物理化学属性？</a></li>      <li class="toc-l3"><a href="#3-3-绘制二维-pca-化学空间地图并叠加溶解度">3.3 绘制二维 PCA 化学空间地图并叠加溶解度</a></li>      <li class="toc-l3"><a href="#练习-03a-1-检视-pc2-两端的极端分子-兼谈降维用于异常数据排查">🏋️ 练习 03a-1：检视 PC2 两端的极端分子（兼谈降维用于异常数据排查）</a></li>      <li class="toc-l2"><a href="#4-投影新分子与定量适用域检查-有机半导体分子落在哪里">4. 投影新分子与定量适用域检查：有机半导体分子落在哪里？</a></li>      <li class="toc-l3"><a href="#4-1-用已拟合的-scaler-和-pca-投影新分子">4.1 用已拟合的 scaler 和 pca 投影新分子</a></li>      <li class="toc-l3"><a href="#4-2-在-17-维全空间中定量测量最近邻距离-适用域诊断">4.2 在 17 维全空间中定量测量最近邻距离（适用域诊断）</a></li>      <li class="toc-l2"><a href="#5-对-2048-维-morgan-指纹做-pca-为什么线性降维会失效">5. 对 2048 维 Morgan 指纹做 PCA：为什么线性降维会失效？</a></li>      <li class="toc-l2"><a href="#6-t-sne-保留-局部邻居-关系的非线性流形降维">6. t-SNE：保留“局部邻居”关系的非线性流形降维</a></li>      <li class="toc-l3"><a href="#6-1-t-sne-的工作原理与标准预处理流水线">6.1 t-SNE 的工作原理与标准预处理流水线</a></li>      <li class="toc-l3"><a href="#6-2-深入观察一个局部-岛屿-当指纹相似遇上性质突变-activity-cliff">6.2 深入观察一个局部“岛屿”：当指纹相似遇上性质突变（Activity Cliff）</a></li>      <li class="toc-l3"><a href="#6-3-解读-t-sne-图的四大避坑准则-兼谈-umap-与-tmap">6.3 解读 t-SNE 图的四大避坑准则（兼谈 UMAP 与 TMAP）</a></li>      <li class="toc-l3"><a href="#练习-03a-2-观察-perplexity-对-t-sne-局部与全局颗粒度的影响">🏋️ 练习 03a-2：观察 perplexity 对 t-SNE 局部与全局颗粒度的影响</a></li>      <li class="toc-l3"><a href="#练习-03a-3-将有机半导体分子并入指纹空间做-t-sne-近邻分析">🏋️ 练习 03a-3：将有机半导体分子并入指纹空间做 t-SNE 近邻分析</a></li>      <li class="toc-l2"><a href="#小结">小结</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="04b — 贝叶斯优化（下）：主动实验设计与合成配方寻优 在 04a 中，我们学会了用高斯过程回归（GPR）同时输出候选点的预测均值 和预测不确定性 。现在我们来解决实验材料人与合成化学家最关心的核心问题： 假设面前有 3,955 种可能的催化反应配方（或者一片二维温度—浓度工艺窗口），每次进实验室合成与表征都要花费一" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="04b — 贝叶斯优化（下）：主动实验设计与合成配方寻优 | AI for Materials Science" />
+  <meta property="og:description" content="04b — 贝叶斯优化（下）：主动实验设计与合成配方寻优 在 04a 中，我们学会了用高斯过程回归（GPR）同时输出候选点的预测均值 和预测不确定性 。现在我们来解决实验材料人与合成化学家最关心的核心问题： 假设面前有 3,955 种可能的催化反应配方（或者一片二维温度—浓度工艺窗口），每次进实验室合成与表征都要花费一" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/04-bayesian-optimization/04b_bayesian_optimization.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/04-bayesian-optimization/04b_bayesian_optimization.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>04b — 贝叶斯优化（下）：主动实验设计与合成配方寻优 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/04-bayesian-optimization/04a_gaussian_processes.html"
+           data-progress-mark="notebooks/04-bayesian-optimization/04a_gaussian_processes.html"
+>📓 04a_gaussian_processes.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/04-bayesian-optimization/04b_bayesian_optimization.html"
+           data-progress-mark="notebooks/04-bayesian-optimization/04b_bayesian_optimization.html"
+class="active">📓 04b_bayesian_optimization.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/04-bayesian-optimization/04c_exercises.html"
+           data-progress-mark="notebooks/04-bayesian-optimization/04c_exercises.html"
+>🏋️ 04c_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/04-bayesian-optimization.html">模块 04：贝叶斯优化与主动实验设计</a> /  <span>04b_bayesian_optimization.ipynb</span>
+</div>
+<h1>04b — 贝叶斯优化（下）：主动实验设计与合成配方寻优</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>04b_bayesian_optimization.ipynb</code>（26.0 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/04%20-%20Bayesian%20Optimization/04b_bayesian_optimization.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/bac75ddb7506-04b_bayesian_optimization.ipynb" download="04b_bayesian_optimization.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/04-bayesian-optimization/04_bo_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/04-bayesian-optimization/04b_bayesian_optimization.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>在 <code>04a</code> 中，我们学会了用高斯过程回归（GPR）同时输出候选点的预测均值 <span class="math-inline" data-tex="\mu(x)">\(\mu(x)\)</span> 和预测不确定性 <span class="math-inline" data-tex="\sigma(x)">\(\sigma(x)\)</span>。现在我们来解决实验材料人与合成化学家最关心的核心问题：</p>
+<blockquote>
+<p><strong>假设面前有 3,955 种可能的催化反应配方（或者一片二维温度—浓度工艺窗口），每次进实验室合成与表征都要花费一整天。在绝不可能把所有配方全试一遍的前提下，如何仅用 20～25 次实验就精准锁定最高产率的配方？</strong></p>
+</blockquote>
+<p>这就是**贝叶斯优化（Bayesian Optimization, BO）<strong>与</strong>主动学习（Active Learning）**的任务——它也是当今“自动驾驶实验室（Self-Driving Labs / Autonomous Materials Discovery）”的核心决策大脑。</p>
+<p>本节内容安排如下：</p>
+<ol>
+<li><strong>贝叶斯优化的四步闭环</strong>：利用（Exploitation）与探索（Exploration）的权衡；</li>
+<li><strong>手写三大采集函数（Acquisition Functions）</strong>：纯利用（Greedy）、置信上界（UCB）与期望提升（Expected Improvement, EI）；</li>
+<li><strong>连续工艺参数寻优实战</strong>：直观追踪 6 轮迭代如何跳出局部最优陷阱，并拓展到二维（温度 + 浓度）参数空间；</li>
+<li><strong>真实合成反应寻优实战</strong>：在 Buchwald–Hartwig 钯催化碳氮偶联反应数据集（Ahneman et al., <em>Science</em> 2018，共 3,955 个反应）上，仅用 25 次实验找到 &gt;95% 产率的最优配方；</li>
+<li><strong>贝叶斯优化的适用边界与工程实践指南</strong>。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="0-环境准备与数据读取辅助函数">0. 环境准备与数据读取辅助函数</h2>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.gaussian_process</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianProcessRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.gaussian_process.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matern</span><span class="p">,</span> <span class="n">RBF</span><span class="p">,</span> <span class="n">WhiteKernel</span><span class="p">,</span> <span class="n">ConstantKernel</span> <span class="k">as</span> <span class="n">C</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.decomposition</span><span class="w"> </span><span class="kn">import</span> <span class="n">PCA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">rdFingerprintGenerator</span>
+
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">find_file</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;../data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">path</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">google.colab</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;请上传 </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">name</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;找不到 </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">，请确保它位于 data/ 文件夹或当前目录下&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-贝叶斯优化的四步闭环-利用-exploitation-vs-探索-exploration">1. 贝叶斯优化的四步闭环：利用（Exploitation）vs 探索（Exploration）</h2>
+<p>与传统“一次性做完所有实验再拟合并分析”的被动建模不同，贝叶斯优化是一个**“建模 <span class="math-inline" data-tex="\to">\(\to\)</span> 推荐下一轮实验 <span class="math-inline" data-tex="\to">\(\to\)</span> 实验反馈 <span class="math-inline" data-tex="\to">\(\to\)</span> 更新模型”**的序贯闭环过程：</p>
+<ol>
+<li><strong>初始采样（Initialization）</strong>：在参数空间中随机（或按拉丁超立方均匀设计）做少量几次初始实验（例如 <span class="math-inline" data-tex="3 \sim 5">\(3 \sim 5\)</span> 个点），构成初始观测集 <span class="math-inline" data-tex="\mathcal{D}_0 = \{(x_i, y_i)\}">\(\mathcal{D}_0 = \{(x_i, y_i)\}\)</span>；</li>
+<li><strong>拟合代理模型（Surrogate Model）</strong>：用高斯过程回归（GPR）拟合当前已观测数据 <span class="math-inline" data-tex="\mathcal{D}_t">\(\mathcal{D}_t\)</span>，快速算出所有未测候选点 <span class="math-inline" data-tex="x">\(x\)</span> 的后验均值 <span class="math-inline" data-tex="\mu(x)">\(\mu(x)\)</span> 和标准差 <span class="math-inline" data-tex="\sigma(x)">\(\sigma(x)\)</span>；</li>
+<li><strong>最大化采集函数（Acquisition Function, <span class="math-inline" data-tex="\alpha(x)">\(\alpha(x)\)</span>）</strong>：将 <span class="math-inline" data-tex="\mu(x)">\(\mu(x)\)</span> 和 <span class="math-inline" data-tex="\sigma(x)">\(\sigma(x)\)</span> 代入采集函数 <span class="math-inline" data-tex="\alpha(x)">\(\alpha(x)\)</span>，为每个候选点打出“多值得去测”的综合得分，挑出得分最高的点 <span class="math-inline" data-tex="x_{t+1} = \arg\max_x \alpha(x)">\(x_{t+1} = \arg\max_x \alpha(x)\)</span> 交由实验室开展下一轮测试；</li>
+<li><strong>更新数据集</strong>：将新测得的实验结果 <span class="math-inline" data-tex="(x_{t+1}, y_{t+1})">\((x_{t+1}, y_{t+1})\)</span> 并入已观测集 <span class="math-inline" data-tex="\mathcal{D}_{t+1}">\(\mathcal{D}_{t+1}\)</span>，返回第 2 步循环，直到实验预算耗尽或材料性能达标。</li>
+</ol>
+<p>在这个闭环中，采集函数 <span class="math-inline" data-tex="\alpha(x)">\(\alpha(x)\)</span> 必须精妙地平衡两种相互竞争的动机：</p>
+<ul>
+<li><strong>利用（Exploitation，深挖已知高地）</strong>：去预测均值 <span class="math-inline" data-tex="\mu(x)">\(\mu(x)\)</span> 很高的区域精细微调，力求稳步刷新记录；</li>
+<li><strong>探索（Exploration，开拓未知盲区）</strong>：去预测不确定性 <span class="math-inline" data-tex="\sigma(x)">\(\sigma(x)\)</span> 很大的空白区探路，防止被局部小山头困住而漏掉真正的全局最高峰。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-手写三大经典采集函数-greedy-ucb-ei">2. 手写三大经典采集函数（Greedy / UCB / EI）</h2>
+<p>假设我们的实验目标是<strong>最大化</strong>材料性能 <span class="math-inline" data-tex="y">\(y\)</span>，目前已经做过的实验中最高性能记录为 <span class="math-inline" data-tex="y_{\text{best}} = \max_{i} y_i">\(y_{\text{best}} = \max_{i} y_i\)</span>。最常用的三种采集函数定义如下：</p>
+<ol>
+<li>
+<p><strong>纯利用策略（Greedy / Pure Exploitation）</strong>：
+<div class="math-block" data-tex="\alpha_{\text{Greedy}}(x) = \mu(x)">\[\alpha_{\text{Greedy}}(x) = \mu(x)\]</div>
+完全无视不确定性 <span class="math-inline" data-tex="\sigma(x)">\(\sigma(x)\)</span>，只挑当前预测均值最高的点，极易陷入局部最优。</p>
+</li>
+<li>
+<p><strong>置信上界（Upper Confidence Bound, UCB）</strong>：
+<div class="math-block" data-tex="\alpha_{\text{UCB}}(x) = \mu(x) + \kappa \cdot \sigma(x)">\[\alpha_{\text{UCB}}(x) = \mu(x) + \kappa \cdot \sigma(x)\]</div>
+直接把均值和不确定性按权重 <span class="math-inline" data-tex="\kappa \ge 0">\(\kappa \ge 0\)</span> 相加（乐观主义原则：按每个点置信区间的上界来评估其潜力）。<span class="math-inline" data-tex="\kappa">\(\kappa\)</span> 越小越偏向利用，<span class="math-inline" data-tex="\kappa">\(\kappa\)</span> 越大越偏向探索（常取 <span class="math-inline" data-tex="\kappa = 2.0">\(\kappa = 2.0\)</span>）。</p>
+</li>
+<li>
+<p><strong>期望提升（Expected Improvement, EI）</strong>：
+衡量候选点 <span class="math-inline" data-tex="x">\(x\)</span> 的真实性能超越当前最高记录 <span class="math-inline" data-tex="y_{\text{best}}">\(y_{\text{best}}\)</span> 的<strong>数学期望增量</strong> <span class="math-inline" data-tex="\mathbb{E}[\max(0, f(x) - y_{\text{best}} - \xi)]">\(\mathbb{E}[\max(0, f(x) - y_{\text{best}} - \xi)]\)</span>。由于 <span class="math-inline" data-tex="f(x) \sim \mathcal{N}(\mu(x), \sigma^2(x))">\(f(x) \sim \mathcal{N}(\mu(x), \sigma^2(x))\)</span>，该积分有优雅的解析闭式解：
+<div class="math-block" data-tex="\alpha_{\text{EI}}(x) = (\mu(x) - y_{\text{best}} - \xi)\,\Phi(Z) + \sigma(x)\,\phi(Z), \quad Z = \frac{\mu(x) - y_{\text{best}} - \xi}{\sigma(x)}">\[\alpha_{\text{EI}}(x) = (\mu(x) - y_{\text{best}} - \xi)\,\Phi(Z) + \sigma(x)\,\phi(Z), \quad Z = \frac{\mu(x) - y_{\text{best}} - \xi}{\sigma(x)}\]</div>
+其中 <span class="math-inline" data-tex="\Phi(\cdot)">\(\Phi(\cdot)\)</span> 和 <span class="math-inline" data-tex="\phi(\cdot)">\(\phi(\cdot)\)</span> 分别是标准正态分布的累积分布函数（<code>norm.cdf</code>）与概率密度函数（<code>norm.pdf</code>），微小常数 <span class="math-inline" data-tex="\xi">\(\xi\)</span>（常取 <code>0.01</code>）用于调节探索倾向。注意公式右边的两项：第一项奖励高均值 <span class="math-inline" data-tex="\mu(x) &gt; y_{\text{best}}">\(\mu(x) &gt; y_{\text{best}}\)</span>（利用），第二项 <span class="math-inline" data-tex="\sigma(x)\phi(Z)">\(\sigma(x)\phi(Z)\)</span> 奖励高不确定性（探索），无需手动拍脑袋调权重即可自动平衡两者！</p>
+</li>
+</ol>
+<p>下面我们构造一条具有两个峰的“未知真实工艺曲线” <code>hidden_process(x)</code>（左侧 <span class="math-inline" data-tex="x=2.3">\(x=2.3\)</span> 处有一个次优小峰，右侧 <span class="math-inline" data-tex="x=7.8">\(x=7.8\)</span> 处藏着真正的全局主峰）。假设初始 3 个实验点不幸全都落在了左侧小峰附近，我们看看 Greedy、UCB 和 EI 分别会推荐去哪里做第 4 个实验：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">hidden_process</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;模拟双峰材料工艺响应曲线：x=2.3 为局部次优峰 (0.6)，x=7.8 为全局主峰 (1.0)&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="mf">0.6</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="mf">2.3</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.8</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="mf">7.8</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.9</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">acq_ucb</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="mf">2.0</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">kappa</span> <span class="o">*</span> <span class="n">std</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">acq_ei</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">y_best</span><span class="p">,</span> <span class="n">xi</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
+        <span class="n">imp</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">y_best</span> <span class="o">-</span> <span class="n">xi</span>
+        <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">std</span> <span class="o">&gt;</span> <span class="mf">1e-9</span><span class="p">,</span> <span class="n">imp</span> <span class="o">/</span> <span class="n">std</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">ei</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">std</span> <span class="o">&gt;</span> <span class="mf">1e-9</span><span class="p">,</span> <span class="n">imp</span> <span class="o">*</span> <span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span> <span class="o">+</span> <span class="n">std</span> <span class="o">*</span> <span class="n">norm</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">Z</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ei</span>
+
+<span class="n">X_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">300</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">X_init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">2.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">3.6</span><span class="p">]])</span>   <span class="c1"># 初始 3 个实验点全部集中在左侧小峰附近</span>
+<span class="n">y_init</span> <span class="o">=</span> <span class="n">hidden_process</span><span class="p">(</span><span class="n">X_init</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+<span class="n">gp</span> <span class="o">=</span> <span class="n">GaussianProcessRegressor</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">C</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">RBF</span><span class="p">(</span><span class="mf">1.0</span><span class="p">),</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">gp</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_init</span><span class="p">,</span> <span class="n">y_init</span><span class="p">)</span>
+<span class="n">mu</span><span class="p">,</span> <span class="n">std</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_grid</span><span class="p">,</span> <span class="n">return_std</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">9.5</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">gridspec_kw</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;height_ratios&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">]})</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">X_grid</span><span class="p">,</span> <span class="n">hidden_process</span><span class="p">(</span><span class="n">X_grid</span><span class="p">),</span> <span class="s2">&quot;k--&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Hidden True Process&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">X_grid</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="s2">&quot;b-&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;GP Posterior Mean&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">X_grid</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">mu</span> <span class="o">-</span> <span class="mf">1.96</span> <span class="o">*</span> <span class="n">std</span><span class="p">,</span> <span class="n">mu</span> <span class="o">+</span> <span class="mf">1.96</span> <span class="o">*</span> <span class="n">std</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;95% CI&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_init</span><span class="p">,</span> <span class="n">y_init</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Initial Experiments (n = 3)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Device Performance&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;GP Surrogate Model vs Three Acquisition Functions&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="n">ei_vals</span>  <span class="o">=</span> <span class="n">acq_ei</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">y_init</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">xi</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="n">ucb_vals</span> <span class="o">=</span> <span class="n">acq_ucb</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">X_grid</span><span class="p">,</span> <span class="n">ei_vals</span> <span class="o">/</span> <span class="p">(</span><span class="n">ei_vals</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">),</span> <span class="s2">&quot;g-&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;EI (recommends x = </span><span class="si">{</span><span class="n">X_grid</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">ei_vals</span><span class="p">),</span><span class="w"> </span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">X_grid</span><span class="p">,</span> <span class="n">ucb_vals</span> <span class="o">/</span> <span class="p">(</span><span class="n">ucb_vals</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">),</span> <span class="s2">&quot;m-&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;UCB (recommends x = </span><span class="si">{</span><span class="n">X_grid</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">ucb_vals</span><span class="p">),</span><span class="w"> </span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">X_grid</span><span class="p">,</span> <span class="n">mu</span> <span class="o">/</span> <span class="p">(</span><span class="n">mu</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">),</span> <span class="s2">&quot;b:&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Greedy (recommends x = </span><span class="si">{</span><span class="n">X_grid</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">mu</span><span class="p">),</span><span class="w"> </span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Process Parameter x (e.g., Normalized Annealing Temperature)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Normalized Acquisition&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-连续材料工艺寻优-直观追踪-6-轮迭代跳出局部最优">3. 连续材料工艺寻优：直观追踪 6 轮迭代跳出局部最优</h2>
+<p>从上图下半部分可以清楚看到：</p>
+<ul>
+<li>**Greedy（蓝色点线）**被左侧已知小山峰牢牢吸住，推荐下一个点继续测 <span class="math-inline" data-tex="x = 2.34">\(x = 2.34\)</span>，永远不会去右侧看一眼；</li>
+<li>**EI（绿线）和 UCB（紫线）**则注意到右侧 <span class="math-inline" data-tex="x &gt; 4.5">\(x &gt; 4.5\)</span> 的广阔空白区具有很大的不确定性 <span class="math-inline" data-tex="\sigma(x)">\(\sigma(x)\)</span>，果断给出高分推荐去右侧探路。</li>
+</ul>
+<p>下面我们把 <strong>EI 贝叶斯优化</strong> 连续运行 6 轮（<code>Step 1</code> 至 <code>Step 6</code>），看看每测完一个新点（绿色五角星），GPR 的置信带如何收缩、并一步步锁定右侧 <span class="math-inline" data-tex="x = 7.8">\(x = 7.8\)</span> 的全局最高峰：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">X_obs</span> <span class="o">=</span> <span class="n">X_init</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">y_obs</span> <span class="o">=</span> <span class="n">y_init</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">13</span><span class="p">,</span> <span class="mf">6.5</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">axes</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">gp_step</span> <span class="o">=</span> <span class="n">GaussianProcessRegressor</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">C</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">RBF</span><span class="p">(</span><span class="mf">1.0</span><span class="p">),</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">gp_step</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_obs</span><span class="p">,</span> <span class="n">y_obs</span><span class="p">)</span>
+    <span class="n">mu</span><span class="p">,</span> <span class="n">std</span> <span class="o">=</span> <span class="n">gp_step</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_grid</span><span class="p">,</span> <span class="n">return_std</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">ei</span> <span class="o">=</span> <span class="n">acq_ei</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">y_obs</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">xi</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+    <span class="n">next_x</span> <span class="o">=</span> <span class="n">X_grid</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">ei</span><span class="p">)]</span>
+    <span class="n">next_y</span> <span class="o">=</span> <span class="n">hidden_process</span><span class="p">(</span><span class="n">next_x</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">X_grid</span><span class="p">,</span> <span class="n">hidden_process</span><span class="p">(</span><span class="n">X_grid</span><span class="p">),</span> <span class="s2">&quot;k--&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">X_grid</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="s2">&quot;b-&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">X_grid</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">mu</span> <span class="o">-</span> <span class="mf">1.96</span> <span class="o">*</span> <span class="n">std</span><span class="p">,</span> <span class="n">mu</span> <span class="o">+</span> <span class="mf">1.96</span> <span class="o">*</span> <span class="n">std</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.15</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_obs</span><span class="p">,</span> <span class="n">y_obs</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">35</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="n">next_x</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="p">[</span><span class="n">next_y</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;lime&quot;</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">85</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Next x = </span><span class="si">{</span><span class="n">next_x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Step </span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2"> | Best y = </span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">y_obs</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span><span class="w"> </span><span class="n">next_y</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper left&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+
+    <span class="n">X_obs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">X_obs</span><span class="p">,</span> <span class="n">next_x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)])</span>
+    <span class="n">y_obs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y_obs</span><span class="p">,</span> <span class="n">next_y</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Bayesian Optimization (EI) Escaping Local Optimum in 6 Steps&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>可以看到：第 1–2 步 EI 先在左侧山峰确认顶点并试探右侧边界，第 3 步跨入右侧未知区测到 <span class="math-inline" data-tex="x = 6.22">\(x = 6.22\)</span> 发现数值回升，第 4–6 步便迅速顺藤摸瓜登顶 <span class="math-inline" data-tex="x = 7.80">\(x = 7.80\)</span> 的全局最优（<code>Best y = 1.000</code>）！</p>
+<h3 id="练习-04b-1-调节-ucb-探索权重-kappa-对跳出局部最优的影响">🏋️ 练习 04b-1：调节 UCB 探索权重 <span class="math-inline" data-tex="\kappa">\(\kappa\)</span> 对跳出局部最优的影响</h3>
+<p>把上面 6 步循环中的采集函数从 <code>acq_ei</code> 换成 <code>acq_ucb(mu, std, kappa=...)</code>，分别测试三个不同的探索系数：</p>
+<ul>
+<li><code>kappa = 0.1</code>（极度保守，几乎只做局部利用）；</li>
+<li><code>kappa = 2.0</code>（利用与探索平衡）；</li>
+<li><code>kappa = 10.0</code>（高度鼓励探索未知空白区）。</li>
+</ul>
+<p>打印每个 <code>kappa</code> 在 6 步迭代后找到的最大值 <code>y_obs.max()</code> 以及这 6 步选中的采样位置，观察为什么 <code>kappa = 0.1</code> 会被死死困在左侧小山峰。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-04b-2-二维材料工艺窗口寻优-退火温度-t-前驱体浓度-c">🏋️ 练习 04b-2：二维材料工艺窗口寻优（退火温度 <span class="math-inline" data-tex="T">\(T\)</span> + 前驱体浓度 <span class="math-inline" data-tex="c">\(c\)</span>）</h3>
+<p>将一维工艺推广到二维工艺平面：下方函数 <code>process_2d(X)</code> 模拟了由温度 <span class="math-inline" data-tex="T \in [0, 10]">\(T \in [0, 10]\)</span> 和浓度 <span class="math-inline" data-tex="c \in [0, 10]">\(c \in [0, 10]\)</span> 共同决定的薄膜性能（在 <span class="math-inline" data-tex="(2.5, 3.0)">\((2.5, 3.0)\)</span> 处有一个高为 <code>0.65</code> 的次优峰，在 <span class="math-inline" data-tex="(7.5, 7.2)">\((7.5, 7.2)\)</span> 处有一个高为 <code>1.00</code> 的全局主峰），并在 <span class="math-inline" data-tex="25 \times 25 = 625">\(25 \times 25 = 625\)</span> 个候选网格点 <code>X_cand</code> 上计算好了真实性能 <code>y_true_all</code>。</p>
+<ol>
+<li>从随机抽取的 3 个初始点 <code>init_idx</code> 出发，用 <code>GaussianProcessRegressor(kernel=C(1.0) * RBF(1.5), alpha=1e-5)</code> 配合 <code>acq_ei</code> 循环迭代 <strong>15 步</strong>（总计 18 次实验），每次从未测网格点 <code>unseen</code> 中挑选 EI 最大的点加入观测集 <code>obs_idx</code>；</li>
+<li>对比 18 次贝叶斯优化找到的最大性能与随机盲抽 18 个点找到的最大性能，并在二维等高线图上标出初始点（白圈）和 BO 选中的 15 个点（红星）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">process_2d</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+    <span class="n">t</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">peak1</span> <span class="o">=</span> <span class="mf">0.65</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.3</span> <span class="o">*</span> <span class="p">((</span><span class="n">t</span> <span class="o">-</span> <span class="mf">2.5</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">c</span> <span class="o">-</span> <span class="mf">3.0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">peak2</span> <span class="o">=</span> <span class="mf">1.00</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.35</span> <span class="o">*</span> <span class="p">((</span><span class="n">t</span> <span class="o">-</span> <span class="mf">7.5</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">c</span> <span class="o">-</span> <span class="mf">7.2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">peak1</span> <span class="o">+</span> <span class="n">peak2</span>
+
+<span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span>
+<span class="n">TT</span><span class="p">,</span> <span class="n">CC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
+<span class="n">X_cand</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">TT</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">CC</span><span class="o">.</span><span class="n">ravel</span><span class="p">()])</span>
+<span class="n">y_true_all</span> <span class="o">=</span> <span class="n">process_2d</span><span class="p">(</span><span class="n">X_cand</span><span class="p">)</span>
+
+<span class="c1"># 在下方填写你的 15 步二维 BO 循环与绘图代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-真实化学合成寻优实战-buchwald-hartwig-钯催化偶联反应">4. 真实化学合成寻优实战：Buchwald–Hartwig 钯催化偶联反应</h2>
+<p>在合成化学与配方工程中，实验条件往往不是连续数值，而是<strong>多个离散组分构成的组合空间（Combinatorial Space）</strong>：例如从候选库中挑选 1 种膦配体（Ligand）、1 种碱（Base）、1 种添加剂（Additive）和 1 种芳基卤代物底物（Aryl Halide），组合成一个具体的反应配方。</p>
+<p><code>data/bh-reactions.csv</code> 收录了 Doyle 与 Dreher 团队发表在 <em>Science</em> 2018 上的经典高通量实验数据集（Ahneman et al., <em>Science</em> <strong>360</strong>, 186–190, 2018），包含 <strong>3,955 个真实的钯催化碳氮偶联反应</strong>及其测得的实验产率 <code>yield</code>（<code>0% ~ 100%</code>）。</p>
+<ul>
+<li>在全部 3,955 个反应中，平均产率只有 <strong>33.1%</strong>，但最优配方的产率高达 <strong>99.9%</strong>。</li>
+<li>如果我们在一个新课题中只能做 <strong>25 次实验</strong>（仅占 3,955 种可能组合的 <strong>0.6%</strong>），把每个反应的 4 个组分做 <strong>One-Hot 独热编码</strong>（共 42 维 0/1 向量，表示用了哪号配体、哪号碱、哪号添加剂、哪号底物），用 GPR + EI/UCB 驱动贝叶斯优化，能不能在 25 次实验内揪出产率 &gt;95% 的顶级配方？</li>
+</ul>
+<p>下面我们用 5 个不同的随机初始种子（每次随机测 5 个初始反应 + 20 轮 BO 主动推荐 = 共 25 次实验），对比 <strong>随机盲试（Random Search）</strong>、<strong>BO (EI)</strong> 与 <strong>BO (UCB)</strong> 的平均寻优曲线：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">bh</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">find_file</span><span class="p">(</span><span class="s2">&quot;bh-reactions.csv&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;反应总数: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bh</span><span class="p">)</span><span class="si">}</span><span class="s2"> | 全库平均产率: </span><span class="si">{</span><span class="n">bh</span><span class="p">[</span><span class="s1">&#39;yield&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">% | 全库最高产率: </span><span class="si">{</span><span class="n">bh</span><span class="p">[</span><span class="s1">&#39;yield&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+
+<span class="c1"># 对 4 个离散反应组分做 One-Hot 编码（共 42 维特征）</span>
+<span class="n">X_oh</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">bh</span><span class="p">[[</span><span class="s2">&quot;ligand&quot;</span><span class="p">,</span> <span class="s2">&quot;additive&quot;</span><span class="p">,</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="s2">&quot;aryl halide&quot;</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+<span class="n">y_yield</span> <span class="o">=</span> <span class="n">bh</span><span class="p">[</span><span class="s2">&quot;yield&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;One-Hot 反应组合特征矩阵形状:&quot;</span><span class="p">,</span> <span class="n">X_oh</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">run_bo_reaction</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">n_steps</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;ei&quot;</span><span class="p">):</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">n_total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">observed</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">n_total</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_init</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="n">best_history</span> <span class="o">=</span> <span class="p">[</span><span class="n">y</span><span class="p">[</span><span class="n">observed</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()]</span>
+
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_steps</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;random&quot;</span><span class="p">:</span>
+            <span class="n">unseen</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_total</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">observed</span><span class="p">]</span>
+            <span class="n">next_idx</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">unseen</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kernel</span> <span class="o">=</span> <span class="n">C</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">RBF</span><span class="p">(</span><span class="n">length_scale</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">+</span> <span class="n">WhiteKernel</span><span class="p">(</span><span class="n">noise_level</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="n">gp</span> <span class="o">=</span> <span class="n">GaussianProcessRegressor</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span> <span class="n">normalize_y</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+            <span class="n">gp</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">observed</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">observed</span><span class="p">])</span>
+
+            <span class="n">unseen_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_total</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">observed</span><span class="p">])</span>
+            <span class="n">mu</span><span class="p">,</span> <span class="n">std</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">unseen_idx</span><span class="p">],</span> <span class="n">return_std</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;ei&quot;</span><span class="p">:</span>
+                <span class="n">scores</span> <span class="o">=</span> <span class="n">acq_ei</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="n">observed</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">xi</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;ucb&quot;</span><span class="p">:</span>
+                <span class="n">scores</span> <span class="o">=</span> <span class="n">acq_ucb</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+            <span class="n">next_idx</span> <span class="o">=</span> <span class="n">unseen_idx</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">scores</span><span class="p">)]</span>
+
+        <span class="n">observed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">next_idx</span><span class="p">)</span>
+        <span class="n">best_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">observed</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">best_history</span><span class="p">)</span>
+
+<span class="n">seeds</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+<span class="n">curves_rand</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">run_bo_reaction</span><span class="p">(</span><span class="n">X_oh</span><span class="p">,</span> <span class="n">y_yield</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;random&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">])</span>
+<span class="n">curves_ei</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">run_bo_reaction</span><span class="p">(</span><span class="n">X_oh</span><span class="p">,</span> <span class="n">y_yield</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;ei&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">])</span>
+<span class="n">curves_ucb</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">run_bo_reaction</span><span class="p">(</span><span class="n">X_oh</span><span class="p">,</span> <span class="n">y_yield</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;ucb&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">])</span>
+
+<span class="n">steps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">26</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">8.5</span><span class="p">,</span> <span class="mf">4.8</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">mat</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">&quot;Random Search&quot;</span><span class="p">,</span> <span class="n">curves_rand</span><span class="p">,</span> <span class="s2">&quot;gray&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;BO (Expected Improvement)&quot;</span><span class="p">,</span> <span class="n">curves_ei</span><span class="p">,</span> <span class="s2">&quot;green&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;BO (UCB, kappa=2)&quot;</span><span class="p">,</span> <span class="n">curves_ucb</span><span class="p">,</span> <span class="s2">&quot;blue&quot;</span><span class="p">),</span>
+<span class="p">]:</span>
+    <span class="n">mean_c</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">std_c</span>  <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">mean_c</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">2.2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (25-exp mean best = </span><span class="si">{</span><span class="n">mean_c</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">mean_c</span> <span class="o">-</span> <span class="n">std_c</span><span class="p">,</span> <span class="n">mean_c</span> <span class="o">+</span> <span class="n">std_c</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.12</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y_yield</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Global Max (</span><span class="si">{</span><span class="n">y_yield</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Total Number of Experiments Conducted&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Best Reaction Yield Found So Far (%)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Buchwald-Hartwig Coupling Optimization (3,955 Candidate Reactions)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;lower right&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>在 3,955 个候选反应中，仅开展 25 次实验（不到全空间的 <code>0.65%</code>），贝叶斯优化（EI 与 UCB）就能把找到的最高产率稳定推进到 <strong>94% ～ 97%</strong>，而相同预算下的随机盲试还停留在 80% 左右。</p>
+<h3 id="练习-04b-3-用化学结构指纹-morgan-fp-pca-替代纯编号-one-hot-编码">🏋️ 练习 04b-3：用化学结构指纹（Morgan FP + PCA）替代纯编号 One-Hot 编码</h3>
+<p>上面使用的 One-Hot 编码只告诉模型“这是 1 号配体、那是 2 号配体”，模型完全不知道两个配体在化学结构上是否相似。</p>
+<ul>
+<li><code>bh</code> 表格中的 <code>ligand</code>、<code>additive</code>、<code>base</code>、<code>aryl halide</code> 四列本身存放的就是各组分的 <strong>SMILES 字符串</strong>！</li>
+<li>请为这 4 列分别计算 256 维的 Morgan 二值指纹并横向拼接（共 1,024 维），用 <code>PCA(n_components=30, random_state=0)</code> 降维到 30 维得到特征矩阵 <code>X_fp_pca</code>；</li>
+<li>在 <code>seeds = [0, 1, 2]</code> 上运行 <code>run_bo_reaction(X_fp_pca, y_yield, strategy=&quot;ei&quot;)</code>，对比它与 One-Hot 编码在 25 次实验后的平均最高产率。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-贝叶斯优化的适用边界与工程实践指南">5. 贝叶斯优化的适用边界与工程实践指南</h2>
+<p>在将贝叶斯优化用于你自己的实验课题之前，请牢记以下三条工程边界：</p>
+<ol>
+<li><strong>适用维度边界（低维至中维最优）</strong>：
+标准高斯过程回归基于欧氏距离或核相似度，最适合 <strong>1 ～ 20 维</strong> 的连续工艺参数（温度、退火时间、旋涂转速、前驱体配比、退火气氛压强）或经 PCA 压缩后的反应描述符。如果直接输入上千维未压缩特征，高维空间中所有点对距离趋同，GPR 的后验方差会退化为常数，此时应先用第三讲的 PCA 降维，或改用基于树模型的代理优化器（如 SMAC / 随机森林 BO）。</li>
+<li><strong>样本规模边界（小样本至中等样本）</strong>：
+标准 GPR 每次拟合需要对 <span class="math-inline" data-tex="N \times N">\(N \times N\)</span> 核矩阵求逆，时间复杂度为 <span class="math-inline" data-tex="\mathcal{O}(N^3)">\(\mathcal{O}(N^3)\)</span>。当累计实验点数 <span class="math-inline" data-tex="N &lt; 1000">\(N &lt; 1000\)</span> 时，每次迭代仅需几毫秒到几秒；当数据量超过数千条时，标准 GPR 会明显变慢，此时通常已走出“小样本盲区”，可切换为深度神经网络集成或稀疏高斯过程。</li>
+<li><strong>并行孔板/多通道实验（Batch BO）</strong>：
+上面的标准循环每次只推荐 1 个最优实验点（Sequential BO）。但如果你的实验室一次可以平行合成 8 个样品或跑一整块 24 孔板，直接取 EI 排名前 8 的点往往会导致这 8 个点全挤在同一个峰值附近。工程上常采用 <strong>克里金假想观测策略（Kriging Believer）</strong>：选出第 1 个点后，把它的预测均值 <span class="math-inline" data-tex="\mu(x_1)">\(\mu(x_1)\)</span> 暂时当作“假想真实观测值”塞回 GPR 更新方差（迫使 <span class="math-inline" data-tex="x_1">\(x_1\)</span> 周围的 <span class="math-inline" data-tex="\sigma">\(\sigma\)</span> 归零），再选第 2 个点，依此类推即可一次性生成兼顾高性能与空间分散性的批次推荐清单。</li>
+</ol>
+<hr />
+<h2 id="小结-第四讲-贝叶斯优化-知识全景">小结：第四讲（贝叶斯优化）知识全景</h2>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>核心工具与概念</th>
+<th>解决的实际科研问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>04a</code> 高斯过程回归</strong></td>
+<td>多元正态条件分布、<code>GaussianProcessRegressor</code>、<code>RBF</code>/<code>Matern</code>/<code>WhiteKernel</code>、<code>Tanimoto</code> 分子核</td>
+<td>在小样本实验数据上同时输出预测均值 <span class="math-inline" data-tex="\mu(x)">\(\mu(x)\)</span> 与不确定性 <span class="math-inline" data-tex="\sigma(x)">\(\sigma(x)\)</span>，自动剥离测量噪声并提供原生适用域预警</td>
+</tr>
+<tr>
+<td><strong><code>04b</code> 贝叶斯优化</strong></td>
+<td>四步主动学习闭环、利用 vs 探索权衡、<code>Greedy</code> / <code>UCB</code> / <code>EI</code> 采集函数</td>
+<td>在昂贵的材料工艺窗口与数千种催化反应组合中，仅用数十次实验跳出局部最优并锁定全局最优配方</td>
+</tr>
+</tbody>
+</table>
+<h3 id="后续课程衔接">后续课程衔接</h3>
+<p>至此，我们已经完成了课程上半学期前四讲（<strong>Python 与 RDKit 数据基础 → 监督学习 → 无监督学习 → 贝叶斯优化与主动实验设计</strong>）的完整闭环。在接下来的模块中，我们将进一步深入特征工程与 SHAP 可解释性分析（<code>05</code>）、无机晶体材料信息学（<code>06</code>），以及下半学期的深度学习、SMILES 语言模型、分子生成模型（VAE）与图神经网络（GNN &amp; 机器学习势函数）。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/04-bayesian-optimization/04b_bayesian_optimization.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/04-bayesian-optimization.html">返回模块 04</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/04-bayesian-optimization/04a_gaussian_processes.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">04a — 贝叶斯优化（上）：高斯过程回归与预测不确定性量化</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/04-bayesian-optimization/04c_exercises.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">04c — 第四讲基础习题：高斯过程回归与贝叶斯优化巩固练习</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-环境准备与数据读取辅助函数">0. 环境准备与数据读取辅助函数</a></li>      <li class="toc-l2"><a href="#1-贝叶斯优化的四步闭环-利用-exploitation-vs-探索-exploration">1. 贝叶斯优化的四步闭环：利用（Exploitation）vs 探索（Exploration）</a></li>      <li class="toc-l2"><a href="#2-手写三大经典采集函数-greedy-ucb-ei">2. 手写三大经典采集函数（Greedy / UCB / EI）</a></li>      <li class="toc-l2"><a href="#3-连续材料工艺寻优-直观追踪-6-轮迭代跳出局部最优">3. 连续材料工艺寻优：直观追踪 6 轮迭代跳出局部最优</a></li>      <li class="toc-l3"><a href="#练习-04b-1-调节-ucb-探索权重-kappa-对跳出局部最优的影响">🏋️ 练习 04b-1：调节 UCB 探索权重 \(\kappa\) 对跳出局部最优的影响</a></li>      <li class="toc-l3"><a href="#练习-04b-2-二维材料工艺窗口寻优-退火温度-t-前驱体浓度-c">🏋️ 练习 04b-2：二维材料工艺窗口寻优（退火温度 \(T\) + 前驱体浓度 \(c\)）</a></li>      <li class="toc-l2"><a href="#4-真实化学合成寻优实战-buchwald-hartwig-钯催化偶联反应">4. 真实化学合成寻优实战：Buchwald–Hartwig 钯催化偶联反应</a></li>      <li class="toc-l3"><a href="#练习-04b-3-用化学结构指纹-morgan-fp-pca-替代纯编号-one-hot-编码">🏋️ 练习 04b-3：用化学结构指纹（Morgan FP + PCA）替代纯编号 One-Hot 编码</a></li>      <li class="toc-l2"><a href="#5-贝叶斯优化的适用边界与工程实践指南">5. 贝叶斯优化的适用边界与工程实践指南</a></li>      <li class="toc-l2"><a href="#小结-第四讲-贝叶斯优化-知识全景">小结：第四讲（贝叶斯优化）知识全景</a></li>      <li class="toc-l3"><a href="#后续课程衔接">后续课程衔接</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>
