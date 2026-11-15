@@ -1,0 +1,19 @@
+# Jupyter / Python caches
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.pytest_cache/
+
+# Local Windows launcher & OS files
+启动JupyterLab.bat
+Thumbs.db
+.DS_Store
+
+# Generated training artifacts / temporary outputs
+*.png
+!01 - Basics/solubility_vs_logp.png
+*.pt
+!08 - Sequence Models and Transformers/data/*.pt
+!09 - Generative Models/data/*.pt
