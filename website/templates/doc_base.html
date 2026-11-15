@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="doc-layout{% if with_toc %} doc-layout-toc{% endif %}">
+  {% include "_sidebar.html" %}
+  <main class="doc-main" id="main-content">
+    {% block doc_main %}{% endblock %}
+  </main>
+  {%- if with_toc %}{% include "_toc.html" %}{% endif %}
+</div>
+{% endblock %}

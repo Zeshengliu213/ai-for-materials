@@ -1,0 +1,55 @@
+# 构建课程网站并发布到 GitHub Pages。
+#
+# 首次使用需在仓库 Settings → Pages → Build and deployment → Source
+# 选择 "GitHub Actions"（只需设置一次）。
+name: Deploy course site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只跑一个部署；新的推送会取消排队中的旧任务，但不打断正在进行的部署。
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: website/requirements.txt
+
+      - name: Install build dependencies
+        run: pip install -r website/requirements.txt
+
+      - name: Build site
+        # --base-url 决定 sitemap.xml、canonical 链接与社交分享大图是否生成。
+        run: |
+          python website/build.py --clean \
+            --base-url "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

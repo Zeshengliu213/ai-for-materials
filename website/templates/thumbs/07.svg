@@ -1,0 +1,15 @@
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="显微图像卷积与神经网络层示意">
+  <g class="vz-grid">
+    <rect class="vz-surface" x="10" y="20" width="72" height="72" rx="3"/>
+    <path d="M10 44h72M10 68h72M34 20v72M58 20v72"/>
+  </g>
+  <rect class="vz-kernel" x="34" y="44" width="24" height="24"/>
+  <path class="vz-stroke-crimson" d="M92 56h22" marker-end="url(#vz-arrow)"/>
+  <g class="vz-edge">
+    <path d="M150 30l44 26M150 30l44 52M150 56l44-26M150 56l44 26M150 82l44-26M150 82l44 0M194 56l46 26M194 56l46-26M194 30l46 26M194 82l46-26"/>
+  </g>
+  <g class="vz-fill-navy"><circle cx="150" cy="30" r="6"/><circle cx="150" cy="56" r="6"/><circle cx="150" cy="82" r="6"/></g>
+  <g class="vz-fill-teal"><circle cx="194" cy="30" r="6"/><circle cx="194" cy="56" r="6"/><circle cx="194" cy="82" r="6"/></g>
+  <circle class="vz-fill-gold" cx="240" cy="56" r="7"/>
+  <path class="vz-stroke-crimson" d="M256 56h26" marker-end="url(#vz-arrow)"/>
+</svg>

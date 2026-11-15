@@ -1,0 +1,20 @@
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="SHAP 特征归因蜂群图示意">
+  <path class="vz-axis" d="M160 8v96"/>
+  <g class="vz-fill-crimson">
+    <circle cx="186" cy="22" r="4"/><circle cx="202" cy="20" r="4"/><circle cx="218" cy="24" r="4"/>
+    <circle cx="238" cy="21" r="4"/><circle cx="262" cy="23" r="4"/><circle cx="196" cy="48" r="4"/>
+    <circle cx="214" cy="50" r="4"/><circle cx="232" cy="46" r="4"/><circle cx="178" cy="74" r="4"/>
+    <circle cx="194" cy="76" r="4"/>
+  </g>
+  <g class="vz-fill-navy">
+    <circle cx="142" cy="24" r="4"/><circle cx="124" cy="21" r="4"/><circle cx="106" cy="23" r="4"/>
+    <circle cx="146" cy="48" r="4"/><circle cx="126" cy="50" r="4"/><circle cx="104" cy="46" r="4"/>
+    <circle cx="84" cy="49" r="4"/><circle cx="140" cy="74" r="4"/><circle cx="118" cy="76" r="4"/>
+    <circle cx="96" cy="72" r="4"/><circle cx="72" cy="75" r="4"/><circle cx="150" cy="98" r="4"/>
+    <circle cx="132" cy="100" r="4"/><circle cx="170" cy="97" r="4"/>
+  </g>
+  <g class="vz-fill-muted">
+    <rect x="12" y="19" width="42" height="5" rx="2.5"/><rect x="12" y="45" width="34" height="5" rx="2.5"/>
+    <rect x="12" y="71" width="38" height="5" rx="2.5"/><rect x="12" y="95" width="28" height="5" rx="2.5"/>
+  </g>
+</svg>

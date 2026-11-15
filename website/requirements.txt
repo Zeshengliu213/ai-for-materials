@@ -1,0 +1,5 @@
+# Build dependencies for the course website generator (python website/build.py).
+# Markdown and syntax highlighting are rendered at build time, so the published
+# pages show their text without any JavaScript.
+markdown-it-py>=3.0,<4
+Pygments>=2.17

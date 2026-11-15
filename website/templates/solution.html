@@ -1,0 +1,30 @@
+{% extends "doc_base.html" %}
+{% block doc_main %}
+<div class="breadcrumb">
+  <a href="{{ p }}index.html">课程主页</a> /
+  <a href="{{ p }}modules/{{ module.slug }}.html">模块 {{ module.num }}：{{ module.zh_title }}</a> /
+  <span>参考答案</span>
+</div>
+<h1><span class="kind-badge kind-{{ solution.kind }}">{{ "习题答案" if solution.is_exercise else "课件答案" }}</span>
+  {{ solution.title }}</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">答案文件：<code>{{ solution.filename }}</code>（{{ solution.size_label }}）</div>
+  <div class="toolbar-actions">
+    {%- if solution.colab_url %}
+    <a class="btn btn-colab" href="{{ solution.colab_url }}" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>
+    {%- endif %}
+    <a class="btn btn-secondary" href="{{ p }}{{ solution.download_href }}" download="{{ solution.filename }}">⬇ 下载答案 .ipynb</a>
+    <a class="btn btn-secondary" href="{{ p }}modules/{{ module.slug }}.html">返回模块 {{ module.num }}</a>
+  </div>
+</div>
+<div id="solution-gate" class="academic-box solution-gate-inner">
+  <strong>先自己做一遍，再看答案。</strong>
+  <p>直接阅读答案的学习效果远低于独立实现。建议至少尝试 20 分钟，卡住时先看习题里的
+    💡 提示，再展开本页。</p>
+  <p class="hint-inline">展开状态只在当前浏览器标签页有效，关闭标签页后会重新折叠。</p>
+  <button type="button" id="solution-reveal" class="btn btn-primary">我已尝试，展开参考答案</button>
+</div>
+<div id="solution-body" hidden>
+  {{ cells }}
+</div>
+{% endblock %}

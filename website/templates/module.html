@@ -1,0 +1,147 @@
+{% extends "doc_base.html" %}
+{% block doc_main %}
+<div class="breadcrumb"><a href="{{ p }}index.html">课程主页</a> / <span>模块 {{ module.num }}</span></div>
+<div class="module-head">
+  <span class="module-num">Module {{ module.num }}</span>
+  <span class="status-badge status-{{ module.status }}">{{ module.status_label }}</span>
+  <span class="module-head-en">{{ module.en_title }}</span>
+</div>
+<h1>{{ module.zh_title }}</h1>
+
+{%- if module.notebooks %}
+<div class="progress-panel" data-progress-keys="
+  {%- for nb in module.notebooks %}notebooks/{{ module.slug }}/{{ nb.stem }}.html{% if not loop.last %},{% endif %}{% endfor %}">
+  <div class="progress-head">
+    <strong>本模块学习进度</strong>
+    <span class="progress-count" data-progress-count>0 / {{ module.notebooks | length }}</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+  <p class="hint-inline">进度只保存在你当前浏览器（localStorage），不会上传到任何服务器。</p>
+</div>
+{%- endif %}
+
+{%- if module.slides %}
+<h2>讲课幻灯片（Slides）</h2>
+<ul class="slide-list">
+  {%- for deck in module.slides %}
+  <li><a href="{{ p }}{{ deck.href }}" target="_blank" rel="noopener">🖥 {{ deck.title }}</a></li>
+  {%- endfor %}
+</ul>
+{%- endif %}
+
+{%- if module.lectures %}
+<h2 id="lectures">互动实战课件（Notebooks）</h2>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>课件名称</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>
+      {%- for nb in module.lectures %}
+      {%- set nb_href = "notebooks/%s/%s.html" % (module.slug, nb.stem) %}
+      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="{{ nb_href }}"
+                 aria-label="把 {{ nb.filename }} 标记为已学完" />
+        </td>
+        <td><a href="{{ p }}{{ nb_href }}"><strong>{{ nb.title }}</strong></a><br/>
+          <code>{{ nb.filename }}</code></td>
+        <td>{{ nb.size_label }}</td>
+        <td>
+          <a class="btn btn-secondary" href="{{ p }}{{ nb_href }}">在线阅读</a>
+          <a class="btn btn-secondary" href="{{ p }}{{ nb.download_href }}" download="{{ nb.filename }}">下载</a>
+          {%- if nb.colab_url %}
+          <a class="btn btn-colab" href="{{ nb.colab_url }}" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>
+          {%- endif %}
+        </td>
+      </tr>
+      {%- endfor %}
+    </tbody>
+  </table>
+</div>
+{%- endif %}
+
+{%- if module.exercises %}
+<h2 id="exercises">课后习题（Exercises）<span class="kind-badge kind-exercise">习题</span></h2>
+<p class="hint-inline">建议在完成本模块全部课件后再做习题；参考答案默认折叠，请先独立完成。
+  也可以在<a href="{{ p }}exercises.html">全部习题汇总页</a>统一查看各模块习题。</p>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>
+      {%- for nb in module.exercises %}
+      {%- set nb_href = "notebooks/%s/%s.html" % (module.slug, nb.stem) %}
+      {%- set sol = module.solution_for(nb) %}
+      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="{{ nb_href }}"
+                 aria-label="把 {{ nb.filename }} 标记为已完成" />
+        </td>
+        <td><a href="{{ p }}{{ nb_href }}"><strong>{{ nb.title }}</strong></a><br/>
+          <code>{{ nb.filename }}</code></td>
+        <td>{{ nb.size_label }}</td>
+        <td>
+          <a class="btn btn-secondary" href="{{ p }}{{ nb_href }}">开始做题</a>
+          <a class="btn btn-secondary" href="{{ p }}{{ nb.download_href }}" download="{{ nb.filename }}">下载</a>
+          {%- if nb.colab_url %}
+          <a class="btn btn-colab" href="{{ nb.colab_url }}" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>
+          {%- endif %}
+          {%- if sol %}
+          <a class="btn btn-secondary" href="{{ p }}solutions/{{ module.slug }}/{{ sol.stem }}.html">参考答案</a>
+          {%- endif %}
+        </td>
+      </tr>
+      {%- endfor %}
+    </tbody>
+  </table>
+</div>
+{%- elif module.notebooks %}
+<h2 id="exercises">课后习题（Exercises）</h2>
+<div class="academic-box">
+  <p class="hint-inline">本模块的习题 Notebook 还在编写中。可以先完成课件内标有
+    <strong>🏋️ 练习</strong> 的段落，或到<a href="{{ p }}exercises.html">全部习题汇总页</a>
+    看看已经上线的模块习题。</p>
+</div>
+{%- endif %}
+
+{%- if module.solutions %}
+<h2 id="solutions">参考答案（Solutions）</h2>
+<p class="hint-inline">答案页默认折叠，请先独立完成练习再展开。</p>
+<ul class="solution-list">
+  {%- for sol in module.solutions %}
+  <li><span class="kind-badge kind-{{ sol.kind }}">{{ "习题答案" if sol.is_exercise else "课件答案" }}</span>
+    <a href="{{ p }}solutions/{{ module.slug }}/{{ sol.stem }}.html">✅ {{ sol.title }}</a>
+    (<code>{{ sol.filename }}</code> · {{ sol.size_label }}) —
+    <a href="{{ p }}{{ sol.download_href }}" download="{{ sol.filename }}">下载 .ipynb</a></li>
+  {%- endfor %}
+</ul>
+{%- endif %}
+
+{%- if module.datasets %}
+<h2>配套数据集（Datasets）</h2>
+<ul>
+  {%- for ds in module.datasets %}
+  <li><code>{{ ds.filename }}</code> ({{ ds.size_label }}) —
+    <a href="{{ p }}{{ ds.href }}" download="{{ ds.filename }}">下载数据集</a></li>
+  {%- endfor %}
+</ul>
+{%- endif %}
+
+{%- if module.outline %}
+<h2>{% if module.status == 'todo' %}本模块编写计划{% else %}后续补充计划{% endif %}</h2>
+<div class="academic-box">
+  <ul class="outline-list">
+    {%- for entry in module.outline %}
+    <li>{{ entry | safe }}</li>
+    {%- endfor %}
+  </ul>
+  <p class="hint-inline">内容正在编写中，欢迎先浏览已上线的其他模块。</p>
+</div>
+{%- endif %}
+
+<h2>模块导读与教学设计</h2>
+{%- if readme %}
+<div class="markdown-body">{{ readme }}</div>
+{%- else %}
+<div class="academic-box"><strong>模块简介：</strong>{{ module.summary }}</div>
+{%- endif %}
+{% include "_pager.html" %}
+{% endblock %}

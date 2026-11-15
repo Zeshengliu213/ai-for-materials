@@ -17,3 +17,6 @@ Thumbs.db
 *.pt
 !08 - Sequence Models and Transformers/data/*.pt
 !09 - Generative Models/data/*.pt
+
+# 课程网站构建产物（由 GitHub Actions 自动构建并发布，不进版本库）
+website/dist/

@@ -1,0 +1,27 @@
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">
+      {%- for module in modules %}
+      <li>
+        <a href="{{ p }}modules/{{ module.slug }}.html"
+           {% if module.slug == current_slug and not current_nb %}class="active"{% endif %}>
+          <strong>{{ module.num }}</strong> · {{ module.zh_title }}
+        </a>
+      </li>
+      {%- if module.slug == current_slug %}
+      {%- for nb in module.notebooks %}
+      <li class="sidebar-sub">
+        <a href="{{ p }}notebooks/{{ module.slug }}/{{ nb.stem }}.html"
+           data-progress-mark="notebooks/{{ module.slug }}/{{ nb.stem }}.html"
+           {% if current_nb == nb.stem %}class="active"{% endif %}>{{ "🏋️" if nb.is_exercise else "📓" }} {{ nb.filename }}</a>
+      </li>
+      {%- endfor %}
+      {%- endif %}
+      {%- endfor %}
+    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="{{ p }}exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>

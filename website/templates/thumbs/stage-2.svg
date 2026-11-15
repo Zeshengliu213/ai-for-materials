@@ -1,0 +1,5 @@
+<svg class="stage-icon" viewBox="0 0 48 48" aria-hidden="true">
+  <path class="vz-axis" d="M8 40h34M8 40V8"/>
+  <path class="vz-dashed" d="M8 40L40 10"/>
+  <g class="vz-fill-navy"><circle cx="16" cy="34" r="3"/><circle cx="24" cy="26" r="3"/><circle cx="33" cy="17" r="3"/></g>
+</svg>

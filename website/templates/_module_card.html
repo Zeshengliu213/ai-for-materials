@@ -1,0 +1,35 @@
+<article class="module-card module-card-{{ module.status }}">
+  <div>
+    <a class="module-thumb" href="modules/{{ module.slug }}.html" tabindex="-1" aria-hidden="true">
+      {% include "thumbs/" ~ module.num ~ ".svg" ignore missing %}
+    </a>
+    <div class="module-card-top">
+      <span class="module-num">Module {{ module.num }}</span>
+      <span class="status-badge status-{{ module.status }}">{{ module.status_label }}</span>
+    </div>
+    <h3 class="module-title"><a href="modules/{{ module.slug }}.html">{{ module.zh_title }}</a></h3>
+    <p class="module-desc">{{ module.summary }}</p>
+    <ul class="module-notebooks">
+      {%- if module.notebooks %}
+      {%- for nb in module.notebooks[:6] %}
+      <li><a href="notebooks/{{ module.slug }}/{{ nb.stem }}.html"
+             data-progress-mark="notebooks/{{ module.slug }}/{{ nb.stem }}.html">{{ "🏋️" if nb.is_exercise else "📓" }} {{ nb.filename }}</a>
+        <span class="module-nb-size">{{ nb.size_label }}</span></li>
+      {%- endfor %}
+      {%- else %}
+      <li class="module-nb-planned">{{ (module.outline[0] if module.outline else "课件编写规划中") | safe }}</li>
+      {%- endif %}
+    </ul>
+  </div>
+  {%- if module.notebooks %}
+  <div class="card-progress" data-progress-keys="
+    {%- for nb in module.notebooks %}notebooks/{{ module.slug }}/{{ nb.stem }}.html{% if not loop.last %},{% endif %}{% endfor %}">
+    <div class="progress-track progress-track-sm"><div class="progress-fill" data-progress-fill></div></div>
+    <span class="progress-count" data-progress-count>0 / {{ module.notebooks | length }}</span>
+  </div>
+  {%- endif %}
+  <div class="module-card-footer">
+    <span>{{ module.lectures | length }} 课件 · {{ module.exercises | length }} 习题 · {{ module.datasets | length }} 数据集</span>
+    <a href="modules/{{ module.slug }}.html">{% if module.status == 'todo' %}查看编写计划{% else %}进入模块{% endif %} →</a>
+  </div>
+</article>

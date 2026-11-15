@@ -1,0 +1,6 @@
+<svg class="stage-icon" viewBox="0 0 48 48" aria-hidden="true">
+  <rect class="vz-surface" x="4" y="8" width="20" height="32" rx="3"/>
+  <g class="vz-grid"><path d="M4 18h20M4 29h20M14 8v32"/></g>
+  <path class="vz-stroke-crimson" d="M28 24h6"/>
+  <path class="vz-line" d="M40 16l6 4v8l-6 4-6-4v-8z"/>
+</svg>

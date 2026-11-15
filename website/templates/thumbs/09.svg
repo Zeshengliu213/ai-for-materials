@@ -1,0 +1,18 @@
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="隐空间采样生成新分子示意">
+  <ellipse class="vz-latent" cx="74" cy="55" rx="58" ry="42"/>
+  <g class="vz-fill-navy" opacity="0.75">
+    <circle cx="52" cy="36" r="3.5"/><circle cx="78" cy="28" r="3.5"/><circle cx="96" cy="46" r="3.5"/>
+    <circle cx="44" cy="60" r="3.5"/><circle cx="66" cy="68" r="3.5"/><circle cx="92" cy="74" r="3.5"/>
+    <circle cx="60" cy="50" r="3.5"/><circle cx="108" cy="60" r="3.5"/>
+  </g>
+  <circle class="vz-fill-crimson" cx="80" cy="54" r="6"/>
+  <path class="vz-stroke-crimson" d="M142 55h30" marker-end="url(#vz-arrow)"/>
+  <g class="vz-line" stroke-width="2">
+    <path d="M206 30l20 12v24l-20 12-20-12V42z"/>
+    <path d="M226 42l20-12M186 66l-18 10"/>
+    <path d="M276 46l16 9v18l-16 9-16-9V55z"/>
+    <path d="M246 30l14 16"/>
+  </g>
+  <circle class="vz-fill-teal" cx="246" cy="30" r="5"/>
+  <circle class="vz-fill-gold" cx="168" cy="76" r="5"/>
+</svg>

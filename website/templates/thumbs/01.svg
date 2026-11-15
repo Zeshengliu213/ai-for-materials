@@ -1,0 +1,23 @@
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="数据表与分子结构示意">
+  <rect class="vz-surface" x="8" y="18" width="120" height="74" rx="4"/>
+  <rect class="vz-fill-navy" x="8" y="18" width="120" height="15" rx="4" opacity="0.85"/>
+  <g class="vz-grid">
+    <path d="M8 48h120M8 63h120M8 78h120M48 18v74M88 18v74"/>
+  </g>
+  <g class="vz-fill-muted">
+    <rect x="15" y="40" width="24" height="4" rx="2"/><rect x="55" y="40" width="24" height="4" rx="2"/>
+    <rect x="95" y="40" width="24" height="4" rx="2"/><rect x="15" y="55" width="18" height="4" rx="2"/>
+    <rect x="55" y="55" width="26" height="4" rx="2"/><rect x="95" y="55" width="16" height="4" rx="2"/>
+    <rect x="15" y="70" width="26" height="4" rx="2"/><rect x="55" y="70" width="18" height="4" rx="2"/>
+    <rect x="95" y="70" width="22" height="4" rx="2"/>
+  </g>
+  <path class="vz-stroke-crimson" d="M146 55h24" marker-end="url(#vz-arrow)"/>
+  <g class="vz-line" stroke-width="2">
+    <path d="M214 34l22 13v26l-22 13-22-13V47z"/>
+    <path d="M218 44l15 9v17l-15 9-15-9V53z" opacity="0.5"/>
+    <path d="M236 47l20-11M192 47l-20-11M214 86v20"/>
+  </g>
+  <circle class="vz-fill-teal" cx="256" cy="36" r="5"/>
+  <circle class="vz-fill-gold" cx="172" cy="36" r="5"/>
+  <circle class="vz-fill-crimson" cx="214" cy="106" r="5"/>
+</svg>

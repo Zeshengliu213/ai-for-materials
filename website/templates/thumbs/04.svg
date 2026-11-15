@@ -1,0 +1,10 @@
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="高斯过程置信区间与采集函数示意">
+  <path class="vz-band" d="M20 62C70 16 96 10 134 30c38 20 60 70 100 58 24-7 44-34 66-46v38c-22 16-42 34-66 38-40 7-62-28-100-40C96 66 70 70 20 92z"/>
+  <path class="vz-stroke-navy" d="M20 76C70 42 96 36 134 50c38 14 60 50 100 42 24-5 44-26 66-38"/>
+  <g class="vz-fill-crimson">
+    <circle cx="62" cy="62" r="4.5"/><circle cx="134" cy="50" r="4.5"/><circle cx="214" cy="84" r="4.5"/>
+  </g>
+  <path class="vz-stroke-gold vz-dashed-soft" d="M20 104c60 0 70-2 96-14 26-12 40 12 70 10 34-2 80-24 114-38"/>
+  <path class="vz-stroke-gold" d="M300 62v14" stroke-width="2"/>
+  <circle class="vz-fill-gold" cx="300" cy="62" r="5"/>
+</svg>

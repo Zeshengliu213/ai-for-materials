@@ -1,0 +1,11 @@
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="分子图上的消息传递示意">
+  <g class="vz-edge" stroke-width="2">
+    <path d="M60 34l56 20M116 54l58-24M174 30l54 26M116 54l44 46M60 34L46 86M228 56l48-22M228 56l24 42"/>
+  </g>
+  <g class="vz-msg">
+    <path d="M78 40l22 8M132 46l26-11M190 36l24 12M132 66l16 17"/>
+  </g>
+  <g class="vz-fill-navy"><circle cx="60" cy="34" r="9"/><circle cx="174" cy="30" r="9"/><circle cx="276" cy="34" r="9"/></g>
+  <g class="vz-fill-teal"><circle cx="116" cy="54" r="10"/><circle cx="228" cy="56" r="10"/></g>
+  <g class="vz-fill-gold"><circle cx="46" cy="86" r="8"/><circle cx="160" cy="100" r="8"/><circle cx="252" cy="98" r="8"/></g>
+</svg>

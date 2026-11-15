@@ -1,0 +1,70 @@
+{% extends "doc_base.html" %}
+{% block doc_main %}
+<div class="breadcrumb"><a href="{{ p }}index.html">课程主页</a> / <span>全部习题</span></div>
+<h1>全部习题与参考答案</h1>
+<p class="lede">课程共上线 <strong>{{ total_exercises }}</strong> 份习题 Notebook。
+  每份习题都配有参考答案（默认折叠），建议先独立完成再对照。</p>
+
+{%- if total_exercises %}
+<div class="progress-panel" data-progress-keys="{{ progress_keys }}">
+  <div class="progress-head">
+    <strong>习题总进度</strong>
+    <span class="progress-count" data-progress-count>0 / {{ total_exercises }}</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+  <p class="hint-inline">进度只保存在你当前浏览器（localStorage），清理浏览器数据会丢失。</p>
+</div>
+{%- endif %}
+
+{%- for group in groups %}
+{%- set module = group.module %}
+<section class="exercise-group">
+  <h2 id="module-{{ module.num }}">
+    <span class="module-num">Module {{ module.num }}</span> {{ module.zh_title }}
+  </h2>
+  {%- if group.rows %}
+  <div class="markdown-body">
+    <table class="nb-table">
+      <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+      <tbody>
+        {%- for row in group.rows %}
+        <tr>
+          <td class="nb-check-cell">
+            <input type="checkbox" class="progress-check" data-progress-key="{{ row.href }}"
+                   aria-label="把 {{ row.nb.filename }} 标记为已完成" />
+          </td>
+          <td><a href="{{ p }}{{ row.href }}"><strong>{{ row.nb.title }}</strong></a><br/>
+            <code>{{ row.nb.filename }}</code></td>
+          <td>{{ row.nb.size_label }}</td>
+          <td>
+            <a class="btn btn-secondary" href="{{ p }}{{ row.href }}">开始做题</a>
+            <a class="btn btn-secondary" href="{{ p }}{{ row.nb.download_href }}"
+               download="{{ row.nb.filename }}">下载</a>
+            {%- if row.nb.colab_url %}
+            <a class="btn btn-colab" href="{{ row.nb.colab_url }}" target="_blank" rel="noopener">▶ Colab</a>
+            {%- endif %}
+            {%- if row.solution_href %}
+            <a class="btn btn-secondary" href="{{ p }}{{ row.solution_href }}">参考答案</a>
+            {%- endif %}
+          </td>
+        </tr>
+        {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+  {%- else %}
+  <div class="academic-box">
+    <p class="hint-inline">
+      {%- if group.planned %}
+      本模块课件尚在编写中，习题会随课件一起上线 —— 先看
+      <a href="{{ p }}modules/{{ module.slug }}.html">编写计划</a>。
+      {%- else %}
+      本模块习题 Notebook 编写中。课件内已有标注 <strong>🏋️ 练习</strong> 的随堂练习，
+      可从 <a href="{{ p }}modules/{{ module.slug }}.html">模块页</a> 进入。
+      {%- endif %}
+    </p>
+  </div>
+  {%- endif %}
+</section>
+{%- endfor %}
+{% endblock %}

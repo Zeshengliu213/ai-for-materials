@@ -1,0 +1,28 @@
+<section class="roadmap" aria-labelledby="roadmap-title">
+  <div class="roadmap-head">
+    <h2 id="roadmap-title" class="section-title-plain">课程知识脉络（Roadmap）</h2>
+    <p class="roadmap-lead">从“把材料变成数字”到“让模型反过来设计材料”——点击任意节点直接进入对应模块。</p>
+  </div>
+  <ol class="roadmap-track">
+    {%- for stage in roadmap %}
+    <li class="roadmap-stage{% if stage.done %} roadmap-stage-done{% endif %}">
+      <div class="roadmap-stage-top">
+        <span class="roadmap-index">{{ "%02d" | format(stage.index) }}</span>
+        {% include "thumbs/" ~ stage.icon ~ ".svg" %}
+      </div>
+      <h3 class="roadmap-stage-title">{{ stage.title }}</h3>
+      <p class="roadmap-stage-desc">{{ stage.desc }}</p>
+      <div class="roadmap-chips">
+        {%- for module in stage.members %}
+        <a class="roadmap-chip roadmap-chip-{{ module.status }}"
+           href="modules/{{ module.slug }}.html"
+           title="模块 {{ module.num }}：{{ module.zh_title }}（{{ module.status_label }}）">
+          <span class="roadmap-chip-num">{{ module.num }}</span>
+          <span class="roadmap-chip-title">{{ module.zh_title }}</span>
+        </a>
+        {%- endfor %}
+      </div>
+    </li>
+    {%- endfor %}
+  </ol>
+</section>

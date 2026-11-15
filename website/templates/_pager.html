@@ -1,0 +1,16 @@
+{%- if previous or following %}
+<nav class="pager" aria-label="课程顺序导航">
+  {%- if previous %}
+  <a class="pager-link pager-prev" href="{{ p }}{{ previous.href }}" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">{{ previous.title }}</span>
+  </a>
+  {%- else %}<span></span>{% endif %}
+  {%- if following %}
+  <a class="pager-link pager-next" href="{{ p }}{{ following.href }}" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">{{ following.title }}</span>
+  </a>
+  {%- else %}<span></span>{% endif %}
+</nav>
+{%- endif %}

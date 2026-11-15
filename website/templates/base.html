@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{{ description }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="{{ page_title }}" />
+  <meta property="og:description" content="{{ description }}" />
+  <meta property="og:site_name" content="{{ site.title }}" />
+  {%- if canonical %}
+  <link rel="canonical" href="{{ canonical }}" />
+  <meta property="og:url" content="{{ canonical }}" />
+  {%- elif site.base_url %}
+  <meta property="og:url" content="{{ site.base_url }}" />
+  {%- endif %}
+  {%- if site.base_url %}
+  <meta property="og:image" content="{{ site.base_url }}/assets/social-card.svg" />
+  <meta name="twitter:image" content="{{ site.base_url }}/assets/social-card.svg" />
+  {%- endif %}
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="{{ favicon }}" />
+  <link rel="stylesheet" href="{{ p }}assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="{{ p }}assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="{{ p }}assets/pygments.css" />
+  <link rel="stylesheet" href="{{ p }}assets/style.css" />
+  <link rel="stylesheet" href="{{ p }}assets/components.css" />
+  <script>
+    window.AI4M_BASE = "{{ p }}";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="{{ p }}assets/vendor/katex/katex.min.js"></script>
+  <script defer src="{{ p }}assets/search-index.js"></script>
+  <script defer src="{{ p }}assets/app.js"></script>
+  {%- block head_extra %}{% endblock %}
+  <title>{{ page_title }}</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="{{ p }}index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">{{ site.title }}</span>
+        <span class="brand-sub">{{ site.subtitle }}</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="{{ p }}index.html"{% if active == 'home' %} class="active"{% endif %}>课程主页</a>
+      <a href="{{ p }}index.html#syllabus"{% if active == 'syllabus' %} class="active"{% endif %}>课程大纲</a>
+      <a href="{{ p }}exercises.html"{% if active == 'exercises' %} class="active"{% endif %}>习题与答案</a>
+      <a href="{{ p }}index.html#legend">学习指南</a>
+      <a href="{{ p }}index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+{% block body %}{% endblock %}
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

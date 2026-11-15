@@ -1,0 +1,13 @@
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="预测值对真实值的 parity 散点图">
+  <g class="vz-axis"><path d="M40 96h250M40 96V10"/></g>
+  <path class="vz-dashed" d="M40 96L286 14"/>
+  <g class="vz-band-teal">
+    <path d="M40 96L286 14l12 18L52 110z" opacity="0.14"/>
+  </g>
+  <g class="vz-fill-navy">
+    <circle cx="72" cy="86" r="4"/><circle cx="104" cy="72" r="4"/><circle cx="118" cy="80" r="4"/>
+    <circle cx="146" cy="62" r="4"/><circle cx="162" cy="54" r="4"/><circle cx="186" cy="52" r="4"/>
+    <circle cx="206" cy="38" r="4"/><circle cx="232" cy="34" r="4"/><circle cx="258" cy="22" r="4"/>
+  </g>
+  <g class="vz-fill-crimson"><circle cx="128" cy="38" r="4"/><circle cx="214" cy="74" r="4"/></g>
+</svg>

@@ -1,0 +1,16 @@
+<svg class="module-thumb-svg" viewBox="0 0 320 110" role="img" aria-label="晶胞结构与模拟 XRD 谱图示意">
+  <g class="vz-line">
+    <path d="M30 40l44-22 44 22v44l-44 22-44-22z" opacity="0.35"/>
+    <path d="M30 40l44 22 44-22M74 62v44"/>
+  </g>
+  <g class="vz-fill-navy">
+    <circle cx="30" cy="40" r="5"/><circle cx="118" cy="40" r="5"/>
+    <circle cx="30" cy="84" r="5"/><circle cx="118" cy="84" r="5"/>
+  </g>
+  <g class="vz-fill-gold"><circle cx="74" cy="18" r="5"/><circle cx="74" cy="106" r="5"/></g>
+  <circle class="vz-fill-crimson" cx="74" cy="62" r="6"/>
+  <g class="vz-axis"><path d="M160 96h150"/></g>
+  <g class="vz-stroke-teal" stroke-width="2.4">
+    <path d="M176 96V54M198 96V72M222 96V28M244 96V66M266 96V44M288 96V78"/>
+  </g>
+</svg>

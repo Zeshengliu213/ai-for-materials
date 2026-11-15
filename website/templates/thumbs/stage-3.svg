@@ -1,0 +1,6 @@
+<svg class="stage-icon" viewBox="0 0 48 48" aria-hidden="true">
+  <path class="vz-band" d="M5 30C14 12 24 10 32 20c6 8 10 10 12 4v14c-4 6-10 2-16-6-6-8-14-6-23 6z"/>
+  <path class="vz-stroke-navy" d="M5 32C14 18 24 16 32 24c6 6 10 6 12 0"/>
+  <circle class="vz-fill-crimson" cx="21" cy="21" r="3.5"/>
+  <circle class="vz-fill-gold" cx="38" cy="26" r="3.5"/>
+</svg>

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block head_extra %}
+  <script type="application/ld+json">{{ course_jsonld }}</script>
+{% endblock %}
+{% block body %}
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Graduate Course · 零基础材料研究生一学期实战课程</div>
+    <h1>AI for Materials Science</h1>
+    <p class="hero-desc">
+      本课程面向零编程基础的材料、化学与物理专业研究生，融合林雪平大学（LiU）<em>AI for Materials Science</em>
+      宏观教学脉络与 EPFL CH-457 互动实战设计。全程基于 Python、Scikit-Learn、RDKit、Pymatgen 与 PyTorch，
+      纯 CPU 即可在本地或 Google Colab 流畅运行。
+    </p>
+    <div class="hero-meta">
+      <span>📚 共 {{ modules | length }} 大课程模块</span>
+      <span>📓 已上线 {{ total_notebooks }} 份互动 Notebook 课件</span>
+      <span>🏋️ {{ total_exercises }} 份课后习题（均配参考答案）</span>
+      <span>🧪 涵盖有机半导体、催化剂发现、晶体材料与图神经网络</span>
+    </div>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#syllabus">浏览课程大纲</a>
+      <a class="btn btn-outline-light" href="{{ first_href }}">从模块 01 开始学习</a>
+      <a class="btn btn-outline-light" href="exercises.html">做习题</a>
+    </div>
+  </div>
+</section>
+
+<main class="container" id="main-content">
+  {% include "_roadmap.html" %}
+
+  <section id="syllabus">
+    <div class="section-header">
+      <h2 class="section-title-plain">课程大纲与课件目录（Syllabus）</h2>
+      <div class="filter-bar">
+        <input id="module-search" class="search-input" type="search"
+               placeholder="筛选模块（如 RDKit / GNN）..." aria-label="筛选课程模块" />
+      </div>
+    </div>
+
+    <div class="progress-panel progress-panel-wide" data-progress-keys="{{ all_progress_keys }}">
+      <div class="progress-head">
+        <strong>我的学习进度</strong>
+        <span class="progress-count" data-progress-count>0 / {{ total_notebooks }}</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+      <div class="progress-foot">
+        <span class="hint-inline">进度只保存在当前浏览器（localStorage），不会上传服务器。</span>
+        <button type="button" id="progress-reset" class="btn btn-secondary">重置进度</button>
+      </div>
+    </div>
+
+    <div class="semester-label">上半学期 · 科学计算、经典机器学习与材料信息学（模块 01–06）</div>
+    <div class="module-grid">
+      {%- for module in part1 %}{% include "_module_card.html" %}{% endfor %}
+    </div>
+
+    <div class="semester-label">下半学期 · 材料深度学习、生成模型与图神经网络（模块 07–10）</div>
+    <div class="module-grid">
+      {%- for module in part2 %}{% include "_module_card.html" %}{% endfor %}
+    </div>
+  </section>
+
+  <section id="legend">
+    <h2>Notebook 互动标记说明</h2>
+    <div class="academic-box">
+      <p class="box-lead">所有实战 Notebook 均采用统一的互动教学标记，建议按“先预测、再运行、后修改”的节奏学习：</p>
+      <div class="legend-grid">
+        <div class="legend-item"><strong>📘 讲解</strong><br/>仔细阅读材料/化学物理背景与算法原理</div>
+        <div class="legend-item"><strong>🤔 先猜一猜</strong><br/>运行代码之前先思考程序会输出什么结果</div>
+        <div class="legend-item"><strong>▶️ 运行看看</strong><br/>选中代码格，按 <code>Shift + Enter</code> 执行</div>
+        <div class="legend-item"><strong>✏️ 改一改</strong><br/>修改标有 <code># ✏️</code> 的参数后重新运行观察变化</div>
+        <div class="legend-item"><strong>🏋️ 练习</strong><br/>独立编写代码（参考答案位于各章 <code>solutions/</code>）</div>
+        <div class="legend-item"><strong>💡 小贴士</strong><br/>实用的科研工程技巧或后续章节伏笔提示</div>
+      </div>
+    </div>
+  </section>
+
+  {%- if slide_modules %}
+  <section id="slides">
+    <h2>讲课幻灯片（Slides）</h2>
+    <div class="academic-box">
+      <ul class="slide-list">
+        {%- for module in slide_modules %}
+        {%- for deck in module.slides %}
+        <li><a href="{{ deck.href }}" target="_blank" rel="noopener">🖥 模块 {{ module.num }} · {{ deck.title }}</a></li>
+        {%- endfor %}
+        {%- endfor %}
+      </ul>
+    </div>
+  </section>
+  {%- endif %}
+
+  <section id="exercises-intro">
+    <h2>习题与参考答案</h2>
+    <div class="academic-box">
+      <p class="box-lead">课程共 <strong>{{ total_exercises }}</strong> 份习题 Notebook，
+        全部汇总在 <a href="exercises.html">习题与答案</a> 页面，可按模块查看完成进度。</p>
+      <p>每份习题都配独立的参考答案页，默认折叠显示 —— 先独立完成，再展开对照，
+        这是本课程最重要的学习节奏。</p>
+    </div>
+  </section>
+
+  <section id="setup">
+    <h2>运行环境配置指南</h2>
+    <div class="academic-box">
+      <p class="box-lead"><strong>方式一：Google Colab（零配置推荐）</strong></p>
+      <p>{{ colab_text }}</p>
+      <p><strong>方式二：本地 Conda / Python 环境</strong></p>
+      <pre><code>conda create -n ai4m python=3.10 -y
+conda activate ai4m
+pip install numpy pandas matplotlib seaborn scikit-learn rdkit pymatgen torch jupyter</code></pre>
+    </div>
+  </section>
+</main>
+{% endblock %}

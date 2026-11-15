@@ -1,0 +1,40 @@
+{% extends "doc_base.html" %}
+{% block doc_main %}
+<div class="breadcrumb">
+  <a href="{{ p }}index.html">课程主页</a> /
+  <a href="{{ p }}modules/{{ module.slug }}.html">模块 {{ module.num }}：{{ module.zh_title }}</a> /
+  {%- if nb.is_exercise %}
+  <a href="{{ p }}exercises.html">习题</a> /
+  {%- endif %}
+  <span>{{ nb.filename }}</span>
+</div>
+<h1>{%- if nb.is_exercise %}<span class="kind-badge kind-exercise">习题</span> {% endif %}{{ nb.title }}</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    {{ "习题文件" if nb.is_exercise else "课件文件" }}：<code>{{ nb.filename }}</code>（{{ nb.size_label }}）
+  </div>
+  <div class="toolbar-actions">
+    {%- if nb.colab_url %}
+    <a class="btn btn-colab" href="{{ nb.colab_url }}" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>
+    {%- endif %}
+    <a class="btn btn-secondary" href="{{ p }}{{ nb.download_href }}" download="{{ nb.filename }}">⬇ 下载 .ipynb</a>
+    {%- if nb_solution %}
+    <a class="btn btn-secondary" href="{{ p }}solutions/{{ module.slug }}/{{ nb_solution.stem }}.html">查看参考答案</a>
+    {%- endif %}
+    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/{{ module.slug }}/{{ nb.stem }}.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+{{ cells }}
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/{{ module.slug }}/{{ nb.stem }}.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="{{ p }}modules/{{ module.slug }}.html">返回模块 {{ module.num }}</a>
+  {%- if nb.is_exercise %}
+  <a class="btn btn-secondary" href="{{ p }}exercises.html">全部习题汇总</a>
+  {%- endif %}
+</div>
+{% include "_pager.html" %}
+{% endblock %}

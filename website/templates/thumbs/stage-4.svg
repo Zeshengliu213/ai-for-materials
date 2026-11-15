@@ -1,0 +1,6 @@
+<svg class="stage-icon" viewBox="0 0 48 48" aria-hidden="true">
+  <g class="vz-line"><path d="M10 16l12-7 12 7v16l-12 7-12-7z" opacity="0.4"/><path d="M10 16l12 7 12-7M22 23v16"/></g>
+  <g class="vz-fill-navy"><circle cx="10" cy="16" r="3"/><circle cx="34" cy="16" r="3"/><circle cx="10" cy="32" r="3"/><circle cx="34" cy="32" r="3"/></g>
+  <circle class="vz-fill-crimson" cx="22" cy="23" r="3.5"/>
+  <g class="vz-stroke-teal" stroke-width="2"><path d="M40 40V28M44 40V20"/></g>
+</svg>

@@ -1,0 +1,12 @@
+{%- if headings | length >= 3 %}
+<nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">
+      {%- for heading in headings %}
+      <li class="toc-l{{ heading.level }}"><a href="#{{ heading.id }}">{{ heading.text }}</a></li>
+      {%- endfor %}
+    </ul>
+  </details>
+</nav>
+{%- endif %}
