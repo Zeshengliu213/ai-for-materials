@@ -8,7 +8,9 @@
 | `01b_pandas.ipynb` | 纯 Python 文本读写；Pandas `DataFrame`/`Series` 入门，读入 AqSolDB，数据体检，选列选行与多条件筛选，排序，列运算与 `.apply()`，`groupby` 分组统计，`merge`/`concat` 与缺失值处理 |
 | `01c_plotting.ipynb` | Matplotlib 折线图、经验公式拟合与外推风险、直方图、多维散点图、多子图排版与高清导出；Seaborn 分组分布、箱线图、回归趋势、相关性热图与 `pairplot` |
 | `01d_rdkit_basics.ipynb` | SMILES 语法、分子绘制与规范化（Canonical SMILES），原子/键/共轭/环系遍历，物理化学描述符，Morgan 指纹与 Tanimoto 相似度，Murcko 骨架，RDKit + Pandas 批量清洗与 SMARTS 子结构检索 |
-| `solutions/01_basics_solutions.ipynb` | 全部 13 道课堂练习的参考答案与解析 |
+| `01e_exercises.ipynb` | **第一讲基础巩固习题**：涵盖 Python 语法、NumPy/Pandas 数据筛选统计、Matplotlib 双子图绘制与 RDKit 描述符/指纹计算的 10 道分步基础练习 |
+| `solutions/01_basics_solutions.ipynb` | `01a`–`01d` 全部 13 道随堂练习的参考答案与解析 |
+| `solutions/01_exercises_solutions.ipynb` | `01e_exercises.ipynb` 全部 10 道基础习题的参考答案与解析 |
 | `data/solubility.csv` | AqSolDB 水溶解度数据集（9482 个化合物的名称、SMILES、实验 $\log S$ 及 17 个 RDKit 描述符） |
 
 建议学习顺序：`01a` → `01b` → `01c` → `01d`，每个 Notebook 约需 1.5 至 2 学时。

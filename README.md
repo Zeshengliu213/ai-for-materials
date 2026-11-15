@@ -39,6 +39,47 @@
 | 🏋️ | 练习 | 独立编写代码（参考答案在各章 `solutions/` 文件夹） |
 | 💡 | 小贴士 | 实用的工程技巧或伏笔提示 |
 
+## 🎨 统一科研绘图风格（ai4m.mplstyle）
+
+课程自带一套与[课程网站](../website/)同源的 Matplotlib 风格，让每份 Notebook 跑出来的图
+直接是可投稿的版式：配色为深海蓝 `#16324f` / 学院暗红 `#8c2d19` / 青绿 `#0f766e` /
+金棕 `#b45309`，去掉上、右边框，只保留横向浅灰网格，标题左对齐加粗，图例无边框，
+`savefig` 默认 300 dpi。
+
+在任意 Notebook 的 import 之后加两行即可（本地与 Colab 通用）：
+
+```python
+import pathlib, sys
+sys.path.insert(0, str(pathlib.Path.cwd().parent))   # course/ 根目录
+import ai4m_style as ai4m
+
+C = ai4m.use()        # 应用风格，返回课程配色
+```
+
+之后：
+
+- 多条曲线自动按课程色序上色，不用手动指定；
+- 需要点名某个颜色时写 `color=C.crimson`（可用 `navy / navy_light / crimson / gold /
+  teal / steel / taupe / sage / slate / ink / muted`）；
+- 三个课程色图可直接用名字取：`cmap="ai4m"`（顺序，适合密度/概率）、
+  `cmap="ai4m_div"`（发散，适合残差与 SHAP）、`cmap="ai4m_heat"`（密度/计数），
+  每个都有对应的 `_r` 反序版本；
+- 坐标轴标签统一用英文（投稿、组会直接可用）；课堂演示要写中文时调用
+  `ai4m.use(chinese=True)`，它会在系统里挑一个真实存在的中文字体，
+  找不到就明确提示而不是画出一堆豆腐块。
+
+只想要版式、不想 import 模块时，也可以直接 `plt.style.use("../ai4m.mplstyle")`。
+
+### 批量注入到所有 Notebook
+
+```bash
+python apply_style.py            # 预演：列出会改哪些文件
+python apply_style.py --write    # 真正写入（幂等，可重复运行）
+```
+
+脚本会把上面那两行放到每份 Notebook 的 import 之后。注意：**已保存的旧图仍是旧风格**，
+需要 Restart & Run All 重跑一遍才会刷新。
+
 ## ☁️ 在线运行（Google Colab）
 
 零基础同学无需在本地安装 Python，点击下方任意章节的 **Open in Colab** 徽章即可直接在浏览器运行：

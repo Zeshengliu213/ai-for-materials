@@ -13,7 +13,8 @@
 | **02a** | `02a_regression.ipynb` | **回归入门**：问题形式化（$X \to y$）、训练/测试集划分与过拟合、评估指标（MAE / RMSE / $R^2$）与均值猜测基线、单特征到多特征线性回归、kNN 与特征标准化（`StandardScaler`）、树模型集成（随机森林 / 梯度提升）、描述符 vs 分子指纹（Bit / Count FP） | 60–75 min |
 | **02b** | `02b_validation_and_tuning.ipynb` | **验证、调优与适用域**：单次划分的随机波动与 $K$ 折交叉验证（5-Fold CV）、数据泄漏（Data Leakage）与 `Pipeline` 防护、网格搜索（`GridSearchCV`）超参数调优、面向共轭大分子的外推压力测试与基于 Tanimoto 相似度的适用域（Applicability Domain）诊断 | 50–60 min |
 | **02c** | `02c_classification.ipynb` | **分类与基础特征重要性**：难溶分子筛查二分类任务定义、分层抽样（`stratify`）、准确率陷阱与混淆矩阵（TP/FP/TN/FN）、Precision / Recall / F1 / ROC-AUC、结合实验成本调节决策阈值、树分裂重要性（MDI）vs 置换重要性（Permutation Importance）、对照 Yalkowsky 方程分析模型漏报原因 | 50–60 min |
-| **参考答案** | `solutions/02_supervised_solutions.ipynb` | 汇总 `02a-1` 至 `02c-3` 共 9 道课堂练习的完整可运行代码、输出结果与物理化学解析 | 课后自查 |
+| **02d** | `02d_exercises.ipynb` | **第二讲基础巩固习题**：涵盖训练/测试集划分与均值基线、多元线性回归、特征标准化与 kNN、防泄漏 Pipeline 与 5 折交叉验证、`GridSearchCV` 调参、分层二分类与随机森林特征重要性的 8 道基础练习 | 30–45 min |
+| **参考答案** | `solutions/02_supervised_solutions.ipynb`<br>`solutions/02_exercises_solutions.ipynb` | 分别汇总 `02a`–`02c` 随堂练习（9 道）与 `02d` 基础巩固习题（8 道）的完整可运行代码与物理化学解析 | 课后自查 |
 
 ---
 

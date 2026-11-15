@@ -1,0 +1,103 @@
+# =============================================================================
+# ai4m.mplstyle — AI for Materials Science 课程统一科研绘图风格
+#
+# 配色与课程网站 (website/assets/style.css) 完全一致：
+#   深海蓝 #16324f · 学院暗红 #8c2d19 · 青绿 #0f766e · 金棕 #b45309
+# 版式参照 Nature / Science 子刊投稿规范：单栏图宽 ~89 mm、无上右边框、
+# 仅保留横向浅灰网格、坐标轴标签略大于刻度、图例无边框。
+#
+# 用法（任选其一）：
+#   import ai4m_style; ai4m_style.use()        # 推荐：同时注册配色与色图
+#   plt.style.use("../ai4m.mplstyle")          # 仅应用本文件
+# =============================================================================
+
+# ---------------------------------------------------------------- figure ----
+figure.figsize      : 5.2, 3.6
+figure.dpi          : 120
+figure.facecolor    : white
+figure.edgecolor    : white
+figure.titlesize    : 12.5
+figure.titleweight  : bold
+figure.constrained_layout.use : True
+
+# ------------------------------------------------------------------ font ----
+font.family         : sans-serif
+font.sans-serif     : Arial, Helvetica, DejaVu Sans, Liberation Sans, sans-serif
+font.size           : 9.5
+mathtext.fontset    : dejavusans
+
+# ------------------------------------------------------------------ axes ----
+axes.facecolor      : white
+axes.edgecolor      : 475569
+axes.linewidth      : 0.9
+axes.labelcolor     : 1e293b
+axes.labelsize      : 10.5
+axes.labelpad       : 4.0
+axes.titlesize      : 11.5
+axes.titleweight    : bold
+axes.titlecolor     : 16324f
+axes.titlepad       : 8.0
+axes.titlelocation  : left
+axes.spines.top     : False
+axes.spines.right   : False
+axes.axisbelow      : True
+axes.unicode_minus  : False
+axes.prop_cycle     : cycler('color', ['16324f', '8c2d19', '0f766e', 'b45309', '4e7ca8', '9a6a4f', '52796f', '6b7280'])
+
+# ------------------------------------------------------------------ grid ----
+axes.grid           : True
+axes.grid.axis      : y
+grid.color          : cbd5e1
+grid.linestyle      : -
+grid.linewidth      : 0.6
+grid.alpha          : 0.55
+
+# ----------------------------------------------------------------- ticks ----
+xtick.color         : 475569
+ytick.color         : 475569
+xtick.labelcolor    : 475569
+ytick.labelcolor    : 475569
+xtick.labelsize     : 9
+ytick.labelsize     : 9
+xtick.direction     : out
+ytick.direction     : out
+xtick.major.size    : 3.5
+ytick.major.size    : 3.5
+xtick.major.width   : 0.9
+ytick.major.width   : 0.9
+xtick.minor.size    : 2.0
+ytick.minor.size    : 2.0
+
+# ----------------------------------------------------------------- lines ----
+lines.linewidth     : 1.9
+lines.markersize    : 5.5
+lines.markeredgewidth : 0.0
+lines.solid_capstyle : round
+scatter.edgecolors  : none
+errorbar.capsize    : 2.5
+
+# ---------------------------------------------------------------- patches ---
+patch.linewidth     : 0.8
+patch.edgecolor     : white
+patch.force_edgecolor : True
+hatch.linewidth     : 0.6
+
+# ---------------------------------------------------------------- legend ----
+legend.frameon      : False
+legend.fontsize     : 9
+legend.title_fontsize : 9
+legend.handlelength : 1.6
+legend.handletextpad : 0.6
+legend.columnspacing : 1.4
+legend.borderaxespad : 0.4
+
+# ----------------------------------------------------------------- images ---
+image.cmap          : viridis
+image.interpolation : nearest
+
+# ---------------------------------------------------------------- savefig ---
+savefig.dpi         : 300
+savefig.bbox        : tight
+savefig.pad_inches  : 0.03
+savefig.facecolor   : white
+savefig.transparent : False

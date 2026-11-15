@@ -11,7 +11,8 @@
 | **03a** | `03a_dimensionality_reduction.ipynb` | **降维与化学空间可视化**：无监督学习概览、AqSolDB 万级分子库、PCA 几何直觉与标准化前提、17 个描述符的解释方差与载荷（Loadings）化学解读、新分子（有机半导体）投影与 17 维全空间最近邻适用域诊断、为什么稀疏分子指纹做线性 PCA 会失效、非线性流形降维 t-SNE 及其四大解读准则 | 60–75 min |
 | **03b** | `03b_clustering.ipynb` | **聚类与严格数据划分**：手写 K-means 拆解“分配—更新质心”迭代与局部最优陷阱、肘部法则（Inertia）与轮廓系数（Silhouette Score）、非凸流形与基于密度的聚类（DBSCAN）、高维指纹空间的 Tanimoto 距离分布与化学信息学标准 **Taylor-Butina 聚类**、基于聚类的分组交叉验证（Cluster Split / `GroupKFold`） | 60–75 min |
 | **03c** | `03c_pd_dimer_discovery.ipynb` | **科研实战案例：发现新型双核 Pd(I) 催化剂**：复现 Hueffel et al. (*Science* 2021)——在仅有 4 个已知正例且常规 DFT 自由能判据失效的困境下，结合 LKB-P 配体知识库、1,000 次共识 K-means 打分（Consensus Clustering）与二聚体专用 DFT 描述符，从 348 个膦配体中靶向筛出 21 个候选并实验证实 8 个新型催化剂 | 50–60 min |
-| **参考答案** | `solutions/03_unsupervised_solutions.ipynb` | 汇总 `03a-1` 至 `03c-3` 共 9 道课堂练习的完整可运行代码、图表与物理化学解析 | 课后自查 |
+| **03d** | `03d_exercises.ipynb` | **第三讲基础巩固习题**：涵盖标准化与 PCA 解释方差、主成分载荷排序、新分子 PCA 投影、K-means 聚类与轮廓系数、RDKit Taylor-Butina 指纹聚类、`GroupKFold` 按簇交叉验证及 LKB-P 配体近邻检索的 8 道基础练习 | 30–45 min |
+| **参考答案** | `solutions/03_unsupervised_solutions.ipynb`<br>`solutions/03_exercises_solutions.ipynb` | 分别汇总 `03a`–`03c` 随堂练习（9 道）与 `03d` 基础巩固习题（8 道）的完整可运行代码与物理化学解析 | 课后自查 |
 
 ---
 
