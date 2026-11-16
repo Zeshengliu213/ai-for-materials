@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="05c — 第五讲基础习题：特征工程、SHAP 与三维分子巩固练习 本套习题帮助你一步步巩固第五讲（05a–05b）中特征选择（方差过滤 / 共线性剪枝 / RFE）、Shapley 值与 SHAP 归因、ETKDG 三维构象生成、3D 形状描述符以及 PubChem API 抓取的核心操作。每道题只需填写 2–6 行" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="05c — 第五讲基础习题：特征工程、SHAP 与三维分子巩固练习 | AI for Materials Science" />
+  <meta property="og:description" content="05c — 第五讲基础习题：特征工程、SHAP 与三维分子巩固练习 本套习题帮助你一步步巩固第五讲（05a–05b）中特征选择（方差过滤 / 共线性剪枝 / RFE）、Shapley 值与 SHAP 归因、ETKDG 三维构象生成、3D 形状描述符以及 PubChem API 抓取的核心操作。每道题只需填写 2–6 行" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>05c — 第五讲基础习题：特征工程、SHAP 与三维分子巩固练习 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html"
+           data-progress-mark="notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html"
+>📓 05a_feature_selection_and_shap.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html"
+           data-progress-mark="notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html"
+>📓 05b_conformers_and_pubchem.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html"
+           data-progress-mark="notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html"
+class="active">🏋️ 05c_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/05-feature-engineering-and-molecular-informatics.html">模块 05：特征工程、SHAP 与 3D 分子</a> /  <a href="../../exercises.html">习题</a> /  <span>05c_exercises.ipynb</span>
+</div>
+<h1><span class="kind-badge kind-exercise">习题</span> 05c — 第五讲基础习题：特征工程、SHAP 与三维分子巩固练习</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    习题文件：<code>05c_exercises.ipynb</code>（13.9 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/05%20-%20Feature%20Engineering%20and%20Molecular%20Informatics/05c_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/d91ddd1e562e-05c_exercises.ipynb" download="05c_exercises.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/05-feature-engineering-and-molecular-informatics/05_exercises_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>本套习题帮助你一步步巩固第五讲（<code>05a</code>–<code>05b</code>）中特征选择（方差过滤 / 共线性剪枝 / RFE）、Shapley 值与 SHAP 归因、ETKDG 三维构象生成、3D 形状描述符以及 PubChem API 抓取的核心操作。每道题只需填写 <strong>2–6 行代码</strong>，并附有预期数值提示供你自查。完成后可对照 <code>solutions/05_exercises_solutions.ipynb</code> 查看完整解答。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="0-公共环境准备">0. 公共环境准备</h2>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span><span class="p">,</span> <span class="n">cross_val_score</span><span class="p">,</span> <span class="n">KFold</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">RFE</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearRegression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">AllChem</span><span class="p">,</span> <span class="n">Descriptors</span><span class="p">,</span> <span class="n">Descriptors3D</span><span class="p">,</span> <span class="n">rdMolDescriptors</span>
+
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">find_file</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;../data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">path</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;找不到 </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 本习题集统一使用的数据：AqSolDB 的 2,000 分子子集（17 个自带描述符）</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">find_file</span><span class="p">(</span><span class="s2">&quot;solubility.csv&quot;</span><span class="p">))</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolWt&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">20</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;MolWt&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">800</span><span class="p">)]</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">FEATS</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;SMILES&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">)]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">FEATS</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">X_tr</span><span class="p">,</span> <span class="n">X_te</span><span class="p">,</span> <span class="n">y_tr</span><span class="p">,</span> <span class="n">y_te</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;X: </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> 个分子 × </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> 个描述符&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">FEATS</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第一部分-特征选择与-shap-对应-05a">第一部分：特征选择与 SHAP（对应 <code>05a</code>）</h2>
+<h3 id="习题-1-找出-准常量-描述符">🏋️ 习题 1：找出“准常量”描述符</h3>
+<p>一个描述符如果在绝大多数分子上取值都相同，就几乎不携带区分信息。</p>
+<p>请对训练集 <code>X_tr</code> 的每一列，计算 <strong>最高频取值所占的比例</strong>（提示：<code>s.value_counts(normalize=True).iloc[0]</code>），整理成一个按降序排列的 <code>pd.Series</code> 并打印前 5 项。</p>
+<ul>
+<li><strong>预期输出</strong>：排在最前的是 <code>NumSaturatedRings</code>、<code>NumAliphaticRings</code> 这类计数型描述符，最高一项的占比在 <code>0.80</code> 以上（即 80% 以上的分子在这一列上取同一个值）。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-2-揪出高度共线的描述符对">🏋️ 习题 2：揪出高度共线的描述符对</h3>
+<ol>
+<li>计算 <code>X_tr</code> 的<strong>绝对值</strong> Pearson 相关系数矩阵 <code>corr = X_tr.corr().abs()</code>；</li>
+<li>遍历矩阵的<strong>上三角</strong>（即 <span class="math-inline" data-tex="i &lt; j">\(i &lt; j\)</span>，避免重复与对角线），把所有 <span class="math-inline" data-tex="|r| &gt; 0.95">\(|r| &gt; 0.95\)</span> 的特征对连同相关系数收集到一个列表里；</li>
+<li>按相关系数从高到低打印。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：<code>HeavyAtomCount</code> 与 <code>NumValenceElectrons</code>、<code>LabuteASA</code> 与 <code>MolWt</code> 等“分子尺寸”类描述符之间的 <span class="math-inline" data-tex="|r|">\(|r|\)</span> 都在 <code>0.95</code> 以上。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-3-用-rfe-把-17-个描述符压到-5-个">🏋️ 习题 3：用 RFE 把 17 个描述符压到 5 个</h3>
+<ol>
+<li>用 <code>RFE(estimator=RandomForestRegressor(n_estimators=80, random_state=0, n_jobs=-1), n_features_to_select=5, step=2)</code> 在 <code>(X_tr, y_tr)</code> 上拟合；</li>
+<li>打印入选的 5 个描述符名（<code>X.columns[rfe.support_]</code>）；</li>
+<li>分别用<strong>全部 17 个</strong>特征和<strong>入选的 5 个</strong>特征训练 <code>RandomForestRegressor(n_estimators=200, random_state=0, n_jobs=-1)</code>，打印两者的测试集 <span class="math-inline" data-tex="R^2">\(R^2\)</span>。</li>
+</ol>
+<ul>
+<li><strong>思考</strong>：特征数砍掉近三分之二，<span class="math-inline" data-tex="R^2">\(R^2\)</span> 变化了多少？（在这个数据集上你甚至可能看到 5 个特征<strong>略胜于</strong> 17 个——为什么剔除冗余特征反而可能提升泛化性能？）</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-4-验证-选择性数据泄漏">🏋️ 习题 4：验证“选择性数据泄漏”</h3>
+<p>对比两种交叉验证写法（都用 <code>cv = KFold(5, shuffle=True, random_state=0)</code>，模型统一为 <code>RandomForestRegressor(n_estimators=120, random_state=0, n_jobs=-1)</code>）：</p>
+<ul>
+<li><strong>写法 A（有泄漏）</strong>：先在<strong>全量</strong> <code>(X, y)</code> 上用 <code>RFE(..., n_features_to_select=4, step=3)</code> 选出 4 个特征，再只对这 4 列做 <code>cross_val_score</code>；</li>
+<li><strong>写法 B（正确）</strong>：把同样的 <code>RFE</code> 和模型串进 <code>Pipeline</code>，对完整的 <code>(X, y)</code> 做 <code>cross_val_score</code>。</li>
+</ul>
+<p>打印两者的平均 <span class="math-inline" data-tex="R^2">\(R^2\)</span> 及其差值。</p>
+<ul>
+<li><strong>说明</strong>：本数据集样本多、信号强，两者差距会很小甚至为负。真正的危险发生在“样本少、候选特征上千”的场景——请在答案里用一句话解释为什么。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-5-手算两个特征的精确-shapley-值">🏋️ 习题 5：手算两个特征的精确 Shapley 值</h3>
+<p>当只有 2 个特征 <span class="math-inline" data-tex="F = \{A, B\}">\(F = \{A, B\}\)</span> 时，Shapley 公式退化成一个可以手算的形式：</p>
+<div class="math-block" data-tex="\phi_A = \tfrac{1}{2}\big[v(\{A\}) - v(\varnothing)\big] + \tfrac{1}{2}\big[v(\{A, B\}) - v(\{B\})\big]">\[\phi_A = \tfrac{1}{2}\big[v(\{A\}) - v(\varnothing)\big] + \tfrac{1}{2}\big[v(\{A, B\}) - v(\{B\})\big]\]</div>
+<p>（<span class="math-inline" data-tex="\phi_B">\(\phi_B\)</span> 完全对称）。下方代码块已经为你训练好了 3 个子集模型并给定了一个待解释样本 <code>x_demo</code>。请：</p>
+<ol>
+<li>写出 <code>v(S)</code> 的四个取值：<code>v_empty</code>、<code>v_A</code>、<code>v_B</code>、<code>v_AB</code>（空集的价值就是训练集均值 <code>y_tr.mean()</code>）；</li>
+<li>按上式算出 <code>phi_A</code> 与 <code>phi_B</code>；</li>
+<li>验证有效性公理：<code>v_empty + phi_A + phi_B</code> 是否等于 <code>v_AB</code>（误差应在 <span class="math-inline" data-tex="10^{-10}">\(10^{-10}\)</span> 以内）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">A</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span>
+
+<span class="n">m_A</span>  <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr</span><span class="p">[[</span><span class="n">A</span><span class="p">]],</span> <span class="n">y_tr</span><span class="p">)</span>
+<span class="n">m_B</span>  <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr</span><span class="p">[[</span><span class="n">B</span><span class="p">]],</span> <span class="n">y_tr</span><span class="p">)</span>
+<span class="n">m_AB</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr</span><span class="p">[[</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">]],</span> <span class="n">y_tr</span><span class="p">)</span>
+
+<span class="n">x_demo</span> <span class="o">=</span> <span class="n">X_te</span><span class="p">[[</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">]]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[[</span><span class="mi">0</span><span class="p">]]</span>          <span class="c1"># 保持 DataFrame 形状，便于直接 predict</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;待解释样本：&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">x_demo</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第二部分-三维构象与-pubchem-api-对应-05b">第二部分：三维构象与 PubChem API（对应 <code>05b</code>）</h2>
+<h3 id="习题-6-生成三维构象并读出-mmff-能量">🏋️ 习题 6：生成三维构象并读出 MMFF 能量</h3>
+<p>对蒽（<code>&quot;c1ccc2cc3ccccc3cc2c1&quot;</code>）：</p>
+<ol>
+<li><code>Chem.MolFromSmiles</code> 之后<strong>先 <code>Chem.AddHs</code></strong>（漏掉这一步会让构象与空间位阻完全失真）；</li>
+<li>用 <code>params = AllChem.ETKDGv3(); params.randomSeed = 42</code> 调用 <code>AllChem.EmbedMolecule</code>，打印返回码；</li>
+<li>调用 <code>AllChem.MMFFOptimizeMolecule(mol, maxIters=1000)</code>，再用
+<code>ff = AllChem.MMFFGetMoleculeForceField(mol, AllChem.MMFFGetMoleculeProperties(mol))</code>
+取出 <code>ff.CalcEnergy()</code> 并打印；</li>
+<li>打印加氢前后的原子数。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：嵌入返回码为 <code>0</code>；加氢前 14 个原子，加氢后 24 个；MMFF 能量在几十 kcal/mol 量级。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-7-用-npr1-npr2-判断分子形状">🏋️ 习题 7：用 NPR1 / NPR2 判断分子形状</h3>
+<p>对下面三个分子分别生成 10 个构象、取能量最低的那个，计算 <code>Descriptors3D.NPR1</code>、<code>Descriptors3D.NPR2</code> 和 <code>rdMolDescriptors.CalcPBF</code>：</p>
+<ul>
+<li><code>Hexane</code>（棒状）: <code>&quot;CCCCCC&quot;</code></li>
+<li><code>Pentacene</code>（盘状）: <code>&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</code></li>
+<li><code>Adamantane</code>（球状）: <code>&quot;C1C2CC3CC1CC(C2)C3&quot;</code></li>
+</ul>
+<p>整理成一张 DataFrame 打印，并回答：</p>
+<ol>
+<li>哪个分子的 <code>NPR1</code> 最接近 <code>1.0</code>？它对应形状三角的哪个顶点？</li>
+<li>哪个分子的 <code>PBF</code> 最接近 <code>0</code>？<code>PBF</code> 为什么能用来判断分子是不是平面的？</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：金刚烷的 <code>NPR1</code> 与 <code>NPR2</code> 都约等于 <code>1.0</code>（球状顶点）；并五苯的 <code>PBF</code> 约等于 <code>0</code>（完美平面）。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-8-用-pubchem-抓取数据并验证-yalkowsky-方程">🏋️ 习题 8：用 PubChem 抓取数据并验证 Yalkowsky 方程</h3>
+<ol>
+<li>用 PUG-REST 的 <code>compound/cid/&lt;CID列表&gt;/property/MolecularWeight,XLogP/JSON</code> 接口，<strong>一次请求</strong>拿回下面 5 个分子的分子量与 <code>XLogP</code>：
+<code>{&quot;naphthalene&quot;: 931, &quot;anthracene&quot;: 8418, &quot;phenanthrene&quot;: 995, &quot;pyrene&quot;: 31423, &quot;chrysene&quot;: 9171}</code>；</li>
+<li>读入 <code>data/melting_points.csv</code>，取出这 5 个分子的 <code>Tm_C</code> 与 <code>logS</code>（按 <code>name</code> 列匹配）；</li>
+<li>用 PubChem 的 <code>XLogP</code>（而不是 RDKit 的 <code>MolLogP</code>）代入 Yalkowsky 方程
+<div class="math-block" data-tex="\log S_{\text{pred}} = 0.5 - \text{XLogP} - 0.01\,(T_m - 25)">\[\log S_{\text{pred}} = 0.5 - \text{XLogP} - 0.01\,(T_m - 25)\]</div>
+打印一张对比表（列：<code>name</code>、<code>XLogP</code>、<code>Tm_C</code>、<code>logS_pred</code>、<code>logS_exp</code>、<code>error</code>），并计算 RMSE。</li>
+</ol>
+<ul>
+<li><strong>提示</strong>：记得 <code>time.sleep(0.25)</code> 遵守 PubChem 的限速；如果网络不通，请在答案里改用 <code>melting_points.csv</code> 中的 <code>MolLogP</code> 列完成第 3 步。</li>
+<li><strong>预期输出</strong>：这 5 个并苯分子的 RMSE 低于 1 个对数单位，且 5 个误差<strong>全为正</strong>（GSE 系统性地略微高估了并苯的溶解度）——对一个只有两个变量的半经验公式来说相当不错。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="完成后">完成后</h2>
+<ul>
+<li>对照 <code>solutions/05_exercises_solutions.ipynb</code> 检查本套 8 道基础习题的答案；</li>
+<li><code>05a</code> 与 <code>05b</code> 正文中内嵌的 6 道课堂练习（<code>05a-1</code> ~ <code>05a-3</code>、<code>05b-1</code> ~ <code>05b-3</code>）的参考解答在 <code>solutions/05_feature_solutions.ipynb</code>。</li>
+</ul>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/05-feature-engineering-and-molecular-informatics.html">返回模块 05</a>  <a class="btn btn-secondary" href="../../exercises.html">全部习题汇总</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">05b — 三维分子构象、3D 描述符与 PubChem API 实战</span>
+  </a>  <a class="pager-link pager-next" href="../../modules/06-materials-informatics.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">模块 06 · 无机与晶体材料信息学</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-公共环境准备">0. 公共环境准备</a></li>      <li class="toc-l2"><a href="#第一部分-特征选择与-shap-对应-05a">第一部分：特征选择与 SHAP（对应 05a）</a></li>      <li class="toc-l3"><a href="#习题-1-找出-准常量-描述符">🏋️ 习题 1：找出“准常量”描述符</a></li>      <li class="toc-l3"><a href="#习题-2-揪出高度共线的描述符对">🏋️ 习题 2：揪出高度共线的描述符对</a></li>      <li class="toc-l3"><a href="#习题-3-用-rfe-把-17-个描述符压到-5-个">🏋️ 习题 3：用 RFE 把 17 个描述符压到 5 个</a></li>      <li class="toc-l3"><a href="#习题-4-验证-选择性数据泄漏">🏋️ 习题 4：验证“选择性数据泄漏”</a></li>      <li class="toc-l3"><a href="#习题-5-手算两个特征的精确-shapley-值">🏋️ 习题 5：手算两个特征的精确 Shapley 值</a></li>      <li class="toc-l2"><a href="#第二部分-三维构象与-pubchem-api-对应-05b">第二部分：三维构象与 PubChem API（对应 05b）</a></li>      <li class="toc-l3"><a href="#习题-6-生成三维构象并读出-mmff-能量">🏋️ 习题 6：生成三维构象并读出 MMFF 能量</a></li>      <li class="toc-l3"><a href="#习题-7-用-npr1-npr2-判断分子形状">🏋️ 习题 7：用 NPR1 / NPR2 判断分子形状</a></li>      <li class="toc-l3"><a href="#习题-8-用-pubchem-抓取数据并验证-yalkowsky-方程">🏋️ 习题 8：用 PubChem 抓取数据并验证 Yalkowsky 方程</a></li>      <li class="toc-l2"><a href="#完成后">完成后</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

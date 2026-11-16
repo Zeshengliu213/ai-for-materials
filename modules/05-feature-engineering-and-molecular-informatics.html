@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="特征选择与 SHAP 归因分析、3D 分子构象生成与 PubChem API 实战。" />
+  <meta name="description" content="特征选择与 SHAP 归因分析、3D 分子构象生成与 PubChem API 实战（补全 Yalkowsky 熔点伏笔）。" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="模块 05：特征工程、SHAP 与 3D 分子 | AI for Materials Science" />
-  <meta property="og:description" content="特征选择与 SHAP 归因分析、3D 分子构象生成与 PubChem API 实战。" />
+  <meta property="og:description" content="特征选择与 SHAP 归因分析、3D 分子构象生成与 PubChem API 实战（补全 Yalkowsky 熔点伏笔）。" />
   <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/modules/05-feature-engineering-and-molecular-informatics.html" />
   <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/modules/05-feature-engineering-and-molecular-informatics.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
   <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
@@ -98,6 +98,18 @@
 class="active">
           <strong>05</strong> · 特征工程、SHAP 与 3D 分子
         </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html"
+           data-progress-mark="notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html"
+>📓 05a_feature_selection_and_shap.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html"
+           data-progress-mark="notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html"
+>📓 05b_conformers_and_pubchem.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html"
+           data-progress-mark="notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html"
+>🏋️ 05c_exercises.ipynb</a>
       </li>      <li>
         <a href="../modules/06-materials-informatics.html"
 >
@@ -133,20 +145,217 @@ class="active">
 <div class="breadcrumb"><a href="../index.html">课程主页</a> / <span>模块 05</span></div>
 <div class="module-head">
   <span class="module-num">Module 05</span>
-  <span class="status-badge status-todo">待编写</span>
+  <span class="status-badge status-done">已完成</span>
   <span class="module-head-en">Feature Engineering &amp; Molecular Informatics</span>
 </div>
-<h1>特征工程、SHAP 与 3D 分子</h1><h2>本模块编写计划</h2>
-<div class="academic-box">
-  <ul class="outline-list">    <li><code>05a</code> 特征选择（方差过滤、相关性剪枝、递归特征消除）与 SHAP 归因分析：从“模型说得准”走向“模型说得清”。</li>    <li><code>05b</code> 3D 分子构象生成（RDKit ETKDG + MMFF 优化）、构象系综与 3D 描述符。</li>    <li><code>05b</code> PubChem PUG-REST API 实战：按名称/SMILES 批量抓取实验性质，补全第 01 讲留下的 Yalkowsky 熔点伏笔。</li>  </ul>
-  <p class="hint-inline">内容正在编写中，欢迎先浏览已上线的其他模块。</p>
-</div>
-<h2>模块导读与教学设计</h2><div class="academic-box"><strong>模块简介：</strong>特征选择与 SHAP 归因分析、3D 分子构象生成与 PubChem API 实战。</div><nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../notebooks/04-bayesian-optimization/04c_exercises.html" rel="prev">
+<h1>特征工程、SHAP 与 3D 分子</h1><div class="progress-panel" data-progress-keys="notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html,notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html,notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html">
+  <div class="progress-head">
+    <strong>本模块学习进度</strong>
+    <span class="progress-count" data-progress-count>0 / 3</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+  <p class="hint-inline">进度只保存在你当前浏览器（localStorage），不会上传到任何服务器。</p>
+</div><h2 id="lectures">互动实战课件（Notebooks）</h2>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>课件名称</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html"
+                 aria-label="把 05a_feature_selection_and_shap.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html"><strong>05a — 特征工程与模型可解释性：特征选择与 SHAP 归因分析</strong></a><br/>
+          <code>05a_feature_selection_and_shap.ipynb</code></td>
+        <td>47.6 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/c6ca61a46fc3-05a_feature_selection_and_shap.ipynb" download="05a_feature_selection_and_shap.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/05%20-%20Feature%20Engineering%20and%20Molecular%20Informatics/05a_feature_selection_and_shap.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html"
+                 aria-label="把 05b_conformers_and_pubchem.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html"><strong>05b — 三维分子构象、3D 描述符与 PubChem API 实战</strong></a><br/>
+          <code>05b_conformers_and_pubchem.ipynb</code></td>
+        <td>51.9 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/fd8d94326ca1-05b_conformers_and_pubchem.ipynb" download="05b_conformers_and_pubchem.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/05%20-%20Feature%20Engineering%20and%20Molecular%20Informatics/05b_conformers_and_pubchem.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="exercises">课后习题（Exercises）<span class="kind-badge kind-exercise">习题</span></h2>
+<p class="hint-inline">建议在完成本模块全部课件后再做习题；参考答案默认折叠，请先独立完成。
+  也可以在<a href="../exercises.html">全部习题汇总页</a>统一查看各模块习题。</p>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html"
+                 aria-label="把 05c_exercises.ipynb 标记为已完成" />
+        </td>
+        <td><a href="../notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html"><strong>05c — 第五讲基础习题：特征工程、SHAP 与三维分子巩固练习</strong></a><br/>
+          <code>05c_exercises.ipynb</code></td>
+        <td>13.9 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html">开始做题</a>
+          <a class="btn btn-secondary" href="../files/_shared/d91ddd1e562e-05c_exercises.ipynb" download="05c_exercises.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/05%20-%20Feature%20Engineering%20and%20Molecular%20Informatics/05c_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>          <a class="btn btn-secondary" href="../solutions/05-feature-engineering-and-molecular-informatics/05_exercises_solutions.html">参考答案</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="solutions">参考答案（Solutions）</h2>
+<p class="hint-inline">答案页默认折叠，请先独立完成练习再展开。</p>
+<ul class="solution-list">  <li><span class="kind-badge kind-exercise">习题答案</span>
+    <a href="../solutions/05-feature-engineering-and-molecular-informatics/05_exercises_solutions.html">✅ 05c — 第五讲基础习题参考答案（Solutions）</a>
+    (<code>05_exercises_solutions.ipynb</code> · 23.6 KB) —
+    <a href="../files/_shared/f56879c88a6d-05_exercises_solutions.ipynb" download="05_exercises_solutions.ipynb">下载 .ipynb</a></li>  <li><span class="kind-badge kind-lecture">课件答案</span>
+    <a href="../solutions/05-feature-engineering-and-molecular-informatics/05_feature_solutions.html">✅ 05 — 特征工程、SHAP 与三维分子：随堂练习参考答案（Solutions）</a>
+    (<code>05_feature_solutions.ipynb</code> · 28.2 KB) —
+    <a href="../files/_shared/7bb2d0e9a7f2-05_feature_solutions.ipynb" download="05_feature_solutions.ipynb">下载 .ipynb</a></li></ul><h2>配套数据集（Datasets）</h2>
+<ul>  <li><code>melting_points.csv</code> (6.3 KB) —
+    <a href="../files/_shared/bb7902a37e64-melting_points.csv" download="melting_points.csv">下载数据集</a></li>  <li><code>solubility.csv</code> (2.1 MB) —
+    <a href="../files/_shared/f274636a3ed2-solubility.csv" download="solubility.csv">下载数据集</a></li></ul>
+<h2>模块导读与教学设计</h2><div class="markdown-body"><h1>05 — 特征工程、SHAP 与 3D 分子（Feature Engineering &amp; Molecular Informatics）</h1>
+<p>前四讲里，我们一直在往模型里“加东西”：加描述符、加指纹、加交叉验证、加不确定性。本讲反过来做两件事——<strong>减法</strong>与<strong>解释</strong>。</p>
+<p>一方面，真实课题里随手就能算出几百上千个描述符，但其中绝大多数彼此高度共线（<code>MolWt</code>、<code>HeavyAtomCount</code>、<code>MolMR</code>、<code>LabuteASA</code> 本质上都在说“分子有多大”），冗余特征会稀释重要性、拖慢训练、在小样本上制造过拟合。我们要学会<strong>把 29 维压到 10 维而精度不掉</strong>。</p>
+<p>另一方面，导师和审稿人真正追问的从来不是 <span class="math-inline" data-tex="R^2">\(R^2\)</span> 的第三位小数，而是“<strong>对我合成的这一个分子，模型凭什么这么判</strong>”。本讲用合作博弈论的 <strong>Shapley 值</strong>，把单个分子的预测值严格拆解成各描述符的推拉贡献。</p>
+<p>最后，本讲还要兑现一个从第一讲就埋下的伏笔：Yalkowsky 通用溶解度方程里的<strong>熔点项 <span class="math-inline" data-tex="-0.01(T_m - 25)">\(-0.01(T_m - 25)\)</span></strong>。熔点来自三维晶体堆积，任何 2D 描述符都算不出来——我们用 RDKit 把分子“站起来”变成三维构象系综，再用 PubChem API 把真实的实验熔点抓回来，亲手补上这块缺失的拼图。</p>
+<hr />
+<h2>课程模块结构</h2>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>Notebook</th>
+<th>核心内容</th>
+<th>建议课时</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>05a</strong></td>
+<td><code>05a_feature_selection_and_shap.ipynb</code></td>
+<td><strong>特征选择与模型可解释性</strong>：过滤法（方差 / 准常量判据、Pearson 共线性贪心剪枝）、包裹法（RFE / RFECV）、三条路线五折交叉验证横评（29 → 10 维精度不变）、<strong>选择性数据泄漏</strong>与 <code>Pipeline</code> 防坑、Shapley 值四条公理、用 16 个重训模型<strong>手写精确 Shapley 值</strong>验证有效性公理、<code>shap.TreeExplainer</code> 蜂群图全局归因与瀑布图单分子归因、SHAP vs MDI vs 置换重要性在共线特征下的三种表现</td>
+<td>70–85 min</td>
+</tr>
+<tr>
+<td><strong>05b</strong></td>
+<td><code>05b_conformers_and_pubchem.ipynb</code></td>
+<td><strong>三维构象、3D 描述符与 PubChem 实战</strong>：ETKDG 距离几何嵌入与 MMFF94 力场优化、构象系综与 Boltzmann 加权、RMSD 去重、PMI 形状三角（NPR1 / NPR2）与 <code>Asphericity</code> / <code>PBF</code>、2D vs 3D vs 2D+3D 的收益对照实验、PUG-REST 批量抓取与限速礼仪、PUG-View 实验熔点的自由文本解析、规范化 SMILES 跨库对齐、<strong>Yalkowsky 熔点伏笔兑现</strong>（RMSE 下降约 31%，拟合系数对照 1980 年代理论值）</td>
+<td>70–85 min</td>
+</tr>
+<tr>
+<td><strong>05c</strong></td>
+<td><code>05c_exercises.ipynb</code></td>
+<td><strong>第五讲基础巩固习题</strong>：涵盖准常量特征判据、共线特征对筛查、RFE 降维、选择性泄漏验证、两特征精确 Shapley 手算、ETKDG + MMFF 构象生成、NPR / PBF 形状判别、PubChem 批量抓取验证 GSE 的 8 道分步基础练习</td>
+<td>40–50 min</td>
+</tr>
+<tr>
+<td><strong>参考答案</strong></td>
+<td><code>solutions/05_feature_solutions.ipynb</code><br><code>solutions/05_exercises_solutions.ipynb</code></td>
+<td>分别汇总 <code>05a</code>–<code>05b</code> 随堂练习（6 道）与 <code>05c</code> 基础巩固习题（8 道）的完整可运行代码、图表与解析</td>
+<td>课后自查</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>与前四讲的前后呼应</h2>
+<table>
+<thead>
+<tr>
+<th>前序模块埋下的伏笔</th>
+<th>本讲在何处兑现与深化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>02c</code>：置换重要性显示打乱 <code>MolWt</code> 时模型纹丝不动，因为 <code>HeavyAtomCount</code> 在旁边“打掩护”</td>
+<td><strong><code>05a</code> 第 4 &amp; 11 节</strong>：相关矩阵给出 <span class="math-inline" data-tex="\lvert r(\text{MolWt}, \text{HeavyAtomCount})\rvert \approx 0.94">\(\lvert r(\text{MolWt}, \text{HeavyAtomCount})\rvert \approx 0.94\)</span> 的直接证据；并排对比 MDI、置换重要性与 SHAP 三种度量在共线特征下的不同表现——置换重要性把 <code>HeavyAtomCount</code> 压到接近 0，而 SHAP 仍按模型实际使用情况给它分摊贡献</td>
+</tr>
+<tr>
+<td><code>02c</code>：MDI 与置换重要性都只给出一个全局数字，无法解释“为什么模型判<strong>这一个</strong>分子难溶”</td>
+<td><strong><code>05a</code> 第 8–10 节</strong>：从 Shapley 四公理出发，用瀑布图把单个分子的预测值拆成 <span class="math-inline" data-tex="\mathbb{E}[\hat{y}] + \sum_i \phi_i">\(\mathbb{E}[\hat{y}] + \sum_i \phi_i\)</span>，给出可直接写进论文讨论部分的归因句</td>
+</tr>
+<tr>
+<td><code>02c</code>：Yalkowsky 方程的熔点项 <span class="math-inline" data-tex="T_m">\(T_m\)</span> 不在 10 个 2D 描述符里，导致“砖头粉”型高对称分子被系统性漏报</td>
+<td><strong><code>05b</code> 第 6–7 节</strong>：用 PubChem PUG-View 抓回 79 个分子的实验熔点，加入后 GSE 的 RMSE 从 1.54 降到 1.06（改善约 31%）；最小二乘拟合出的系数与 Yalkowsky 的 <span class="math-inline" data-tex="-1">\(-1\)</span>、<span class="math-inline" data-tex="-0.01">\(-0.01\)</span> 在方向与量级上一致</td>
+</tr>
+<tr>
+<td><code>02b</code> / <code>03a</code>：高维特征需要降维，但 PCA 会让主成分失去化学意义</td>
+<td><strong><code>05a</code> 第 3–6 节</strong>：特征<strong>选择</strong>（保留原始描述符，可解释）与特征<strong>提取</strong>（PCA，不可解释）的分工；29 → 10 维后每一列仍能向实验同行逐条讲清楚</td>
+</tr>
+<tr>
+<td><code>03b</code> / <code>04a</code>：Tanimoto 相似度与分子指纹都建立在 2D 拓扑之上</td>
+<td><strong><code>05b</code> 第 1–3 节</strong>：ETKDG + MMFF 生成三维构象系综，PMI 形状三角把“棒状 / 盘状 / 球状”量化；并苯类聚在盘状顶点（<code>PBF</code> 接近 0），这正是其 herringbone 堆积与高迁移率的几何根源</td>
+</tr>
+<tr>
+<td><code>07a</code>（后续）：梯度下降拟合 <span class="math-inline" data-tex="\log S">\(\log S\)</span>–<span class="math-inline" data-tex="\log P">\(\log P\)</span> 得到的斜率约 <span class="math-inline" data-tex="-0.41">\(-0.41\)</span>，远比 Yalkowsky 的 <span class="math-inline" data-tex="-1">\(-1\)</span> 平缓</td>
+<td><strong><code>05b</code> 第 7.1 节</strong>：原因是全量数据上高熔点分子的晶格效应被吸收进了残差；一旦把 <span class="math-inline" data-tex="T_m">\(T_m\)</span> 显式放进模型，<span class="math-inline" data-tex="\log P">\(\log P\)</span> 的系数立刻朝理论值靠拢</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>数据集说明</h2>
+<ul>
+<li>
+<p><code>data/solubility.csv</code>：AqSolDB 水溶解度数据集（9,482 个有机分子，自带 17 个 RDKit 描述符列），用于 <code>05a</code> 全程的特征选择与 SHAP 分析、<code>05b</code> 第 4 节的 3D 描述符收益对照实验，以及 <code>05c</code> 第一部分习题；</p>
+</li>
+<li>
+<p><code>data/melting_points.csv</code>：<strong>本讲新增</strong>。79 个常见有机分子（并苯、杂环、酚类、羧酸、农药、甾体激素等）的实验熔点数据集，共 7 列：</p>
+<table>
+<thead>
+<tr>
+<th>列名</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>查询用的通用名</td>
+</tr>
+<tr>
+<td><code>cid</code></td>
+<td>PubChem 化合物编号</td>
+</tr>
+<tr>
+<td><code>aqsoldb_name</code></td>
+<td>该分子在 AqSolDB 中的名称（常与 <code>name</code> 不同，因此不能按名字对齐）</td>
+</tr>
+<tr>
+<td><code>SMILES</code></td>
+<td>RDKit 规范化 SMILES（跨库对齐的依据）</td>
+</tr>
+<tr>
+<td><code>Tm_C</code></td>
+<td>实验熔点 / °C，由 PubChem PUG-View 的 <code>Melting Point</code> 注释解析并取多来源中位数</td>
+</tr>
+<tr>
+<td><code>logS</code></td>
+<td>AqSolDB 实测水溶解度</td>
+</tr>
+<tr>
+<td><code>MolLogP</code></td>
+<td>RDKit 计算的 <span class="math-inline" data-tex="\log P">\(\log P\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>该文件正是用 <code>05b</code> 第 6 节的 <code>fetch_melting_point()</code> 代码批量抓取、再按规范化 SMILES 与 AqSolDB 对齐生成的，<strong>随课程打包以保证在没有网络的课堂上也能完整复现第 7 节的分析</strong>。</p>
+</li>
+</ul>
+<hr />
+<h2>依赖说明</h2>
+<p>除课程 <code>requirements.txt</code> 中的基础依赖外，本讲额外需要 <strong><code>shap</code></strong>（用于 <code>05a</code> 第 9–11 节）：</p>
+<pre><code class="language-bash"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>shap
+</pre></div>
+</code></pre>
+<p><code>05a</code> 中的导入格已内置 <code>try / except ImportError</code> 自动安装回退，在 Colab 上无需手动处理。</p>
+<p><code>05b</code> 第 5–6 节会访问 PubChem 的公开 API（无需注册、无需 API Key）。若课堂网络不通，相关代码格会打印提示并跳过，后续分析自动改用本地的 <code>data/melting_points.csv</code>，<strong>不影响整节课的完整性</strong>。</p>
+</div><nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../notebooks/04-bayesian-optimization/04c_exercises.html" rel="prev">
     <span class="pager-label">← 上一讲</span>
     <span class="pager-title">04c — 第四讲基础习题：高斯过程回归与贝叶斯优化巩固练习</span>
-  </a>  <a class="pager-link pager-next" href="../modules/06-materials-informatics.html" rel="next">
+  </a>  <a class="pager-link pager-next" href="../notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html" rel="next">
     <span class="pager-label">下一讲 →</span>
-    <span class="pager-title">模块 06 · 无机与晶体材料信息学</span>
+    <span class="pager-title">05a — 特征工程与模型可解释性：特征选择与 SHAP 归因分析</span>
   </a></nav>  </main></div>
 <footer class="footer">
   <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>

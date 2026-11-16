@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="05a — 特征工程与模型可解释性：特征选择与 SHAP 归因分析 在第二讲我们学会了用十来个 RDKit 描述符训练随机森林预测水溶解度，在第四讲我们又用高斯过程把&#34;模型有多大把握&#34;量化了出来。但在真实课题汇报里，导师和审稿人最常追问的往往不是 的第三位小数，而是另外两个问题： 1. 这 30 个描述符里，到底哪几个" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="05a — 特征工程与模型可解释性：特征选择与 SHAP 归因分析 | AI for Materials Science" />
+  <meta property="og:description" content="05a — 特征工程与模型可解释性：特征选择与 SHAP 归因分析 在第二讲我们学会了用十来个 RDKit 描述符训练随机森林预测水溶解度，在第四讲我们又用高斯过程把&#34;模型有多大把握&#34;量化了出来。但在真实课题汇报里，导师和审稿人最常追问的往往不是 的第三位小数，而是另外两个问题： 1. 这 30 个描述符里，到底哪几个" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>05a — 特征工程与模型可解释性：特征选择与 SHAP 归因分析 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html"
+           data-progress-mark="notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html"
+class="active">📓 05a_feature_selection_and_shap.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html"
+           data-progress-mark="notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html"
+>📓 05b_conformers_and_pubchem.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html"
+           data-progress-mark="notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html"
+>🏋️ 05c_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/05-feature-engineering-and-molecular-informatics.html">模块 05：特征工程、SHAP 与 3D 分子</a> /  <span>05a_feature_selection_and_shap.ipynb</span>
+</div>
+<h1>05a — 特征工程与模型可解释性：特征选择与 SHAP 归因分析</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>05a_feature_selection_and_shap.ipynb</code>（47.6 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/05%20-%20Feature%20Engineering%20and%20Molecular%20Informatics/05a_feature_selection_and_shap.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/c6ca61a46fc3-05a_feature_selection_and_shap.ipynb" download="05a_feature_selection_and_shap.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/05-feature-engineering-and-molecular-informatics/05_feature_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>在第二讲我们学会了用十来个 RDKit 描述符训练随机森林预测水溶解度，在第四讲我们又用高斯过程把&quot;模型有多大把握&quot;量化了出来。但在真实课题汇报里，导师和审稿人最常追问的往往不是 <span class="math-inline" data-tex="R^2">\(R^2\)</span> 的第三位小数，而是另外两个问题：</p>
+<ol>
+<li><strong>这 30 个描述符里，到底哪几个是真正起作用的？</strong>——很多描述符彼此高度共线（<code>MolWt</code>、<code>HeavyAtomCount</code>、<code>MolMR</code>、<code>LabuteASA</code> 本质上都在说“分子有多大”），冗余特征会稀释重要性、拖慢训练、让模型在小样本上更容易过拟合。</li>
+<li><strong>对于我合成的这一个具体分子，模型为什么判它难溶？</strong>——全局特征重要性只能告诉你“<code>MolLogP</code> 在整个数据集上最重要”，却无法解释“为什么模型认为**蒽（anthracene）**这一个分子特别难溶”。</li>
+</ol>
+<p>本节我们沿着这两条线展开：</p>
+<ul>
+<li>前半程讲 <strong>特征选择（Feature Selection）</strong> 的三条经典路线——<strong>过滤法（Filter）</strong>、<strong>包裹法（Wrapper）</strong> 与 <strong>嵌入法（Embedded）</strong>，并亲手把 29 维描述符矩阵压到 10 维而几乎不损失精度；</li>
+<li>后半程讲 <strong>SHAP（SHapley Additive exPlanations）</strong>：从合作博弈论的 Shapley 值定义出发，先用 16 个重训模型手写<strong>精确 Shapley 值</strong>验证其可加性公理，再用 <code>shap.TreeExplainer</code> 对随机森林做全局与单分子归因，最后对比 SHAP、MDI 与置换重要性在共线特征下的不同表现。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="0-环境准备与数据读取辅助函数">0. 环境准备与数据读取辅助函数</h2>
+<p>本节使用第一讲就开始贯穿全课程的 <strong>AqSolDB</strong> 水溶解度数据集（<code>data/solubility.csv</code>，9,482 个有机分子）。它自带 17 个 RDKit 描述符列，我们再用 RDKit 补算 12 个，凑成一张 <strong>29 列的描述符矩阵</strong>——正好是真实课题里“把能算的描述符一股脑先算出来”的典型起点。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span><span class="p">,</span> <span class="n">cross_val_score</span><span class="p">,</span> <span class="n">KFold</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">RFE</span><span class="p">,</span> <span class="n">RFECV</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.inspection</span><span class="w"> </span><span class="kn">import</span> <span class="n">permutation_importance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">MinMaxScaler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Descriptors</span><span class="p">,</span> <span class="n">Draw</span><span class="p">,</span> <span class="n">rdMolDescriptors</span>
+
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">find_file</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;../data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">path</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">google.colab</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;请上传 </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">name</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;找不到 </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">，请确保它位于 data/ 文件夹或当前目录下&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-能算的描述符-与-该用的描述符">1. “能算的描述符”与“该用的描述符”</h2>
+<p>RDKit 的 <code>Descriptors.descList</code> 里有 <strong>200 多个</strong> 2D 描述符，<code>mordred</code> 之类的第三方库更能一口气算出 1,800 个。初学者最容易犯的错误，就是把它们<strong>全部</strong>扔给模型，然后祈祷算法自己分辨好坏。这会带来三个具体的麻烦：</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>具体表现</th>
+<th>在材料/化学数据上的典型例子</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>维数灾难与过拟合</strong></td>
+<td>特征数接近甚至超过样本数时，模型总能找到一组“碰巧”拟合训练集的权重</td>
+<td>只有 40 个实测器件的新体系，却套用 1,800 维 mordred 描述符</td>
+</tr>
+<tr>
+<td><strong>共线性（Multicollinearity）</strong></td>
+<td>多个特征携带几乎相同的信息，重要性被稀释、线性模型系数剧烈震荡</td>
+<td><code>MolWt</code> / <code>HeavyAtomCount</code> / <code>MolMR</code> / <code>LabuteASA</code> / <code>NumValenceElectrons</code> 都在描述“分子多大”</td>
+</tr>
+<tr>
+<td><strong>准常量特征（Near-constant）</strong></td>
+<td>某一列 98% 的取值都相同，几乎不携带区分信息，却照样参与分裂</td>
+<td><code>NumRadicalElectrons</code>——绝大多数稳定有机分子都是 0</td>
+</tr>
+</tbody>
+</table>
+<p>特征选择的目标，就是在<strong>不牺牲（甚至略微提升）预测精度</strong>的前提下，把特征数降到可解释、可复现、可向实验同行讲清楚的规模。三条经典路线：</p>
+<ul>
+<li><strong>过滤法（Filter）</strong>：只看特征矩阵 <span class="math-inline" data-tex="X">\(X\)</span> 本身（方差、相关系数）或 <span class="math-inline" data-tex="X">\(X\)</span> 与 <span class="math-inline" data-tex="y">\(y\)</span> 的单变量统计量，<strong>与具体模型无关</strong>，极快，适合先粗筛；</li>
+<li><strong>包裹法（Wrapper）</strong>：把模型当黑箱反复训练，按“删掉哪一个特征掉分最少”逐步剔除（如 RFE），<strong>最贴合最终模型</strong>，但计算昂贵；</li>
+<li><strong>嵌入法（Embedded）</strong>：模型训练过程本身就在做选择，如 Lasso 的 <span class="math-inline" data-tex="L_1">\(L_1\)</span> 稀疏化、树模型的分裂重要性。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-构建-29-列描述符矩阵">2. 构建 29 列描述符矩阵</h2>
+<p>下面我们：</p>
+<ol>
+<li>读入 AqSolDB，剔除分子量过小/过大的离群条目（金属盐、聚合物片段等），随机抽取 3,000 个分子作为本节的工作集（保证 SHAP 计算在课堂时间内跑得完）；</li>
+<li>保留 CSV 自带的 17 个描述符列；</li>
+<li>用 RDKit 再补算 12 个描述符——其中刻意包含了几个<strong>在这个数据集上几乎恒定</strong>的列（如 <code>NumRadicalElectrons</code>），正好用来演示方差过滤。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">df_all</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">find_file</span><span class="p">(</span><span class="s2">&quot;solubility.csv&quot;</span><span class="p">))</span>
+<span class="n">df_all</span> <span class="o">=</span> <span class="n">df_all</span><span class="p">[(</span><span class="n">df_all</span><span class="p">[</span><span class="s2">&quot;MolWt&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">20</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df_all</span><span class="p">[</span><span class="s2">&quot;MolWt&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">800</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sub</span> <span class="o">=</span> <span class="n">df_all</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">3000</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">EXTRA_DESC</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;FractionCSP3&quot;</span><span class="p">:</span>             <span class="n">Descriptors</span><span class="o">.</span><span class="n">FractionCSP3</span><span class="p">,</span>
+    <span class="s2">&quot;NHOHCount&quot;</span><span class="p">:</span>                <span class="n">Descriptors</span><span class="o">.</span><span class="n">NHOHCount</span><span class="p">,</span>
+    <span class="s2">&quot;NOCount&quot;</span><span class="p">:</span>                  <span class="n">Descriptors</span><span class="o">.</span><span class="n">NOCount</span><span class="p">,</span>
+    <span class="s2">&quot;HallKierAlpha&quot;</span><span class="p">:</span>            <span class="n">Descriptors</span><span class="o">.</span><span class="n">HallKierAlpha</span><span class="p">,</span>
+    <span class="s2">&quot;Kappa1&quot;</span><span class="p">:</span>                   <span class="n">Descriptors</span><span class="o">.</span><span class="n">Kappa1</span><span class="p">,</span>
+    <span class="s2">&quot;Kappa2&quot;</span><span class="p">:</span>                   <span class="n">Descriptors</span><span class="o">.</span><span class="n">Kappa2</span><span class="p">,</span>
+    <span class="s2">&quot;Chi0v&quot;</span><span class="p">:</span>                    <span class="n">Descriptors</span><span class="o">.</span><span class="n">Chi0v</span><span class="p">,</span>
+    <span class="s2">&quot;Chi1v&quot;</span><span class="p">:</span>                    <span class="n">Descriptors</span><span class="o">.</span><span class="n">Chi1v</span><span class="p">,</span>
+    <span class="s2">&quot;NumRadicalElectrons&quot;</span><span class="p">:</span>      <span class="n">Descriptors</span><span class="o">.</span><span class="n">NumRadicalElectrons</span><span class="p">,</span>
+    <span class="s2">&quot;NumSaturatedHeterocycles&quot;</span><span class="p">:</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">NumSaturatedHeterocycles</span><span class="p">,</span>
+    <span class="s2">&quot;NumAmideBonds&quot;</span><span class="p">:</span>            <span class="n">rdMolDescriptors</span><span class="o">.</span><span class="n">CalcNumAmideBonds</span><span class="p">,</span>
+    <span class="s2">&quot;MaxPartialCharge&quot;</span><span class="p">:</span>         <span class="n">Descriptors</span><span class="o">.</span><span class="n">MaxPartialCharge</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">rows</span><span class="p">,</span> <span class="n">keep_idx</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">smi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="s2">&quot;SMILES&quot;</span><span class="p">]):</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">continue</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="n">fn</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">EXTRA_DESC</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">continue</span>
+    <span class="n">keep_idx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+<span class="n">sub</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">keep_idx</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">X_extra</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">BASE_COLS</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df_all</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;SMILES&quot;</span><span class="p">,</span> <span class="s2">&quot;Solubility&quot;</span><span class="p">)]</span>
+<span class="n">X_full</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">sub</span><span class="p">[</span><span class="n">BASE_COLS</span><span class="p">],</span> <span class="n">X_extra</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">X_full</span> <span class="o">=</span> <span class="n">X_full</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">X_full</span><span class="o">.</span><span class="n">median</span><span class="p">())</span>        <span class="c1"># MaxPartialCharge 在少数分子上会返回 NaN</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;描述符矩阵 X_full: </span><span class="si">{</span><span class="n">X_full</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> 个分子 × </span><span class="si">{</span><span class="n">X_full</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> 个描述符&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;列名:&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">X_full</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">X_tr</span><span class="p">,</span> <span class="n">X_te</span><span class="p">,</span> <span class="n">y_tr</span><span class="p">,</span> <span class="n">y_te</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X_full</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="n">rf_full</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">rf_full</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr</span><span class="p">,</span> <span class="n">y_tr</span><span class="p">)</span>
+<span class="n">r2_full</span> <span class="o">=</span> <span class="n">rf_full</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_te</span><span class="p">,</span> <span class="n">y_te</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;基准（全部 </span><span class="si">{</span><span class="n">X_full</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> 个描述符）测试集 R2 = </span><span class="si">{</span><span class="n">r2_full</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-过滤法-一-方差过滤与-准常量特征">3. 过滤法（一）：方差过滤与“准常量特征”</h2>
+<p>最朴素的过滤思路是：<strong>一个几乎不变化的特征，不可能解释因变量的变化</strong>。<code>sklearn.feature_selection.VarianceThreshold</code> 正是据此剔除方差低于阈值的列。</p>
+<p>但直接对原始描述符算方差会踩一个大坑：<strong>方差是有量纲的</strong>。<code>BertzCT</code> 的数值范围在 <span class="math-inline" data-tex="0 \sim 20{,}000">\(0 \sim 20{,}000\)</span>，方差自然巨大；<code>FractionCSP3</code> 被定义在 <span class="math-inline" data-tex="[0, 1]">\([0, 1]\)</span> 之间，方差再大也超不过 0.25。于是“方差排序”会退化成“量纲排序”，毫无意义。</p>
+<p>常见的两种修正：</p>
+<ol>
+<li><strong>先做 Min-Max 归一化再算方差</strong>——把所有特征压到 <span class="math-inline" data-tex="[0, 1]">\([0, 1]\)</span> 后再比较；</li>
+<li><strong>直接统计“最高频取值的占比”</strong>——对 <code>NumRadicalElectrons</code> 这类整数计数型描述符更直观、更抗离群值。</li>
+</ol>
+<p>下面我们把两种判据并排算出来对比：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 判据 1：Min-Max 归一化后的方差（在训练集上 fit，避免信息泄漏）</span>
+<span class="n">mm</span> <span class="o">=</span> <span class="n">MinMaxScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr</span><span class="p">)</span>
+<span class="n">var_scaled</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">mm</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_tr</span><span class="p">)</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">X_tr</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+<span class="c1"># 判据 2：最高频取值所占比例（越接近 1，说明该列越“恒定”）</span>
+<span class="n">top_share</span> <span class="o">=</span> <span class="n">X_tr</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">value_counts</span><span class="p">(</span><span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="n">diag</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;MinMax_variance&quot;</span><span class="p">:</span> <span class="n">var_scaled</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span>
+    <span class="s2">&quot;top_value_share&quot;</span><span class="p">:</span> <span class="n">top_share</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="p">})</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;top_value_share&quot;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">diag</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span>
+<span class="n">对照</span><span class="err">：</span><span class="n">MolLogP</span> <span class="n">的</span> <span class="n">MinMax</span> <span class="n">方差</span> <span class="o">=</span> <span class="p">{</span><span class="n">var_scaled</span><span class="p">[</span><span class="s1">&#39;MolLogP&#39;</span><span class="p">]:</span><span class="mf">.5</span><span class="n">f</span><span class="p">}</span><span class="s2">&quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;，最高频取值占比 = </span><span class="si">{</span><span class="n">top_share</span><span class="p">[</span><span class="s1">&#39;MolLogP&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">4.6</span><span class="p">))</span>
+<span class="n">order</span> <span class="o">=</span> <span class="n">top_share</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="n">C</span><span class="o">.</span><span class="n">crimson</span> <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="mf">0.80</span> <span class="k">else</span> <span class="n">C</span><span class="o">.</span><span class="n">navy</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">order</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">order</span><span class="p">)),</span> <span class="n">order</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">order</span><span class="p">)))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">0.80</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">gold</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;near-constant cutoff = 0.80&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Share of the single most frequent value&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Near-constant Descriptor Screening on the Training Set&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">NEAR_CONST_CUTOFF</span> <span class="o">=</span> <span class="mf">0.80</span>
+<span class="n">const_like</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">top_share</span><span class="p">[</span><span class="n">top_share</span> <span class="o">&gt;</span> <span class="n">NEAR_CONST_CUTOFF</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;判定为准常量的描述符（</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">const_like</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个）:&quot;</span><span class="p">,</span> <span class="n">const_like</span><span class="p">)</span>
+
+<span class="n">cols_var</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">X_full</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">const_like</span><span class="p">]</span>
+<span class="n">rf_var</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr</span><span class="p">[</span><span class="n">cols_var</span><span class="p">],</span> <span class="n">y_tr</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;剔除准常量特征后：</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cols_var</span><span class="p">)</span><span class="si">}</span><span class="s2"> 维，测试集 R2 = </span><span class="si">{</span><span class="n">rf_var</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_te</span><span class="p">[</span><span class="n">cols_var</span><span class="p">],</span><span class="w"> </span><span class="n">y_te</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;（基准 </span><span class="si">{</span><span class="n">r2_full</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">）&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>注意两件事：</p>
+<ol>
+<li><strong>方差过滤是完全无监督的</strong>——它从头到尾没有看过标签 <span class="math-inline" data-tex="y">\(y\)</span>。因此它只适合用来扔掉“几乎恒定”的废列，<strong>绝不能用来给特征排重要性</strong>。看最后那行对照输出：<code>MolLogP</code> 的 Min-Max 方差小到可以忽略（因为 AqSolDB 里混进了 <span class="math-inline" data-tex="\log P \approx -40">\(\log P \approx -40\)</span> 的极端离子，把量程拉得极宽，归一化后绝大多数分子都挤在一小段里），但它恰恰是下文 SHAP 分析中统治一切的头号特征。</li>
+<li>准常量特征对<strong>树模型</strong>的伤害其实有限（分裂时自然会被忽略），但对<strong>线性模型、kNN、神经网络</strong>则会实打实地注入噪声与数值不稳定。</li>
+</ol>
+<h3 id="练习-05a-1-方差过滤阈值的敏感性分析">🏋️ 练习 05a-1：方差过滤阈值的敏感性分析</h3>
+<p>把“最高频取值占比”的阈值 <code>NEAR_CONST_CUTOFF</code> 依次取 <code>0.95, 0.90, 0.85, 0.80, 0.70, 0.60, 0.50</code>：</p>
+<ol>
+<li>对每个阈值统计保留下来的特征数，并用随机森林（<code>n_estimators=200, random_state=0</code>）在训练集上拟合、在测试集上评估 <span class="math-inline" data-tex="R^2">\(R^2\)</span>；</li>
+<li>画出“保留特征数 vs 测试集 <span class="math-inline" data-tex="R^2">\(R^2\)</span>”的折线图，判断阈值降到多少时精度开始明显下滑。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-过滤法-二-共线性剪枝">4. 过滤法（二）：共线性剪枝</h2>
+<p>比准常量特征危害大得多的是<strong>共线性</strong>。在第二讲 <code>02c</code> 的置换重要性实验里我们已经见过这个现象：打乱 <code>MolWt</code> 时模型纹丝不动，因为 <code>HeavyAtomCount</code> 还在旁边提供了几乎相同的信息——<strong>两个高度相关的特征会互相“打掩护”，让任何基于“删掉它会掉多少分”的重要性度量同时低估两者</strong>。</p>
+<p>诊断工具就是 <strong>Pearson 相关系数矩阵</strong> <span class="math-inline" data-tex="|r_{ij}|">\(|r_{ij}|\)</span>。剪枝策略是一个朴素的贪心算法：</p>
+<blockquote>
+<p>按某个优先级遍历特征，一旦发现某列与<strong>已保留</strong>的某列相关系数 <span class="math-inline" data-tex="|r| &gt; 0.9">\(|r| &gt; 0.9\)</span>，就把它丢掉。</p>
+</blockquote>
+<p>优先级怎么定？两种常见做法：(a) 按与标签 <span class="math-inline" data-tex="y">\(y\)</span> 的相关性从高到低（保留信息量大的）；(b) 按化学可解释性人工排序（保留实验同行看得懂的）。这里我们用 (a)。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">corr</span> <span class="o">=</span> <span class="n">X_tr</span><span class="p">[</span><span class="n">cols_var</span><span class="p">]</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">8.2</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span>
+<span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;RdBu_r&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">corr</span><span class="p">)))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">corr</span><span class="p">)))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Absolute Pearson Correlation Matrix of RDKit Descriptors&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;|r|&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">pairs</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">corr</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">corr</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+<span class="p">]</span>
+<span class="n">pairs</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="o">-</span><span class="n">t</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;相关性最强的 10 对描述符：&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">pairs</span><span class="p">[:</span><span class="mi">10</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  |r| = </span><span class="si">{</span><span class="n">r</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">   </span><span class="si">{</span><span class="n">a</span><span class="si">:</span><span class="s2">&lt;24s</span><span class="si">}</span><span class="s2"> &lt;-&gt; </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">prune_collinear</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">priority</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.90</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;贪心共线性剪枝：按 priority 顺序遍历，丢掉与已保留列相关系数超过阈值的列。&quot;&quot;&quot;</span>
+    <span class="n">kept</span><span class="p">,</span> <span class="n">dropped</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">priority</span><span class="p">:</span>
+        <span class="n">clash</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">kept</span> <span class="k">if</span> <span class="n">corr_mat</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">clash</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kept</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dropped</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">clash</span><span class="p">,</span> <span class="n">corr_mat</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">clash</span><span class="p">,</span> <span class="n">col</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">kept</span><span class="p">,</span> <span class="n">dropped</span>
+
+<span class="c1"># 优先级：与 logS 的绝对相关系数从高到低</span>
+<span class="n">target_corr</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_tr</span><span class="p">[</span><span class="n">cols_var</span><span class="p">]</span>
+               <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">y_tr</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]))</span>
+               <span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<span class="n">cols_pruned</span><span class="p">,</span> <span class="n">dropped_map</span> <span class="o">=</span> <span class="n">prune_collinear</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">target_corr</span><span class="o">.</span><span class="n">index</span><span class="p">),</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.90</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;共线性剪枝：</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cols_var</span><span class="p">)</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cols_pruned</span><span class="p">)</span><span class="si">}</span><span class="s2"> 维&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">被剔除的描述符及其替身：&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="p">(</span><span class="n">keeper</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="ow">in</span> <span class="n">dropped_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">col</span><span class="si">:</span><span class="s2">&lt;24s</span><span class="si">}</span><span class="s2"> 被 </span><span class="si">{</span><span class="n">keeper</span><span class="si">:</span><span class="s2">&lt;20s</span><span class="si">}</span><span class="s2"> 覆盖 (|r| = </span><span class="si">{</span><span class="n">r</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+<span class="n">rf_pruned</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr</span><span class="p">[</span><span class="n">cols_pruned</span><span class="p">],</span> <span class="n">y_tr</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">剪枝后测试集 R2 = </span><span class="si">{</span><span class="n">rf_pruned</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_te</span><span class="p">[</span><span class="n">cols_pruned</span><span class="p">],</span><span class="w"> </span><span class="n">y_te</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">（基准 </span><span class="si">{</span><span class="n">r2_full</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">）&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-包裹法-递归特征消除-rfe-rfecv">5. 包裹法：递归特征消除（RFE / RFECV）</h2>
+<p>过滤法只看特征之间的统计关系，完全不知道最终模型的脾气。<strong>递归特征消除（Recursive Feature Elimination, RFE）</strong> 则反过来，把模型拉进循环：</p>
+<ol>
+<li>用<strong>全部</strong>特征训练一次模型，读出每个特征的内置重要性（树模型的 <code>feature_importances_</code>，线性模型的 <span class="math-inline" data-tex="|\text{coef}|">\(|\text{coef}|\)</span>）；</li>
+<li>扔掉重要性最低的 <code>step</code> 个特征；</li>
+<li>在剩下的特征上<strong>重新训练</strong>，重复第 2 步，直到只剩 <code>n_features_to_select</code> 个。</li>
+</ol>
+<p>关键在于第 3 步的“重新训练”：每轮淘汰之后，幸存特征的重要性会被重新评估。这恰恰能部分化解共线性——<code>MolWt</code> 和 <code>HeavyAtomCount</code> 一开始互相分摊重要性，但只要其中一个先被淘汰，另一个的重要性立刻会在下一轮里反弹上来。</p>
+<p>代价是<strong>训练次数成倍增长</strong>：29 个特征、<code>step=2</code> 意味着要训练约 10 次随机森林。如果还不知道该保留几个特征，<code>RFECV</code> 会在每个候选维度上再套一层交叉验证。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">N_KEEP</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">rfe</span> <span class="o">=</span> <span class="n">RFE</span><span class="p">(</span>
+    <span class="n">estimator</span><span class="o">=</span><span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">n_features_to_select</span><span class="o">=</span><span class="n">N_KEEP</span><span class="p">,</span>
+    <span class="n">step</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">rfe</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr</span><span class="p">,</span> <span class="n">y_tr</span><span class="p">)</span>
+
+<span class="n">cols_rfe</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">X_full</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">rfe</span><span class="o">.</span><span class="n">support_</span><span class="p">])</span>
+<span class="n">rank</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">rfe</span><span class="o">.</span><span class="n">ranking_</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">X_full</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RFE 选出的 </span><span class="si">{</span><span class="n">N_KEEP</span><span class="si">}</span><span class="s2"> 个描述符：</span><span class="si">{</span><span class="n">cols_rfe</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">淘汰顺序（ranking_ = 1 表示入选，数字越大越早被淘汰）：&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">rank</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+
+<span class="n">rf_rfe</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr</span><span class="p">[</span><span class="n">cols_rfe</span><span class="p">],</span> <span class="n">y_tr</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">RFE 10 维测试集 R2 = </span><span class="si">{</span><span class="n">rf_rfe</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_te</span><span class="p">[</span><span class="n">cols_rfe</span><span class="p">],</span><span class="w"> </span><span class="n">y_te</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">（基准 </span><span class="si">{</span><span class="n">r2_full</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">）&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-05a-2-用-rfecv-自动确定该保留几个特征">🏋️ 练习 05a-2：用 <code>RFECV</code> 自动确定该保留几个特征</h3>
+<p>手动把 <code>N_KEEP</code> 定成 10 是拍脑袋的。<code>sklearn.feature_selection.RFECV</code> 会在每一个候选特征数上做交叉验证，自动挑出交叉验证得分最高的维度。</p>
+<ol>
+<li>用 <code>RFECV(estimator=RandomForestRegressor(n_estimators=60, random_state=0, n_jobs=-1), step=2, cv=KFold(3, shuffle=True, random_state=0), scoring=&quot;r2&quot;, min_features_to_select=3)</code> 在 <code>(X_tr, y_tr)</code> 上拟合（约需 1–3 分钟）；</li>
+<li>打印 <code>rfecv.n_features_</code> 与入选特征名；</li>
+<li>用 <code>rfecv.cv_results_[&quot;mean_test_score&quot;]</code> 画出“特征数 vs 交叉验证 <span class="math-inline" data-tex="R^2">\(R^2\)</span>”曲线，并在最优点上标注一条竖线。</li>
+</ol>
+<blockquote>
+<p><strong>提示</strong>：<code>cv_results_[&quot;mean_test_score&quot;]</code> 的第 <span class="math-inline" data-tex="k">\(k\)</span> 个元素对应 <code>min_features_to_select + k * step</code> 个特征。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="6-三条路线横评-29-维-10-维-精度几乎不掉">6. 三条路线横评：29 维 → 10 维，精度几乎不掉</h2>
+<p>把前面三种策略放到同一把尺子下，用<strong>五折交叉验证</strong>（而不是单次划分）比较，以免被一次随机划分的运气骗了：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">cv</span> <span class="o">=</span> <span class="n">KFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">strategies</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;1_all_descriptors&quot;</span><span class="p">:</span>      <span class="nb">list</span><span class="p">(</span><span class="n">X_full</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span>
+    <span class="s2">&quot;2_variance_filter&quot;</span><span class="p">:</span>      <span class="n">cols_var</span><span class="p">,</span>
+    <span class="s2">&quot;3_variance_plus_prune&quot;</span><span class="p">:</span>  <span class="n">cols_pruned</span><span class="p">,</span>
+    <span class="s2">&quot;4_rfe_wrapper&quot;</span><span class="p">:</span>          <span class="n">cols_rfe</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">report</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">strategies</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">cross_val_score</span><span class="p">(</span>
+        <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">X_full</span><span class="p">[</span><span class="n">cols</span><span class="p">],</span> <span class="n">y</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">cv</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s2">&quot;r2&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s2">&quot;strategy&quot;</span><span class="p">:</span>   <span class="n">name</span><span class="p">,</span>
+        <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">),</span>
+        <span class="s2">&quot;cv_r2_mean&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="mi">4</span><span class="p">),</span>
+        <span class="s2">&quot;cv_r2_std&quot;</span><span class="p">:</span>  <span class="nb">round</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">std</span><span class="p">(),</span> <span class="mi">4</span><span class="p">),</span>
+    <span class="p">})</span>
+
+<span class="n">report</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">7.5</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">report</span><span class="p">[</span><span class="s2">&quot;n_features&quot;</span><span class="p">],</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;cv_r2_mean&quot;</span><span class="p">],</span> <span class="n">yerr</span><span class="o">=</span><span class="n">report</span><span class="p">[</span><span class="s2">&quot;cv_r2_std&quot;</span><span class="p">],</span>
+            <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">capsize</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.8</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">navy</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;strategy&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;n_features&quot;</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;cv_r2_mean&quot;</span><span class="p">]),</span>
+                <span class="n">textcoords</span><span class="o">=</span><span class="s2">&quot;offset points&quot;</span><span class="p">,</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Number of descriptors kept&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;5-fold CV R2&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Feature Selection: Fewer Descriptors, Same Accuracy&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>结论非常清楚</strong>：从 29 维压到 10 维，交叉验证 <span class="math-inline" data-tex="R^2">\(R^2\)</span> 的变化完全落在折间标准差之内——<strong>三分之二的描述符是可以安全删掉的冗余</strong>。换来的是更短的训练时间、更稳的小样本表现，以及一张能在组会上逐行讲清楚的特征表。</p>
+<hr />
+<h2 id="7-防坑-特征选择必须放进-pipeline">7. 防坑：特征选择必须放进 Pipeline</h2>
+<p>这是一个<strong>极其常见、极其隐蔽</strong>的数据泄漏陷阱，很多已发表的 QSAR 论文都栽在这里：</p>
+<blockquote>
+<p>❌ <strong>错误做法</strong>：在<strong>整个数据集</strong>上跑一次 RFE 选出 10 个特征，然后再对这 10 个特征做交叉验证报告性能。</p>
+</blockquote>
+<p>错在哪？RFE 在选特征时<strong>看过了全部样本的标签 <span class="math-inline" data-tex="y">\(y\)</span></strong>，包括后来被划进验证折的那些。于是“哪些特征有用”这个决定本身就泄漏了验证集信息，交叉验证分数会被系统性地抬高。</p>
+<p>正确做法是把特征选择器<strong>当成模型的一部分</strong>塞进 <code>Pipeline</code>，让它在每一折的训练子集上独立地重新选一次：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 错误：先在全量数据上选特征，再交叉验证</span>
+<span class="n">leaky_selector</span> <span class="o">=</span> <span class="n">RFE</span><span class="p">(</span><span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+                     <span class="n">n_features_to_select</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_full</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">leaky_cols</span> <span class="o">=</span> <span class="n">X_full</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">leaky_selector</span><span class="o">.</span><span class="n">support_</span><span class="p">]</span>
+<span class="n">leaky_score</span> <span class="o">=</span> <span class="n">cross_val_score</span><span class="p">(</span>
+    <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">X_full</span><span class="p">[</span><span class="n">leaky_cols</span><span class="p">],</span> <span class="n">y</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">cv</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s2">&quot;r2&quot;</span><span class="p">,</span>
+<span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+<span class="c1"># 正确：特征选择进 Pipeline，每折独立重选</span>
+<span class="n">honest_pipe</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">([</span>
+    <span class="p">(</span><span class="s2">&quot;select&quot;</span><span class="p">,</span> <span class="n">RFE</span><span class="p">(</span><span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+                   <span class="n">n_features_to_select</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">3</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span>  <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)),</span>
+<span class="p">])</span>
+<span class="n">honest_score</span> <span class="o">=</span> <span class="n">cross_val_score</span><span class="p">(</span><span class="n">honest_pipe</span><span class="p">,</span> <span class="n">X_full</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">cv</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s2">&quot;r2&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[错误] 全量选特征后再 CV   : R2 = </span><span class="si">{</span><span class="n">leaky_score</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[正确] 选特征嵌入 Pipeline : R2 = </span><span class="si">{</span><span class="n">honest_score</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">乐观偏差 = </span><span class="si">{</span><span class="n">leaky_score</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">honest_score</span><span class="si">:</span><span class="s2">+.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>在本例中（3,000 个样本、29 个特征、特征与标签关系极强），两者的差距小到被随机波动淹没——偏差甚至可能是个负数。这不代表泄漏无害，而是说明<strong>在样本远多于特征、信号又很强时，&quot;选哪些特征&quot;这个决定本身几乎不含可泄漏的信息</strong>。请记住这个规律：<strong>样本越少、候选特征越多，这个偏差就越致命</strong>。在一个 40 个实测样本、1,800 维 mordred 描述符的课题里，“先全量选特征再 CV” 能把一个纯噪声模型的 <span class="math-inline" data-tex="R^2">\(R^2\)</span> 吹到 0.8 以上。</p>
+<blockquote>
+<p><strong>📌 一句话准则</strong>：凡是“看过标签 <span class="math-inline" data-tex="y">\(y\)</span>”的预处理步骤（特征选择、目标编码、过采样），都必须放进 <code>Pipeline</code>；只看 <span class="math-inline" data-tex="X">\(X\)</span> 的步骤（<code>StandardScaler</code>、<code>VarianceThreshold</code>）虽然泄漏风险小，放进去也更稳妥。</p>
+</blockquote>
+<hr />
+<h2 id="8-从全局重要性到单分子归因-shapley-值">8. 从全局重要性到单分子归因：Shapley 值</h2>
+<p>到这里，我们能回答的还只是“<strong>整体上</strong>哪些描述符重要”。但当你合成出一个新分子、模型预测 <span class="math-inline" data-tex="\log S = -6.4">\(\log S = -6.4\)</span> 时，你真正想知道的是：</p>
+<blockquote>
+<p>这 <span class="math-inline" data-tex="-6.4">\(-6.4\)</span> 里，有多少是因为它 <span class="math-inline" data-tex="\log P">\(\log P\)</span> 高？有多少是因为它芳环多、刚性大？</p>
+</blockquote>
+<p>SHAP 给出的答案来自 1953 年 Lloyd Shapley 的<strong>合作博弈论</strong>。把一次预测看成一场“合作”：<span class="math-inline" data-tex="M">\(M\)</span> 个特征是 <span class="math-inline" data-tex="M">\(M\)</span> 位玩家，模型输出是他们共同创造的“收益”。Shapley 值要解决的就是<strong>如何公平地把总收益分配给每位玩家</strong>。</p>
+<p>对特征 <span class="math-inline" data-tex="i">\(i\)</span>，其 Shapley 值定义为它在<strong>所有可能的加入顺序</strong>中带来的边际贡献的平均：</p>
+<div class="math-block" data-tex="\phi_i = \sum_{S \subseteq F \setminus \{i\}} \frac{|S|!\,(M - |S| - 1)!}{M!} \Big[ v(S \cup \{i\}) - v(S) \Big]">\[\phi_i = \sum_{S \subseteq F \setminus \{i\}} \frac{|S|!\,(M - |S| - 1)!}{M!} \Big[ v(S \cup \{i\}) - v(S) \Big]\]</div>
+<p>其中 <span class="math-inline" data-tex="F">\(F\)</span> 是全部特征集合，<span class="math-inline" data-tex="S">\(S\)</span> 是不含特征 <span class="math-inline" data-tex="i">\(i\)</span> 的任一子集，<span class="math-inline" data-tex="v(S)">\(v(S)\)</span> 是“只用 <span class="math-inline" data-tex="S">\(S\)</span> 中的特征”时模型对该样本的预测值。前面那个组合系数正是“在随机排列中，恰好 <span class="math-inline" data-tex="S">\(S\)</span> 里的玩家排在 <span class="math-inline" data-tex="i">\(i\)</span> 之前”的概率。</p>
+<p>Shapley 值是<strong>唯一</strong>同时满足以下四条公理的分配方案：</p>
+<table>
+<thead>
+<tr>
+<th>公理</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>有效性（Efficiency）</strong></td>
+<td><span class="math-inline" data-tex="\sum_i \phi_i = v(F) - v(\varnothing)">\(\sum_i \phi_i = v(F) - v(\varnothing)\)</span>，即所有贡献之和恰好等于“该样本的预测值 − 全体平均预测值”</td>
+</tr>
+<tr>
+<td><strong>对称性（Symmetry）</strong></td>
+<td>两个作用完全相同的特征，分到的贡献必须相等</td>
+</tr>
+<tr>
+<td><strong>虚拟性（Dummy）</strong></td>
+<td>对任何子集都不产生影响的特征，贡献为 0</td>
+</tr>
+<tr>
+<td><strong>可加性（Additivity）</strong></td>
+<td>两个模型相加，其 Shapley 值也相加（这是 SHAP 能处理随机森林这种集成模型的关键）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>有效性公理</strong>正是 SHAP 最漂亮的地方：它保证了一个严格的加法分解</p>
+<div class="math-block" data-tex="\hat{y}(x) = \underbrace{\mathbb{E}[\hat{y}]}_{\text{base value}} + \sum_{i=1}^{M} \phi_i(x)">\[\hat{y}(x) = \underbrace{\mathbb{E}[\hat{y}]}_{\text{base value}} + \sum_{i=1}^{M} \phi_i(x)\]</div>
+<p>每个分子的预测值都能被<strong>不多不少</strong>地拆成“数据集平均值 + 各描述符的推拉贡献”。</p>
+<h3 id="8-1-手写精确-shapley-值-用-16-个重训模型验证公理">8.1 手写精确 Shapley 值：用 16 个重训模型验证公理</h3>
+<p>公式里的 <span class="math-inline" data-tex="v(S)">\(v(S)\)</span>（“只用 <span class="math-inline" data-tex="S">\(S\)</span> 中特征的模型”）严格来说需要<strong>对每一个子集重新训练一个模型</strong>。<span class="math-inline" data-tex="M">\(M\)</span> 个特征就是 <span class="math-inline" data-tex="2^M">\(2^M\)</span> 个模型——这正是 Shapley 值的组合爆炸。但如果我们只取 4 个描述符，<span class="math-inline" data-tex="2^4 = 16">\(2^4 = 16\)</span> 个随机森林在几秒内就能训完，足以让我们<strong>完全按定义</strong>把 Shapley 值算一遍，并亲眼验证有效性公理。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">F4</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">]</span>
+<span class="n">X4_tr</span><span class="p">,</span> <span class="n">X4_te</span> <span class="o">=</span> <span class="n">X_tr</span><span class="p">[</span><span class="n">F4</span><span class="p">],</span> <span class="n">X_te</span><span class="p">[</span><span class="n">F4</span><span class="p">]</span>
+<span class="n">BASE_VALUE</span> <span class="o">=</span> <span class="n">y_tr</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>          <span class="c1"># v(空集)：不用任何特征时的最优预测 = 训练集均值</span>
+
+<span class="c1"># 为全部 2^4 = 16 个特征子集各训练一个随机森林</span>
+<span class="n">sub_models</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">F4</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">S</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">F4</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+        <span class="n">sub_models</span><span class="p">[</span><span class="n">S</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">S</span> <span class="k">else</span> <span class="n">RandomForestRegressor</span><span class="p">(</span>
+            <span class="n">n_estimators</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X4_tr</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">S</span><span class="p">)],</span> <span class="n">y_tr</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;已训练 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sub_models</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个子集模型（含空集）&quot;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">v</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;价值函数 v(S)：只用 S 中的特征时，模型对样本 x 的预测值。&quot;&quot;&quot;</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">F4</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">S</span><span class="p">)</span>        <span class="c1"># 固定顺序，便于查表</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">S</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">BASE_VALUE</span>
+    <span class="k">return</span> <span class="n">sub_models</span><span class="p">[</span><span class="n">S</span><span class="p">]</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">S</span><span class="p">)]]))[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">exact_shapley</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;严格按定义枚举全部子集，计算精确 Shapley 值。&quot;&quot;&quot;</span>
+    <span class="n">M_</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">F4</span><span class="p">)</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">F4</span><span class="p">:</span>
+        <span class="n">others</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">F4</span> <span class="k">if</span> <span class="n">g</span> <span class="o">!=</span> <span class="n">f</span><span class="p">]</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">others</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">S</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">others</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+                <span class="n">w</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">factorial</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">S</span><span class="p">))</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">factorial</span><span class="p">(</span><span class="n">M_</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">S</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">factorial</span><span class="p">(</span><span class="n">M_</span><span class="p">)</span>
+                <span class="n">total</span> <span class="o">+=</span> <span class="n">w</span> <span class="o">*</span> <span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">S</span><span class="p">)</span> <span class="o">|</span> <span class="p">{</span><span class="n">f</span><span class="p">},</span> <span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">v</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">S</span><span class="p">),</span> <span class="n">x</span><span class="p">))</span>
+        <span class="n">phi</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="n">total</span>
+    <span class="k">return</span> <span class="n">phi</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">x0</span> <span class="o">=</span> <span class="n">X4_te</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">phi0</span> <span class="o">=</span> <span class="n">exact_shapley</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
+<span class="n">pred_full</span> <span class="o">=</span> <span class="n">v</span><span class="p">(</span><span class="n">F4</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;样本的 4 个描述符取值：&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">x0</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">精确 Shapley 值（单位：log S）：&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">phi0</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="o">-</span><span class="nb">abs</span><span class="p">(</span><span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">])):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  phi(</span><span class="si">{</span><span class="n">f</span><span class="si">:</span><span class="s2">&lt;18s</span><span class="si">}</span><span class="s2">) = </span><span class="si">{</span><span class="n">val</span><span class="si">:</span><span class="s2">+.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">有效性公理检验：&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  base value E[y]     = </span><span class="si">{</span><span class="n">BASE_VALUE</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  + sum(phi_i)        = </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">phi0</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="si">:</span><span class="s2">+.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  = </span><span class="si">{</span><span class="n">BASE_VALUE</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">sum</span><span class="p">(</span><span class="n">phi0</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  全特征模型预测 v(F)  = </span><span class="si">{</span><span class="n">pred_full</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  实测 logS           = </span><span class="si">{</span><span class="n">y_te</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  残差 = </span><span class="si">{</span><span class="nb">abs</span><span class="p">(</span><span class="n">BASE_VALUE</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">sum</span><span class="p">(</span><span class="n">phi0</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">pred_full</span><span class="p">)</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">  -&gt; 有效性公理精确成立&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>残差是机器精度量级——<strong>有效性公理严格成立</strong>，不是近似。</p>
+<p>但这种“每个子集重训一个模型”的做法有两个硬伤：(1) <span class="math-inline" data-tex="2^M">\(2^M\)</span> 的组合爆炸，29 个特征就是 5 亿个模型；(2) 它衡量的是“这个特征值不值得被收集”，而非“这个已训练好的模型是怎么用它的”。</p>
+<p>实践中用的是 <strong>TreeSHAP</strong> 算法：它不重训模型，而是把“缺失特征”处理成“在树里沿着两个分支按样本比例加权下行”，从而在 <span class="math-inline" data-tex="O(T L D^2)">\(O(T L D^2)\)</span> 时间内（<span class="math-inline" data-tex="T">\(T\)</span> 棵树、<span class="math-inline" data-tex="L">\(L\)</span> 个叶子、<span class="math-inline" data-tex="D">\(D\)</span> 层深）<strong>精确</strong>算出树模型的 Shapley 值——这正是 <code>shap.TreeExplainer</code> 能在几秒内处理几百棵树的原因。</p>
+<hr />
+<h2 id="9-shap-treeexplainer-全局归因">9. <code>shap.TreeExplainer</code>：全局归因</h2>
+<p>下面在第 5 节 RFE 选出的 10 维特征上训练随机森林，然后用 TreeSHAP 解释测试集中的 200 个分子。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [16] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">shap</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;正在安装 shap ……&quot;</span><span class="p">)</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_sys</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">_sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="s2">&quot;-q&quot;</span><span class="p">,</span> <span class="s2">&quot;shap&quot;</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">shap</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;shap 版本:&quot;</span><span class="p">,</span> <span class="n">shap</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+
+<span class="n">model_shap</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr</span><span class="p">[</span><span class="n">cols_rfe</span><span class="p">],</span> <span class="n">y_tr</span><span class="p">)</span>
+
+<span class="n">explainer</span> <span class="o">=</span> <span class="n">shap</span><span class="o">.</span><span class="n">TreeExplainer</span><span class="p">(</span><span class="n">model_shap</span><span class="p">)</span>
+<span class="n">X_explain</span> <span class="o">=</span> <span class="n">X_te</span><span class="p">[</span><span class="n">cols_rfe</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">200</span><span class="p">]</span>
+<span class="n">shap_values</span> <span class="o">=</span> <span class="n">explainer</span><span class="o">.</span><span class="n">shap_values</span><span class="p">(</span><span class="n">X_explain</span><span class="p">)</span>
+<span class="n">base_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">explainer</span><span class="o">.</span><span class="n">expected_value</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SHAP 值矩阵形状: </span><span class="si">{</span><span class="n">shap_values</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">   (200 个分子 x </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cols_rfe</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个特征)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;base value E[y] = </span><span class="si">{</span><span class="n">base_value</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">recon</span> <span class="o">=</span> <span class="n">shap_values</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">base_value</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;可加性检验 max|重构值 - 模型预测| = &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">recon</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">model_shap</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_explain</span><span class="p">))</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [17] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># shap 内部会调用 plt.tight_layout()，与课程样式的 constrained_layout 冲突，</span>
+<span class="c1"># 因此所有 shap 画图都放进一个临时关掉 constrained_layout 的上下文里。</span>
+<span class="k">with</span> <span class="n">plt</span><span class="o">.</span><span class="n">rc_context</span><span class="p">({</span><span class="s2">&quot;figure.constrained_layout.use&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}):</span>
+    <span class="n">shap</span><span class="o">.</span><span class="n">summary_plot</span><span class="p">(</span><span class="n">shap_values</span><span class="p">,</span> <span class="n">X_explain</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_size</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;SHAP Beeswarm: How Each Descriptor Pushes logS&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>蜂群图（beeswarm）怎么读</strong>，这是 SHAP 最高信息密度的一张图：</p>
+<ul>
+<li><strong>纵轴</strong>：特征按 <span class="math-inline" data-tex="\overline{|\phi_i|}">\(\overline{|\phi_i|}\)</span>（平均绝对贡献）从上到下排序——这是 SHAP 的全局重要性；</li>
+<li><strong>横轴</strong>：该特征对<strong>单个分子</strong>预测值的推拉量 <span class="math-inline" data-tex="\phi_i">\(\phi_i\)</span>（单位就是 <span class="math-inline" data-tex="\log S">\(\log S\)</span>）。在 0 右侧 = 把预测推向“更易溶”，左侧 = 推向“更难溶”；</li>
+<li><strong>颜色</strong>：该分子在这个特征上的<strong>取值高低</strong>（红高蓝低）。</li>
+</ul>
+<p>于是第一行 <code>MolLogP</code> 呈现出教科书般的图案：<strong>红点（高 <span class="math-inline" data-tex="\log P">\(\log P\)</span>）全部堆在左边，蓝点（低 <span class="math-inline" data-tex="\log P">\(\log P\)</span>）全部堆在右边</strong>——疏水性越强，模型就越往“难溶”方向推，而且最极端的分子能被单独这一个特征推动 3–4 个对数单位。这正是 Yalkowsky 方程里 <span class="math-inline" data-tex="-\log P">\(-\log P\)</span> 那一项的机器学习版本。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [18] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">mean_abs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">shap_values</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">cols_rfe</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">7.5</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="n">mean_abs</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">mean_abs</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">navy</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;mean(|SHAP value|)   [log S units]&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Global Feature Importance from SHAP&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mean_abs</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">v_</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v_</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">mean_abs</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="10-局部归因-为什么模型判这一个分子难溶">10. 局部归因：为什么模型判这一个分子难溶？</h2>
+<p>这才是 SHAP 相对于 MDI / 置换重要性的<strong>本质优势</strong>：后两者只有一个全局数字，而 SHAP 对<strong>每一个分子</strong>都给出一套独立的归因。</p>
+<p>下面我们挑出测试集中模型预测最难溶的分子，画出它的<strong>瀑布图（waterfall plot）</strong>——从数据集平均 <span class="math-inline" data-tex="\mathbb{E}[\hat{y}]">\(\mathbb{E}[\hat{y}]\)</span> 出发，看各个描述符如何一步步把预测推到最终值。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [19] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">pred_explain</span> <span class="o">=</span> <span class="n">model_shap</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_explain</span><span class="p">)</span>
+<span class="n">idx_hard</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">pred_explain</span><span class="p">))</span>        <span class="c1"># 预测最难溶的分子</span>
+
+<span class="n">orig_idx</span> <span class="o">=</span> <span class="n">X_explain</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">idx_hard</span><span class="p">]</span>
+<span class="n">smi_hard</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">orig_idx</span><span class="p">,</span> <span class="s2">&quot;SMILES&quot;</span><span class="p">]</span>
+<span class="n">name_hard</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">orig_idx</span><span class="p">,</span> <span class="s2">&quot;Name&quot;</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;分子名称  : </span><span class="si">{</span><span class="n">name_hard</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SMILES    : </span><span class="si">{</span><span class="n">smi_hard</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;实测 logS : </span><span class="si">{</span><span class="n">sub</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">orig_idx</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Solubility&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;预测 logS : </span><span class="si">{</span><span class="n">pred_explain</span><span class="p">[</span><span class="n">idx_hard</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">mol_hard</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smi_hard</span><span class="p">)</span>
+<span class="n">Draw</span><span class="o">.</span><span class="n">MolToImage</span><span class="p">(</span><span class="n">mol_hard</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">340</span><span class="p">,</span> <span class="mi">260</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [20] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">explanation</span> <span class="o">=</span> <span class="n">shap</span><span class="o">.</span><span class="n">Explanation</span><span class="p">(</span>
+    <span class="n">values</span><span class="o">=</span><span class="n">shap_values</span><span class="p">,</span>
+    <span class="n">base_values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">base_value</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_explain</span><span class="p">)),</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">X_explain</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+    <span class="n">feature_names</span><span class="o">=</span><span class="n">cols_rfe</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">with</span> <span class="n">plt</span><span class="o">.</span><span class="n">rc_context</span><span class="p">({</span><span class="s2">&quot;figure.constrained_layout.use&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}):</span>
+    <span class="n">shap</span><span class="o">.</span><span class="n">plots</span><span class="o">.</span><span class="n">waterfall</span><span class="p">(</span><span class="n">explanation</span><span class="p">[</span><span class="n">idx_hard</span><span class="p">],</span> <span class="n">max_display</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Waterfall: from E[y] to this molecule&#39;s predicted logS&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>瀑布图从底部的 <span class="math-inline" data-tex="\mathbb{E}[\hat{y}]">\(\mathbb{E}[\hat{y}]\)</span> 起步，每一条红/蓝色带把预测往上/往下推一段，最终严格落在模型预测值 <span class="math-inline" data-tex="f(x)">\(f(x)\)</span> 上——<strong>这就是有效性公理的可视化</strong>。</p>
+<p>把这张图翻译成化学语言，就是一句可以直接写进论文讨论部分的话：<em>“模型判定该分子难溶，主要源于其极高的 <code>MolLogP</code> 与较大的 <code>BertzCT</code> 结构复杂度，而较高的 <code>TPSA</code> 只能部分抵消这一趋势。”</em></p>
+<h3 id="练习-05a-3-对比三个并苯类有机半导体分子的-shap-归因">🏋️ 练习 05a-3：对比三个并苯类有机半导体分子的 SHAP 归因</h3>
+<p>用上面训练好的 <code>model_shap</code>（输入特征为 <code>cols_rfe</code>）解释下面三个分子：</p>
+<ul>
+<li><code>Naphthalene</code>（萘）: <code>&quot;c1ccc2ccccc2c1&quot;</code></li>
+<li><code>Anthracene</code>（蒽）: <code>&quot;c1ccc2cc3ccccc3cc2c1&quot;</code></li>
+<li><code>Pentacene</code>（并五苯）: <code>&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</code></li>
+</ul>
+<ol>
+<li>为这三个分子计算 <code>cols_rfe</code> 中的全部描述符（<code>cols_rfe</code> 中的名字与 <code>Descriptors</code> / <code>rdMolDescriptors</code> 中的计算函数同名，可以用一个字典 <code>ALL_DESC = {**{c: getattr(Descriptors, c) for c in BASE_COLS}, **EXTRA_DESC}</code> 统一取到）；</li>
+<li>调用 <code>explainer.shap_values()</code> 得到它们的 SHAP 值，整理成一张 DataFrame（行 = 分子，列 = 特征，另加 <code>base_value</code> 与 <code>预测 logS</code> 两列）；</li>
+<li>用分组柱状图并排对比三者，回答：<strong>从萘到并五苯，预测值的下降主要由哪个描述符贡献？</strong></li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [21] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="11-shap-vs-mdi-vs-置换重要性-共线特征下的三种表现">11. SHAP vs MDI vs 置换重要性：共线特征下的三种表现</h2>
+<p>第二讲 <code>02c</code> 介绍过两种全局重要性，加上 SHAP 一共三种。它们的差别在<strong>共线特征</strong>上暴露得最充分：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [22] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 刻意在高度共线的特征对上做对比：MolWt 与 HeavyAtomCount 同时在场</span>
+<span class="n">COLLINEAR_SET</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;HeavyAtomCount&quot;</span><span class="p">,</span> <span class="s2">&quot;MolMR&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">]</span>
+<span class="n">m_col</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_tr</span><span class="p">[</span><span class="n">COLLINEAR_SET</span><span class="p">],</span> <span class="n">y_tr</span><span class="p">)</span>
+
+<span class="n">mdi</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">m_col</span><span class="o">.</span><span class="n">feature_importances_</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">COLLINEAR_SET</span><span class="p">)</span>
+
+<span class="n">perm</span> <span class="o">=</span> <span class="n">permutation_importance</span><span class="p">(</span><span class="n">m_col</span><span class="p">,</span> <span class="n">X_te</span><span class="p">[</span><span class="n">COLLINEAR_SET</span><span class="p">],</span> <span class="n">y_te</span><span class="p">,</span>
+                              <span class="n">n_repeats</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">perm_imp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">perm</span><span class="o">.</span><span class="n">importances_mean</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">COLLINEAR_SET</span><span class="p">)</span>
+
+<span class="n">sv_col</span> <span class="o">=</span> <span class="n">shap</span><span class="o">.</span><span class="n">TreeExplainer</span><span class="p">(</span><span class="n">m_col</span><span class="p">)</span><span class="o">.</span><span class="n">shap_values</span><span class="p">(</span><span class="n">X_te</span><span class="p">[</span><span class="n">COLLINEAR_SET</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">200</span><span class="p">])</span>
+<span class="n">shap_imp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sv_col</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">COLLINEAR_SET</span><span class="p">)</span>
+
+<span class="n">comp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;MDI_tree_split&quot;</span><span class="p">:</span> <span class="n">mdi</span> <span class="o">/</span> <span class="n">mdi</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
+    <span class="s2">&quot;Permutation&quot;</span><span class="p">:</span>    <span class="n">perm_imp</span> <span class="o">/</span> <span class="n">perm_imp</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
+    <span class="s2">&quot;SHAP_mean_abs&quot;</span><span class="p">:</span>  <span class="n">shap_imp</span> <span class="o">/</span> <span class="n">shap_imp</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
+<span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;（每列已归一化为占比，便于横向对比）&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">comp</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+
+<span class="n">comp</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">&quot;bar&quot;</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">8.5</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">),</span> <span class="n">rot</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.78</span><span class="p">,</span>
+          <span class="n">color</span><span class="o">=</span><span class="p">[</span><span class="n">C</span><span class="o">.</span><span class="n">navy</span><span class="p">,</span> <span class="n">C</span><span class="o">.</span><span class="n">gold</span><span class="p">,</span> <span class="n">C</span><span class="o">.</span><span class="n">crimson</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Normalized importance share&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Three Importance Metrics under Strong Collinearity&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">参考：|r(MolWt, HeavyAtomCount)| = &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">X_tr</span><span class="p">[</span><span class="s1">&#39;MolWt&#39;</span><span class="p">],</span><span class="w"> </span><span class="n">X_tr</span><span class="p">[</span><span class="s1">&#39;HeavyAtomCount&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">])</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>三者的区别可以总结为：</p>
+<table>
+<thead>
+<tr>
+<th>度量</th>
+<th>算在哪个数据集上</th>
+<th>对共线特征的行为</th>
+<th>主要局限</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MDI（树分裂重要性）</strong></td>
+<td>训练集（且只是训练过程的副产物）</td>
+<td>共线特征<strong>平分</strong>重要性，各自被低估</td>
+<td>系统性偏爱高基数（取值多）的连续特征；在训练集上算，会把过拟合也算成“重要”</td>
+</tr>
+<tr>
+<td><strong>置换重要性（Permutation）</strong></td>
+<td>测试集</td>
+<td>共线特征<strong>互相打掩护</strong>，可能双双接近 0</td>
+<td>打乱单列会制造化学上不可能存在的分子（如 <span class="math-inline" data-tex="\log P = 8">\(\log P = 8\)</span> 却 <code>MolWt</code> <span class="math-inline" data-tex="= 60">\(= 60\)</span>）</td>
+</tr>
+<tr>
+<td><strong>SHAP</strong></td>
+<td>任意指定样本集</td>
+<td>共线特征按模型实际使用情况<strong>分摊</strong>贡献，不会双双归零</td>
+<td>计算最贵；TreeSHAP 的条件期望处理同样受相关性影响</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>📌 实践建议</strong>：先用共线性剪枝把高度相关的特征收拾干净（第 4 节），再用 SHAP 做归因——这样三种度量的结论会高度一致，报告出来也最可信。</p>
+</blockquote>
+<hr />
+<h2 id="小结">小结</h2>
+<table>
+<thead>
+<tr>
+<th>核心概念</th>
+<th>方法与实现</th>
+<th>在材料/化学数据上的意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>过滤法：方差 / 准常量</strong></td>
+<td><code>VarianceThreshold</code>；或统计最高频取值占比</td>
+<td>剔除 <code>NumRadicalElectrons</code> 这类在有机分子库里恒为 0 的废列；<strong>必须先归一化</strong>，否则只是在比量纲</td>
+</tr>
+<tr>
+<td><strong>过滤法：共线性剪枝</strong></td>
+<td><span class="math-inline" data-tex="\lvert r_{ij}\rvert &gt; 0.9">\(\lvert r_{ij}\rvert &gt; 0.9\)</span> 贪心剪枝</td>
+<td><code>MolWt</code> / <code>HeavyAtomCount</code> / <code>MolMR</code> / <code>LabuteASA</code> / <code>Chi0v</code> 本质同义，保留一个即可，维度直接腰斩而精度不变</td>
+</tr>
+<tr>
+<td><strong>包裹法：RFE / RFECV</strong></td>
+<td>反复训练 + 淘汰最弱特征</td>
+<td>最贴合最终模型；29 → 10 维，五折 CV <span class="math-inline" data-tex="R^2">\(R^2\)</span> 落在折间标准差内</td>
+</tr>
+<tr>
+<td><strong>选择性数据泄漏</strong></td>
+<td>特征选择必须进 <code>Pipeline</code></td>
+<td>在全量数据上选特征再 CV 会系统性高估性能，小样本高维时尤其致命</td>
+</tr>
+<tr>
+<td><strong>Shapley 值四公理</strong></td>
+<td><span class="math-inline" data-tex="\phi_i = \sum_S w_S\,[\,v(S\cup\{i\}) - v(S)\,]">\(\phi_i = \sum_S w_S\,[\,v(S\cup\{i\}) - v(S)\,]\)</span></td>
+<td>有效性公理保证 <span class="math-inline" data-tex="\hat{y} = \mathbb{E}[\hat{y}] + \sum_i \phi_i">\(\hat{y} = \mathbb{E}[\hat{y}] + \sum_i \phi_i\)</span>，预测值被不多不少地分解</td>
+</tr>
+<tr>
+<td><strong>TreeSHAP 全局归因</strong></td>
+<td><code>shap.TreeExplainer</code> + 蜂群图</td>
+<td><code>MolLogP</code> 红点左、蓝点右的图案，就是 Yalkowsky 方程 <span class="math-inline" data-tex="-\log P">\(-\log P\)</span> 项的机器学习版本</td>
+</tr>
+<tr>
+<td><strong>TreeSHAP 局部归因</strong></td>
+<td>瀑布图 <code>shap.plots.waterfall</code></td>
+<td>对<strong>单个新合成分子</strong>给出“因为疏水性太强、结构太刚性所以难溶”的可写进论文的归因句</td>
+</tr>
+</tbody>
+</table>
+<p><strong>下一节预告（<code>05b_conformers_and_pubchem.ipynb</code>）</strong>：本节所有描述符都是从 2D 拓扑图上算出来的。但 Yalkowsky 方程里还有一项 <span class="math-inline" data-tex="-0.01(T_m - 25)">\(-0.01(T_m - 25)\)</span>——<strong>熔点</strong>，它来自三维晶体堆积，任何 2D 描述符都算不出来。下一节我们先用 RDKit 的 ETKDG + MMFF 把分子“站起来”变成三维构象系综，再用 PubChem PUG-REST API 从数据库里把真实的实验熔点抓回来，亲手补上这块从第一讲就欠下的拼图。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/05-feature-engineering-and-molecular-informatics.html">返回模块 05</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../modules/05-feature-engineering-and-molecular-informatics.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">模块 05 · 特征工程、SHAP 与 3D 分子</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">05b — 三维分子构象、3D 描述符与 PubChem API 实战</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-环境准备与数据读取辅助函数">0. 环境准备与数据读取辅助函数</a></li>      <li class="toc-l2"><a href="#1-能算的描述符-与-该用的描述符">1. “能算的描述符”与“该用的描述符”</a></li>      <li class="toc-l2"><a href="#2-构建-29-列描述符矩阵">2. 构建 29 列描述符矩阵</a></li>      <li class="toc-l2"><a href="#3-过滤法-一-方差过滤与-准常量特征">3. 过滤法（一）：方差过滤与“准常量特征”</a></li>      <li class="toc-l3"><a href="#练习-05a-1-方差过滤阈值的敏感性分析">🏋️ 练习 05a-1：方差过滤阈值的敏感性分析</a></li>      <li class="toc-l2"><a href="#4-过滤法-二-共线性剪枝">4. 过滤法（二）：共线性剪枝</a></li>      <li class="toc-l2"><a href="#5-包裹法-递归特征消除-rfe-rfecv">5. 包裹法：递归特征消除（RFE / RFECV）</a></li>      <li class="toc-l3"><a href="#练习-05a-2-用-rfecv-自动确定该保留几个特征">🏋️ 练习 05a-2：用 RFECV 自动确定该保留几个特征</a></li>      <li class="toc-l2"><a href="#6-三条路线横评-29-维-10-维-精度几乎不掉">6. 三条路线横评：29 维 → 10 维，精度几乎不掉</a></li>      <li class="toc-l2"><a href="#7-防坑-特征选择必须放进-pipeline">7. 防坑：特征选择必须放进 Pipeline</a></li>      <li class="toc-l2"><a href="#8-从全局重要性到单分子归因-shapley-值">8. 从全局重要性到单分子归因：Shapley 值</a></li>      <li class="toc-l3"><a href="#8-1-手写精确-shapley-值-用-16-个重训模型验证公理">8.1 手写精确 Shapley 值：用 16 个重训模型验证公理</a></li>      <li class="toc-l2"><a href="#9-shap-treeexplainer-全局归因">9. shap.TreeExplainer：全局归因</a></li>      <li class="toc-l2"><a href="#10-局部归因-为什么模型判这一个分子难溶">10. 局部归因：为什么模型判这一个分子难溶？</a></li>      <li class="toc-l3"><a href="#练习-05a-3-对比三个并苯类有机半导体分子的-shap-归因">🏋️ 练习 05a-3：对比三个并苯类有机半导体分子的 SHAP 归因</a></li>      <li class="toc-l2"><a href="#11-shap-vs-mdi-vs-置换重要性-共线特征下的三种表现">11. SHAP vs MDI vs 置换重要性：共线特征下的三种表现</a></li>      <li class="toc-l2"><a href="#小结">小结</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

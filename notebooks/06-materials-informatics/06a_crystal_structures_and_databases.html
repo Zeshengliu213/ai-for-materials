@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="06a — 晶体结构、对称性与材料数据库（Pymatgen · CIF · COD · Materials Project） 前五讲我们始终在和 分子 打交道：一个 SMILES 字符串唯一地描述一个有限大小的原子团，Chem.MolFromSmiles 读进来就是一张原子 键的图。描述符、指纹、构象、SHAP——整套" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="06a — 晶体结构、对称性与材料数据库（Pymatgen · CIF · COD · Materials Project） | AI for Materials Science" />
+  <meta property="og:description" content="06a — 晶体结构、对称性与材料数据库（Pymatgen · CIF · COD · Materials Project） 前五讲我们始终在和 分子 打交道：一个 SMILES 字符串唯一地描述一个有限大小的原子团，Chem.MolFromSmiles 读进来就是一张原子 键的图。描述符、指纹、构象、SHAP——整套" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>06a — 晶体结构、对称性与材料数据库（Pymatgen · CIF · COD · Materials Project） | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html"
+           data-progress-mark="notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html"
+class="active">📓 06a_crystal_structures_and_databases.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html"
+           data-progress-mark="notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html"
+>📓 06b_xrd_phase_diagram_screening.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/06-materials-informatics/06c_exercises.html"
+           data-progress-mark="notebooks/06-materials-informatics/06c_exercises.html"
+>🏋️ 06c_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/06-materials-informatics.html">模块 06：无机与晶体材料信息学</a> /  <span>06a_crystal_structures_and_databases.ipynb</span>
+</div>
+<h1>06a — 晶体结构、对称性与材料数据库（Pymatgen · CIF · COD · Materials Project）</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>06a_crystal_structures_and_databases.ipynb</code>（40.0 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/06%20-%20Materials%20Informatics/06a_crystal_structures_and_databases.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/99e0b02dde89-06a_crystal_structures_and_databases.ipynb" download="06a_crystal_structures_and_databases.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/06-materials-informatics/06_materials_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>前五讲我们始终在和<strong>分子</strong>打交道：一个 SMILES 字符串唯一地描述一个有限大小的原子团，<code>Chem.MolFromSmiles</code> 读进来就是一张原子-键的图。描述符、指纹、构象、SHAP——整套工具链都建立在“分子是一个有边界的个体”这个前提上。</p>
+<p>但如果研究对象是 <span class="math-inline" data-tex="\text{SrTiO}_3">\(\text{SrTiO}_3\)</span>、<span class="math-inline" data-tex="\text{TiO}_2">\(\text{TiO}_2\)</span> 或者 <span class="math-inline" data-tex="\text{CsPbI}_3">\(\text{CsPbI}_3\)</span> 呢？</p>
+<ul>
+<li>它们<strong>没有分子</strong>。一块钛酸锶晶体里找不到“一个 <span class="math-inline" data-tex="\text{SrTiO}_3">\(\text{SrTiO}_3\)</span> 分子”，只有无限重复的周期性点阵；</li>
+<li>化学式 <span class="math-inline" data-tex="\text{TiO}_2">\(\text{TiO}_2\)</span> 对应着<strong>至少三种</strong>完全不同的材料：金红石（rutile）、锐钛矿（anatase）、板钛矿（brookite）。它们组成相同，但密度、带隙、光催化活性截然不同——<strong>组成不足以确定材料</strong>；</li>
+<li>决定性质的是<strong>晶胞参数、空间群对称性、原子的 Wyckoff 位置、配位环境</strong>，这些概念在分子世界里根本不存在。</li>
+</ul>
+<p>本节我们换一套工具：用 <strong>pymatgen</strong>（Python Materials Genomics，Materials Project 的官方库）建立晶体结构的表示，做对称性分析、构建超胞与点缺陷，并打通三个真实数据源——本地 <strong>CIF</strong> 文件、开放的 <strong>COD（Crystallography Open Database）</strong> 和 <strong>Materials Project API</strong>。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="0-环境准备">0. 环境准备</h2>
+<p>本节需要 <code>pymatgen</code>。如果还没装：</p>
+<pre><code class="language-bash"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>pymatgen
+</pre></div>
+</code></pre>
+<blockquote>
+<p><strong>⚠️ 关于本讲的运行环境</strong>：<code>pymatgen</code> 对 <code>spglib</code> / <code>numpy</code> / <code>scipy</code> 的版本比较敏感，建议在一个干净的虚拟环境或 Colab 里运行本讲。本讲<strong>不需要</strong> Materials Project 的 API Key 也能完整跑完（第 7 节的在线检索是可选的加餐）。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Structure</span><span class="p">,</span> <span class="n">Lattice</span><span class="p">,</span> <span class="n">Composition</span><span class="p">,</span> <span class="n">Element</span><span class="p">,</span> <span class="n">Species</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.symmetry.analyzer</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpacegroupAnalyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.io.cif</span><span class="w"> </span><span class="kn">import</span> <span class="n">CifWriter</span><span class="p">,</span> <span class="n">CifParser</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pymatgen.core</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pmg_core</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pymatgen 核心模块已载入:&quot;</span><span class="p">,</span> <span class="n">pmg_core</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">find_file</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;../data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">path</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">google.colab</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;请上传 </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">name</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;找不到 </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">，请确保它位于 data/ 文件夹或当前目录下&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-从分子到晶体-周期性边界条件">1. 从分子到晶体：周期性边界条件</h2>
+<p>一个分子由<strong>原子坐标</strong>唯一确定。一个晶体则需要两样东西：</p>
+<ol>
+<li><strong>晶格（Lattice）</strong>：三个基矢 <span class="math-inline" data-tex="\mathbf{a}, \mathbf{b}, \mathbf{c}">\(\mathbf{a}, \mathbf{b}, \mathbf{c}\)</span> 张成的平行六面体——<strong>晶胞（unit cell）</strong>。它们的长度 <span class="math-inline" data-tex="a, b, c">\(a, b, c\)</span> 和夹角 <span class="math-inline" data-tex="\alpha, \beta, \gamma">\(\alpha, \beta, \gamma\)</span> 就是晶胞参数；</li>
+<li><strong>基元（Basis）</strong>：晶胞内每个原子的<strong>分数坐标（fractional coordinates）</strong> <span class="math-inline" data-tex="(x, y, z)">\((x, y, z)\)</span>，取值在 <span class="math-inline" data-tex="[0, 1)">\([0, 1)\)</span>。</li>
+</ol>
+<p>整个晶体 = 晶胞沿三个基矢方向无限平移复制。任何一个原子的实际笛卡尔坐标是</p>
+<div class="math-block" data-tex="\mathbf{r} = x\,\mathbf{a} + y\,\mathbf{b} + z\,\mathbf{c}">\[\mathbf{r} = x\,\mathbf{a} + y\,\mathbf{b} + z\,\mathbf{c}\]</div>
+<p><strong>为什么要用分数坐标而不是埃（Å）？</strong> 因为分数坐标把“结构”和“尺寸”解耦了：加压或升温时晶胞会胀缩（<span class="math-inline" data-tex="a, b, c">\(a, b, c\)</span> 改变），但只要对称性不变，分数坐标完全不动。这让不同温度/压力下的同一个相可以直接比较。</p>
+<p><strong>周期性边界条件（PBC）</strong> 是这里最重要的概念：坐标 <span class="math-inline" data-tex="(0.9, 0, 0)">\((0.9, 0, 0)\)</span> 和 <span class="math-inline" data-tex="(-0.1, 0, 0)">\((-0.1, 0, 0)\)</span> 是<strong>同一个原子</strong>。算两个原子的距离时必须考虑所有周期性镜像，取最近的那个——这叫<strong>最小镜像约定（minimum image convention）</strong>。pymatgen 的 <code>Structure.get_distance()</code> 会自动处理。</p>
+<p>下面我们手动搭一个最经典的结构：<strong>岩盐型 NaCl</strong>（面心立方，<span class="math-inline" data-tex="a = 5.64">\(a = 5.64\)</span> Å）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 方式一：完全手动——给出晶格 + 每个原子的分数坐标</span>
+<span class="c1"># 岩盐结构的常规立方胞里有 4 个 Na + 4 个 Cl，共 8 个原子</span>
+<span class="n">lattice</span> <span class="o">=</span> <span class="n">Lattice</span><span class="o">.</span><span class="n">cubic</span><span class="p">(</span><span class="mf">5.64</span><span class="p">)</span>
+
+<span class="n">na_sites</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]]</span>
+<span class="n">cl_sites</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]]</span>
+
+<span class="n">nacl_manual</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span><span class="n">lattice</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;Na&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;Cl&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="n">na_sites</span> <span class="o">+</span> <span class="n">cl_sites</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">nacl_manual</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;化学式           : </span><span class="si">{</span><span class="n">nacl_manual</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;晶胞内原子数     : </span><span class="si">{</span><span class="n">nacl_manual</span><span class="o">.</span><span class="n">num_sites</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;晶胞体积         : </span><span class="si">{</span><span class="n">nacl_manual</span><span class="o">.</span><span class="n">volume</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> A^3&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;理论密度         : </span><span class="si">{</span><span class="n">nacl_manual</span><span class="o">.</span><span class="n">density</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> g/cm^3   (实验值 2.165)&quot;</span><span class="p">)</span>
+
+<span class="c1"># 注意：必须让 pymatgen 在周期性边界下找最近镜像，不能随手挑两个编号相减</span>
+<span class="n">cl_dists</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">nacl_manual</span><span class="o">.</span><span class="n">get_distance</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Na(0) 到四个 Cl 的距离: </span><span class="si">{</span><span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">cl_dists</span><span class="p">]</span><span class="si">}</span><span class="s2"> A&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;最近邻 Na-Cl 距离: </span><span class="si">{</span><span class="n">cl_dists</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> A   (= a/2 = </span><span class="si">{</span><span class="mf">5.64</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;次近邻（体对角）  : </span><span class="si">{</span><span class="n">cl_dists</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> A   (= sqrt(3)a/2 = </span><span class="si">{</span><span class="mi">3</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">5.64</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>手动列出 8 个原子已经够烦了。换成有 20 个原子的晶胞呢？幸好<strong>对称性</strong>可以帮我们：岩盐结构属于空间群 <span class="math-inline" data-tex="Fm\bar{3}m">\(Fm\bar{3}m\)</span>（No. 225），只要给出<strong>不等价位置（asymmetric unit）</strong>——Na 在 <span class="math-inline" data-tex="(0,0,0)">\((0,0,0)\)</span>、Cl 在 <span class="math-inline" data-tex="(\frac{1}{2},\frac{1}{2},\frac{1}{2})">\((\frac{1}{2},\frac{1}{2},\frac{1}{2})\)</span>——空间群的对称操作会自动把其余原子生成出来。</p>
+<hr />
+<h2 id="2-用空间群搭建晶体-三个经典结构">2. 用空间群搭建晶体：三个经典结构</h2>
+<p><code>Structure.from_spacegroup(sg, lattice, species, coords)</code> 正是干这个的。下面用它搭三个贯穿材料科学的结构：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ① 岩盐 NaCl：Fm-3m (225)，Na 在 4a，Cl 在 4b</span>
+<span class="n">nacl</span> <span class="o">=</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_spacegroup</span><span class="p">(</span>
+    <span class="s2">&quot;Fm-3m&quot;</span><span class="p">,</span> <span class="n">Lattice</span><span class="o">.</span><span class="n">cubic</span><span class="p">(</span><span class="mf">5.64</span><span class="p">),</span> <span class="p">[</span><span class="s2">&quot;Na&quot;</span><span class="p">,</span> <span class="s2">&quot;Cl&quot;</span><span class="p">],</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]]</span>
+<span class="p">)</span>
+
+<span class="c1"># ② 立方钙钛矿 SrTiO3：Pm-3m (221)，A 位 Sr 在角，B 位 Ti 在体心，O 在面心</span>
+<span class="c1">#    这是整个钙钛矿家族（含卤化物钙钛矿太阳能电池）的母结构</span>
+<span class="n">srtio3</span> <span class="o">=</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_spacegroup</span><span class="p">(</span>
+    <span class="s2">&quot;Pm-3m&quot;</span><span class="p">,</span> <span class="n">Lattice</span><span class="o">.</span><span class="n">cubic</span><span class="p">(</span><span class="mf">3.905</span><span class="p">),</span> <span class="p">[</span><span class="s2">&quot;Sr&quot;</span><span class="p">,</span> <span class="s2">&quot;Ti&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">],</span>
+    <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]]</span>
+<span class="p">)</span>
+
+<span class="c1"># ③ 金刚石结构 Si：Fd-3m (227)，半导体工业的基石</span>
+<span class="n">si</span> <span class="o">=</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_spacegroup</span><span class="p">(</span><span class="s2">&quot;Fd-3m&quot;</span><span class="p">,</span> <span class="n">Lattice</span><span class="o">.</span><span class="n">cubic</span><span class="p">(</span><span class="mf">5.431</span><span class="p">),</span> <span class="p">[</span><span class="s2">&quot;Si&quot;</span><span class="p">],</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;NaCl (岩盐)&quot;</span><span class="p">,</span> <span class="n">nacl</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;SrTiO3 (钙钛矿)&quot;</span><span class="p">,</span> <span class="n">srtio3</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;Si (金刚石)&quot;</span><span class="p">,</span> <span class="n">si</span><span class="p">)]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">18s</span><span class="si">}</span><span class="s2"> 化学式=</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span><span class="si">:</span><span class="s2">8s</span><span class="si">}</span><span class="s2"> &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;原子数=</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">num_sites</span><span class="si">:</span><span class="s2">3d</span><span class="si">}</span><span class="s2">  V=</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">volume</span><span class="si">:</span><span class="s2">8.2f</span><span class="si">}</span><span class="s2"> A^3  rho=</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">density</span><span class="si">:</span><span class="s2">6.3f</span><span class="si">}</span><span class="s2"> g/cm^3&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- SrTiO3 的完整结构 ---&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">srtio3</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_structure</span><span class="p">(</span><span class="n">struct</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;把晶胞里的原子画成三维散点，并勾出晶胞的 12 条棱。&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">5.2</span><span class="p">,</span> <span class="mf">4.6</span><span class="p">))</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s2">&quot;3d&quot;</span><span class="p">)</span>
+
+    <span class="n">palette</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Na&quot;</span><span class="p">:</span> <span class="s2">&quot;#8c6bb1&quot;</span><span class="p">,</span> <span class="s2">&quot;Cl&quot;</span><span class="p">:</span> <span class="s2">&quot;#41ab5d&quot;</span><span class="p">,</span> <span class="s2">&quot;Sr&quot;</span><span class="p">:</span> <span class="s2">&quot;#2c7fb8&quot;</span><span class="p">,</span> <span class="s2">&quot;Ti&quot;</span><span class="p">:</span> <span class="s2">&quot;#d95f0e&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;O&quot;</span><span class="p">:</span> <span class="s2">&quot;#c0392b&quot;</span><span class="p">,</span> <span class="s2">&quot;Si&quot;</span><span class="p">:</span> <span class="s2">&quot;#4d4d4d&quot;</span><span class="p">,</span> <span class="s2">&quot;Ba&quot;</span><span class="p">:</span> <span class="s2">&quot;#2c7fb8&quot;</span><span class="p">,</span> <span class="s2">&quot;Pb&quot;</span><span class="p">:</span> <span class="s2">&quot;#555555&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="s2">&quot;#6a3d9a&quot;</span><span class="p">,</span> <span class="s2">&quot;Cs&quot;</span><span class="p">:</span> <span class="s2">&quot;#e7298a&quot;</span><span class="p">,</span> <span class="s2">&quot;La&quot;</span><span class="p">:</span> <span class="s2">&quot;#1b9e77&quot;</span><span class="p">}</span>
+    <span class="n">sizes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;O&quot;</span><span class="p">:</span> <span class="mi">90</span><span class="p">,</span> <span class="s2">&quot;Cl&quot;</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mi">170</span><span class="p">}</span>
+
+    <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">coords</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">struct</span><span class="o">.</span><span class="n">sites</span><span class="p">])</span>
+    <span class="n">symbols</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">specie</span><span class="o">.</span><span class="n">symbol</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">struct</span><span class="o">.</span><span class="n">sites</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">sym</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">symbols</span><span class="p">)):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">symbols</span><span class="p">)</span> <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="n">sym</span><span class="p">]</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">coords</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">coords</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">coords</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                   <span class="n">s</span><span class="o">=</span><span class="n">sizes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sym</span><span class="p">,</span> <span class="mi">190</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="n">sym</span><span class="p">,</span> <span class="n">depthshade</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                   <span class="n">color</span><span class="o">=</span><span class="n">palette</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sym</span><span class="p">,</span> <span class="s2">&quot;#7f8c8d&quot;</span><span class="p">),</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+
+    <span class="c1"># 晶胞的 12 条棱：从每个角点沿三个基矢方向各连一条</span>
+    <span class="n">mat</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">lattice</span><span class="o">.</span><span class="n">matrix</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">origin</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">mat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">j</span> <span class="o">*</span> <span class="n">mat</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">mat</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">flag</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">)):</span>
+                    <span class="k">if</span> <span class="n">flag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">*</span><span class="nb">zip</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="n">origin</span> <span class="o">+</span> <span class="n">axis</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#999999&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_box_aspect</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper left&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ax</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mf">4.4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([(</span><span class="n">nacl</span><span class="p">,</span> <span class="s2">&quot;NaCl  rock salt  Fm-3m&quot;</span><span class="p">),</span>
+                            <span class="p">(</span><span class="n">srtio3</span><span class="p">,</span> <span class="s2">&quot;SrTiO3  perovskite  Pm-3m&quot;</span><span class="p">),</span>
+                            <span class="p">(</span><span class="n">si</span><span class="p">,</span> <span class="s2">&quot;Si  diamond  Fd-3m&quot;</span><span class="p">)]):</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s2">&quot;3d&quot;</span><span class="p">)</span>
+    <span class="n">plot_structure</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>中间那张图就是<strong>钙钛矿 <span class="math-inline" data-tex="ABX_3">\(ABX_3\)</span> 的母结构</strong>：<span class="math-inline" data-tex="A">\(A\)</span> 位（Sr）占据立方体的八个角，<span class="math-inline" data-tex="B">\(B\)</span> 位（Ti）在体心，六个 <span class="math-inline" data-tex="X">\(X\)</span>（O）在面心，构成一个包围 <span class="math-inline" data-tex="B">\(B\)</span> 位的 <span class="math-inline" data-tex="\text{BO}_6">\(\text{BO}_6\)</span> 八面体。把 Sr→Cs、Ti→Pb、O→I，就得到了做太阳能电池的卤化物钙钛矿 <span class="math-inline" data-tex="\text{CsPbI}_3">\(\text{CsPbI}_3\)</span>——<strong>同一个几何骨架，完全不同的应用领域</strong>。这也是为什么钙钛矿能成为一个横跨铁电、超导、催化、光伏的巨大材料家族。</p>
+<h3 id="练习-06a-1-搭建卤化物钙钛矿并比较晶胞">🏋️ 练习 06a-1：搭建卤化物钙钛矿并比较晶胞</h3>
+<p>用 <code>Structure.from_spacegroup</code> 搭建三个立方钙钛矿，空间群都是 <code>Pm-3m</code>，A/B/X 的分数坐标与上面的 <span class="math-inline" data-tex="\text{SrTiO}_3">\(\text{SrTiO}_3\)</span> 完全相同：</p>
+<table>
+<thead>
+<tr>
+<th>材料</th>
+<th><span class="math-inline" data-tex="a">\(a\)</span> / Å</th>
+<th>A</th>
+<th>B</th>
+<th>X</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="math-inline" data-tex="\text{SrTiO}_3">\(\text{SrTiO}_3\)</span></td>
+<td>3.905</td>
+<td>Sr</td>
+<td>Ti</td>
+<td>O</td>
+</tr>
+<tr>
+<td><span class="math-inline" data-tex="\text{BaTiO}_3">\(\text{BaTiO}_3\)</span>（立方高温相）</td>
+<td>4.006</td>
+<td>Ba</td>
+<td>Ti</td>
+<td>O</td>
+</tr>
+<tr>
+<td><span class="math-inline" data-tex="\text{CsPbI}_3">\(\text{CsPbI}_3\)</span>（<span class="math-inline" data-tex="\alpha">\(\alpha\)</span> 相）</td>
+<td>6.289</td>
+<td>Cs</td>
+<td>Pb</td>
+<td>I</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li>对每个结构打印：化学式、晶胞原子数、体积、密度，以及 <strong>B–X 键长</strong>（先在 <code>struct.sites</code> 里找出 B 位和 X 位的编号，再用 <code>struct.get_distance(i, j)</code>）；</li>
+<li>把三者的 B–X 键长和晶胞参数 <span class="math-inline" data-tex="a">\(a\)</span> 列成一张表，验证立方钙钛矿里 <span class="math-inline" data-tex="a \approx 2\,d_{B-X}">\(a \approx 2\,d_{B-X}\)</span> 这个几何关系；</li>
+<li><strong>思考</strong>：<span class="math-inline" data-tex="\text{CsPbI}_3">\(\text{CsPbI}_3\)</span> 的晶胞体积是 <span class="math-inline" data-tex="\text{SrTiO}_3">\(\text{SrTiO}_3\)</span> 的多少倍？</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-对称性分析-spacegroupanalyzer">3. 对称性分析：SpacegroupAnalyzer</h2>
+<p>给定一堆原子坐标，<strong>反推</strong>它的空间群，是晶体学里最基本的操作。pymatgen 通过 <code>spglib</code> 实现：<code>SpacegroupAnalyzer</code> 在给定容差内寻找所有对称操作（旋转、反演、螺旋轴、滑移面），然后匹配到 230 个空间群之一。</p>
+<p>几个必须分清的概念：</p>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>常规胞（conventional cell）</strong></td>
+<td>教科书上画的那个、能体现最高对称性的胞（NaCl 的立方胞，8 个原子）</td>
+</tr>
+<tr>
+<td><strong>原始胞（primitive cell）</strong></td>
+<td>体积最小的重复单元（NaCl 的菱面体原始胞，只有 2 个原子）</td>
+</tr>
+<tr>
+<td><strong>晶系（crystal system）</strong></td>
+<td>七大晶系：立方、六方、四方、三方、正交、单斜、三斜</td>
+</tr>
+<tr>
+<td><strong>Wyckoff 位置</strong></td>
+<td>一组对称等价位置的标记，如 <code>4a</code>、<code>4b</code>、<code>8c</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么要关心原始胞？</strong> 因为 DFT 计算的代价大致按原子数的三次方增长。NaCl 用原始胞算（2 个原子）比用常规胞（8 个原子）快几十倍，而结果完全等价。<strong>第一步永远是化到原始胞</strong>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;NaCl&quot;</span><span class="p">,</span> <span class="n">nacl</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;SrTiO3&quot;</span><span class="p">,</span> <span class="n">srtio3</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;Si&quot;</span><span class="p">,</span> <span class="n">si</span><span class="p">)]:</span>
+    <span class="n">sga</span> <span class="o">=</span> <span class="n">SpacegroupAnalyzer</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">symprec</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+    <span class="n">prim</span> <span class="o">=</span> <span class="n">sga</span><span class="o">.</span><span class="n">get_primitive_standard_structure</span><span class="p">()</span>
+    <span class="n">sym_struct</span> <span class="o">=</span> <span class="n">sga</span><span class="o">.</span><span class="n">get_symmetrized_structure</span><span class="p">()</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s2">&quot;material&quot;</span><span class="p">:</span>    <span class="n">name</span><span class="p">,</span>
+        <span class="s2">&quot;space_group&quot;</span><span class="p">:</span> <span class="n">sga</span><span class="o">.</span><span class="n">get_space_group_symbol</span><span class="p">(),</span>
+        <span class="s2">&quot;SG_number&quot;</span><span class="p">:</span>   <span class="n">sga</span><span class="o">.</span><span class="n">get_space_group_number</span><span class="p">(),</span>
+        <span class="s2">&quot;crystal_sys&quot;</span><span class="p">:</span> <span class="n">sga</span><span class="o">.</span><span class="n">get_crystal_system</span><span class="p">(),</span>
+        <span class="s2">&quot;point_group&quot;</span><span class="p">:</span> <span class="n">sga</span><span class="o">.</span><span class="n">get_point_group_symbol</span><span class="p">(),</span>
+        <span class="s2">&quot;n_sym_ops&quot;</span><span class="p">:</span>   <span class="nb">len</span><span class="p">(</span><span class="n">sga</span><span class="o">.</span><span class="n">get_symmetry_operations</span><span class="p">()),</span>
+        <span class="s2">&quot;conv_sites&quot;</span><span class="p">:</span>  <span class="n">s</span><span class="o">.</span><span class="n">num_sites</span><span class="p">,</span>
+        <span class="s2">&quot;prim_sites&quot;</span><span class="p">:</span>  <span class="n">prim</span><span class="o">.</span><span class="n">num_sites</span><span class="p">,</span>
+        <span class="s2">&quot;n_wyckoff&quot;</span><span class="p">:</span>   <span class="nb">len</span><span class="p">(</span><span class="n">sym_struct</span><span class="o">.</span><span class="n">equivalent_sites</span><span class="p">),</span>
+    <span class="p">})</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- SrTiO3 的 Wyckoff 位置分解 ---&quot;</span><span class="p">)</span>
+<span class="n">sym_sto</span> <span class="o">=</span> <span class="n">SpacegroupAnalyzer</span><span class="p">(</span><span class="n">srtio3</span><span class="p">)</span><span class="o">.</span><span class="n">get_symmetrized_structure</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">wyck</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sym_sto</span><span class="o">.</span><span class="n">equivalent_sites</span><span class="p">,</span> <span class="n">sym_sto</span><span class="o">.</span><span class="n">wyckoff_symbols</span><span class="p">):</span>
+    <span class="n">site</span> <span class="o">=</span> <span class="n">group</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">site</span><span class="o">.</span><span class="n">specie</span><span class="o">.</span><span class="n">symbol</span><span class="si">:</span><span class="s2">3s</span><span class="si">}</span><span class="s2">  Wyckoff </span><span class="si">{</span><span class="n">wyck</span><span class="si">:</span><span class="s2">4s</span><span class="si">}</span><span class="s2">  &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;多重度 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span><span class="si">}</span><span class="s2">  分数坐标 </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">site</span><span class="o">.</span><span class="n">frac_coords</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>读这张表：</p>
+<ul>
+<li><strong>NaCl</strong> 的 48 个对称操作把 8 个原子压缩成 <strong>2 个不等价位置</strong>（一个 Na、一个 Cl），原始胞只有 2 个原子——DFT 计算量直接降到常规胞的 <span class="math-inline" data-tex="(2/8)^3 \approx 1.6\%">\((2/8)^3 \approx 1.6\%\)</span>；</li>
+<li><strong>Si</strong> 的常规胞有 8 个原子，原始胞只有 2 个，而且这 2 个原子还是<strong>对称等价</strong>的（同一个 Wyckoff 位置）——这就是为什么硅只有一种键长、一种键角；</li>
+<li><strong><span class="math-inline" data-tex="\text{SrTiO}_3">\(\text{SrTiO}_3\)</span></strong> 本身已经是原始胞（5 个原子），三个元素各占一个 Wyckoff 位置，其中 O 的多重度是 3（三个面心位置互相等价）。</li>
+</ul>
+<blockquote>
+<p><strong>📌 <code>symprec</code> 这个参数很要命</strong>：它是判断“两个位置算不算等价”的坐标容差（默认 0.01，单位是分数坐标）。实验测出来的结构总带一点噪声，<code>symprec</code> 太小会把 <span class="math-inline" data-tex="Pm\bar{3}m">\(Pm\bar{3}m\)</span> 误判成 <span class="math-inline" data-tex="P1">\(P1\)</span>（毫无对称性），太大又会把真实的畸变（比如 <span class="math-inline" data-tex="\text{BaTiO}_3">\(\text{BaTiO}_3\)</span> 室温下那个让它具有铁电性的微小四方畸变）抹平。<strong>报告空间群时必须同时报告你用的 <code>symprec</code>。</strong></p>
+</blockquote>
+<hr />
+<h2 id="4-超胞与点缺陷-从理想晶体到真实材料">4. 超胞与点缺陷：从理想晶体到真实材料</h2>
+<p>理想晶体在现实中并不存在。真实材料里到处是<strong>点缺陷</strong>——氧空位、间隙原子、取代掺杂——而且往往正是这些缺陷决定了性能：</p>
+<ul>
+<li><span class="math-inline" data-tex="\text{TiO}_2">\(\text{TiO}_2\)</span> 的<strong>氧空位</strong>提供 n 型导电性，是光催化活性的关键；</li>
+<li><span class="math-inline" data-tex="\text{SrTiO}_3">\(\text{SrTiO}_3\)</span> 掺 Nb 或 La 变成透明导体；</li>
+<li>卤化物钙钛矿里的<strong>卤素空位</strong>迁移导致 J–V 迟滞。</li>
+</ul>
+<p>要在计算里描述一个浓度为 1/8 的缺陷，就得先做一个 <span class="math-inline" data-tex="2\times2\times2">\(2\times2\times2\)</span> 的<strong>超胞</strong>（把晶胞沿三个方向各复制 2 次），再在超胞里动一个原子。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 2x2x2 超胞</span>
+<span class="n">supercell</span> <span class="o">=</span> <span class="n">srtio3</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;原胞 : </span><span class="si">{</span><span class="n">srtio3</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span><span class="si">:</span><span class="s2">8s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">srtio3</span><span class="o">.</span><span class="n">num_sites</span><span class="si">:</span><span class="s2">3d</span><span class="si">}</span><span class="s2"> 个原子&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;超胞 : </span><span class="si">{</span><span class="n">supercell</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">formula</span><span class="si">:</span><span class="s2">16s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">supercell</span><span class="o">.</span><span class="n">num_sites</span><span class="si">:</span><span class="s2">3d</span><span class="si">}</span><span class="s2"> 个原子  &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;V = </span><span class="si">{</span><span class="n">supercell</span><span class="o">.</span><span class="n">volume</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> A^3&quot;</span><span class="p">)</span>
+
+<span class="c1"># ① 氧空位：删掉一个 O</span>
+<span class="n">vac</span> <span class="o">=</span> <span class="n">supercell</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">o_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vac</span><span class="o">.</span><span class="n">sites</span><span class="p">)</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">specie</span><span class="o">.</span><span class="n">symbol</span> <span class="o">==</span> <span class="s2">&quot;O&quot;</span><span class="p">]</span>
+<span class="n">vac</span><span class="o">.</span><span class="n">remove_sites</span><span class="p">([</span><span class="n">o_indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">① 氧空位 : </span><span class="si">{</span><span class="n">vac</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">formula</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   名义组成 SrTiO(3-delta)，delta = </span><span class="si">{</span><span class="mi">3</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">o_indices</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;(共 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">o_indices</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个 O 位缺 1 个)&quot;</span><span class="p">)</span>
+
+<span class="c1"># ② 取代掺杂：把一个 Sr 换成 La（A 位施主掺杂，SrTiO3 常用的 n 型掺杂方式）</span>
+<span class="n">doped</span> <span class="o">=</span> <span class="n">supercell</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">sr_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">doped</span><span class="o">.</span><span class="n">sites</span><span class="p">)</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">specie</span><span class="o">.</span><span class="n">symbol</span> <span class="o">==</span> <span class="s2">&quot;Sr&quot;</span><span class="p">]</span>
+<span class="n">doped</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">sr_indices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;La&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">② La 掺杂 : </span><span class="si">{</span><span class="n">doped</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">formula</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   掺杂浓度 x = </span><span class="si">{</span><span class="mi">1</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">sr_indices</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">  (Sr(1-x)La(x)TiO3)&quot;</span><span class="p">)</span>
+
+<span class="c1"># ③ 缺陷破坏对称性——这正是我们要的</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;理想超胞&quot;</span><span class="p">,</span> <span class="n">supercell</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;含氧空位&quot;</span><span class="p">,</span> <span class="n">vac</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;La 掺杂&quot;</span><span class="p">,</span> <span class="n">doped</span><span class="p">)]:</span>
+    <span class="n">sga</span> <span class="o">=</span> <span class="n">SpacegroupAnalyzer</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">symprec</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">10s</span><span class="si">}</span><span class="s2"> 空间群 = </span><span class="si">{</span><span class="n">sga</span><span class="o">.</span><span class="n">get_space_group_symbol</span><span class="p">()</span><span class="si">:</span><span class="s2">10s</span><span class="si">}</span><span class="s2"> &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;(No. </span><span class="si">{</span><span class="n">sga</span><span class="o">.</span><span class="n">get_space_group_number</span><span class="p">()</span><span class="si">:</span><span class="s2">3d</span><span class="si">}</span><span class="s2">)  对称操作数 = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sga</span><span class="o">.</span><span class="n">get_symmetry_operations</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>注意最后三行的对称操作数：</p>
+<ul>
+<li><strong>理想 <span class="math-inline" data-tex="2\times2\times2">\(2\times2\times2\)</span> 超胞</strong>仍是 <span class="math-inline" data-tex="Pm\bar{3}m">\(Pm\bar{3}m\)</span>，而且操作数从原胞的 48 涨到 384——因为超胞内部多出了 8 倍的平移对称性。<strong>超胞不改变晶体的对称性</strong>，只是换了个更大的重复单元；</li>
+<li><strong>挖掉一个氧</strong>后，立方对称性直接塌成四方 <span class="math-inline" data-tex="P4/mmm">\(P4/mmm\)</span>，操作数 384 → 16：空位把三个坐标轴中的一个挑了出来；</li>
+<li><strong>把一个 Sr 换成 La</strong> 后，点群对称性还是 <span class="math-inline" data-tex="m\bar{3}m">\(m\bar{3}m\)</span>（La 坐在角上，三个轴仍然等价），但那 8 倍的平移对称性没了，操作数 384 → 48。</li>
+</ul>
+<p>一句话：<strong>缺陷就是对称性破缺</strong>。这对计算是个坏消息（能利用的对称操作变少，计算变慢），但对物理是个好消息——对称性破缺往往正是新性质的来源：铁电极化、Jahn–Teller 畸变、极化子局域化。</p>
+<h3 id="练习-06a-2-掺杂浓度与超胞大小">🏋️ 练习 06a-2：掺杂浓度与超胞大小</h3>
+<p>对 <span class="math-inline" data-tex="\text{SrTiO}_3">\(\text{SrTiO}_3\)</span>：</p>
+<ol>
+<li>分别构建 <span class="math-inline" data-tex="1\times1\times1">\(1\times1\times1\)</span>、<span class="math-inline" data-tex="2\times2\times2">\(2\times2\times2\)</span>、<span class="math-inline" data-tex="3\times3\times3">\(3\times3\times3\)</span>、<span class="math-inline" data-tex="4\times4\times4">\(4\times4\times4\)</span> 超胞，打印每个超胞的原子数、Sr 原子数和体积；</li>
+<li>对每个超胞，把<strong>一个</strong> Sr 替换成 La，计算对应的掺杂浓度 <span class="math-inline" data-tex="x = 1 / N_{\text{Sr}}">\(x = 1 / N_{\text{Sr}}\)</span>，并打印替换后的化学式；</li>
+<li>画一张“超胞倍数 <span class="math-inline" data-tex="n">\(n\)</span> vs 可达到的最低掺杂浓度 <span class="math-inline" data-tex="x">\(x\)</span>”的图（纵轴用对数坐标）；</li>
+<li><strong>思考</strong>：如果实验上要模拟 <span class="math-inline" data-tex="x = 0.01">\(x = 0.01\)</span>（1 at.% 掺杂）的 <span class="math-inline" data-tex="\text{Sr}_{1-x}\text{La}_x\text{TiO}_3">\(\text{Sr}_{1-x}\text{La}_x\text{TiO}_3\)</span>，至少需要多大的超胞？它有多少个原子？按 DFT 计算量随原子数三次方增长估计，它比原胞慢多少倍？</li>
+</ol>
+<blockquote>
+<p><strong>提示</strong>：<code>srtio3 * (n, n, n)</code> 得到 <span class="math-inline" data-tex="n\times n\times n">\(n\times n\times n\)</span> 超胞；<code>Structure.replace(i, &quot;La&quot;)</code> 原地替换第 <code>i</code> 个位点。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="5-cif-晶体学的通用语言">5. CIF：晶体学的通用语言</h2>
+<p><strong>CIF（Crystallographic Information File）</strong> 之于晶体，就相当于 SMILES 之于分子——它是全世界晶体学数据交换的标准格式。一个 CIF 文件里有晶胞参数、空间群、不等价原子位置、测量条件、文献出处。</p>
+<p>所有主流数据库（COD、ICSD、CSD、Materials Project）都用 CIF 导出，所有 DFT 软件（VASP、Quantum ESPRESSO）都能读 CIF。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">cif_text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">CifWriter</span><span class="p">(</span><span class="n">srtio3</span><span class="p">,</span> <span class="n">symprec</span><span class="o">=</span><span class="mf">0.01</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">cif_text</span><span class="p">[:</span><span class="mi">1200</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...&quot;</span><span class="p">)</span>
+
+<span class="c1"># 写出去再读回来，确认往返无损</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;srtio3_generated.cif&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">cif_text</span><span class="p">)</span>
+
+<span class="n">reloaded</span> <span class="o">=</span> <span class="n">CifParser</span><span class="p">(</span><span class="s2">&quot;srtio3_generated.cif&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">parse_structures</span><span class="p">(</span><span class="n">primitive</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">读回来的结构: </span><span class="si">{</span><span class="n">reloaded</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span><span class="si">}</span><span class="s2">, &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">reloaded</span><span class="o">.</span><span class="n">num_sites</span><span class="si">}</span><span class="s2"> 个原子, &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;空间群 </span><span class="si">{</span><span class="n">SpacegroupAnalyzer</span><span class="p">(</span><span class="n">reloaded</span><span class="p">)</span><span class="o">.</span><span class="n">get_space_group_symbol</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;与原结构是否匹配: </span><span class="si">{</span><span class="n">reloaded</span><span class="o">.</span><span class="n">matches</span><span class="p">(</span><span class="n">srtio3</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="6-cod-完全开放的晶体结构数据库">6. COD：完全开放的晶体结构数据库</h2>
+<p><strong>COD（Crystallography Open Database，crystallography.net）</strong> 收录了 50 多万条实验测定的晶体结构，<strong>完全开放、无需注册、无需 API Key</strong>——这是它相对于 ICSD（商业数据库）和 CSD（剑桥结构数据库，只收有机与金属有机）的最大优势。</p>
+<p>它的 REST 接口很朴素：</p>
+<pre><code><div class="highlight"><pre><span></span>https://www.crystallography.net/cod/result?formula=O2 Ti&amp;format=json    # 按化学式检索
+https://www.crystallography.net/cod/result?text=rutile&amp;format=json       # 按关键词检索
+https://www.crystallography.net/cod/&lt;COD-ID&gt;.cif                         # 下载 CIF
+</pre></div>
+</code></pre>
+<p>下面我们用它做一件<strong>具体的实验室工作</strong>：把 <span class="math-inline" data-tex="\text{TiO}_2">\(\text{TiO}_2\)</span> 的两个主要多晶型——<strong>锐钛矿（anatase）</strong> 和<strong>金红石（rutile）</strong>——的实验结构抓下来对比。这两个相的光催化活性差别很大（P25 商品催化剂就是二者的混合物），而区分它们正是 XRD 的日常任务（下一节 <code>06b</code> 就要做这件事）。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">COD_SEARCH</span> <span class="o">=</span> <span class="s2">&quot;https://www.crystallography.net/cod/result&quot;</span>
+<span class="n">COD_CIF</span>    <span class="o">=</span> <span class="s2">&quot;https://www.crystallography.net/cod/</span><span class="si">{}</span><span class="s2">.cif&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">cod_search</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;检索 COD，返回 DataFrame（失败时返回空表而不是抛异常）。&quot;&quot;&quot;</span>
+    <span class="n">params</span><span class="p">[</span><span class="s2">&quot;format&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;json&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">COD_SEARCH</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;COD 返回状态码 </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;COD 检索失败（可能是网络不通）:&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+<span class="c1"># COD 的化学式写法：元素按字母序、空格分隔、省略下标 1</span>
+<span class="n">hits</span> <span class="o">=</span> <span class="n">cod_search</span><span class="p">(</span><span class="n">formula</span><span class="o">=</span><span class="s2">&quot;O2 Ti&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hits</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;COD 中 TiO2 的结构条目共 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hits</span><span class="p">)</span><span class="si">}</span><span class="s2"> 条</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;file&quot;</span><span class="p">,</span> <span class="s2">&quot;formula&quot;</span><span class="p">,</span> <span class="s2">&quot;mineral&quot;</span><span class="p">,</span> <span class="s2">&quot;sg&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;year&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">hits</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+    <span class="n">named</span> <span class="o">=</span> <span class="n">hits</span><span class="p">[</span><span class="n">hits</span><span class="p">[</span><span class="s2">&quot;mineral&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span> <span class="k">if</span> <span class="s2">&quot;mineral&quot;</span> <span class="ow">in</span> <span class="n">hits</span><span class="o">.</span><span class="n">columns</span> <span class="k">else</span> <span class="n">hits</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;其中标注了矿物名的前 12 条：&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">named</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="k">if</span> <span class="s2">&quot;mineral&quot;</span> <span class="ow">in</span> <span class="n">hits</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">矿物名分布：&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">hits</span><span class="p">[</span><span class="s2">&quot;mineral&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;未获取到 COD 结果，下面的小节会自动改用内置结构。&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 两个有代表性的 COD 条目：锐钛矿与金红石</span>
+<span class="n">COD_IDS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;anatase&quot;</span><span class="p">:</span> <span class="mi">7206075</span><span class="p">,</span> <span class="s2">&quot;rutile&quot;</span><span class="p">:</span> <span class="mi">9015662</span><span class="p">}</span>
+
+<span class="c1"># 离线回退：用空间群 + 文献晶胞参数直接搭出来</span>
+<span class="n">FALLBACK</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;anatase&quot;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">sg</span><span class="o">=</span><span class="s2">&quot;I4_1/amd&quot;</span><span class="p">,</span> <span class="n">lat</span><span class="o">=</span><span class="n">Lattice</span><span class="o">.</span><span class="n">tetragonal</span><span class="p">(</span><span class="mf">3.785</span><span class="p">,</span> <span class="mf">9.514</span><span class="p">),</span>
+                    <span class="n">sp</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Ti&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">],</span> <span class="n">co</span><span class="o">=</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.2081</span><span class="p">]]),</span>
+    <span class="s2">&quot;rutile&quot;</span><span class="p">:</span>  <span class="nb">dict</span><span class="p">(</span><span class="n">sg</span><span class="o">=</span><span class="s2">&quot;P4_2/mnm&quot;</span><span class="p">,</span> <span class="n">lat</span><span class="o">=</span><span class="n">Lattice</span><span class="o">.</span><span class="n">tetragonal</span><span class="p">(</span><span class="mf">4.594</span><span class="p">,</span> <span class="mf">2.959</span><span class="p">),</span>
+                    <span class="n">sp</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Ti&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">],</span> <span class="n">co</span><span class="o">=</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.3053</span><span class="p">,</span> <span class="mf">0.3053</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]),</span>
+<span class="p">}</span>
+
+<span class="n">tio2</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">cod_id</span> <span class="ow">in</span> <span class="n">COD_IDS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">struct</span><span class="p">,</span> <span class="n">source</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">txt</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">COD_CIF</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cod_id</span><span class="p">),</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="n">struct</span> <span class="o">=</span> <span class="n">CifParser</span><span class="o">.</span><span class="n">from_str</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span><span class="o">.</span><span class="n">parse_structures</span><span class="p">(</span><span class="n">primitive</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;COD #</span><span class="si">{</span><span class="n">cod_id</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: 在线下载失败（</span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">），改用内置晶胞参数&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">struct</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fb</span> <span class="o">=</span> <span class="n">FALLBACK</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">struct</span> <span class="o">=</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_spacegroup</span><span class="p">(</span><span class="n">fb</span><span class="p">[</span><span class="s2">&quot;sg&quot;</span><span class="p">],</span> <span class="n">fb</span><span class="p">[</span><span class="s2">&quot;lat&quot;</span><span class="p">],</span> <span class="n">fb</span><span class="p">[</span><span class="s2">&quot;sp&quot;</span><span class="p">],</span> <span class="n">fb</span><span class="p">[</span><span class="s2">&quot;co&quot;</span><span class="p">])</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="s2">&quot;内置文献参数&quot;</span>
+    <span class="n">tio2</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">struct</span>
+
+    <span class="n">sga</span> <span class="o">=</span> <span class="n">SpacegroupAnalyzer</span><span class="p">(</span><span class="n">struct</span><span class="p">,</span> <span class="n">symprec</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+    <span class="n">lat</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">lattice</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">8s</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="n">source</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2">]  </span><span class="si">{</span><span class="n">struct</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span><span class="si">:</span><span class="s2">6s</span><span class="si">}</span><span class="s2">  &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;SG=</span><span class="si">{</span><span class="n">sga</span><span class="o">.</span><span class="n">get_space_group_symbol</span><span class="p">()</span><span class="si">:</span><span class="s2">10s</span><span class="si">}</span><span class="s2">(No.</span><span class="si">{</span><span class="n">sga</span><span class="o">.</span><span class="n">get_space_group_number</span><span class="p">()</span><span class="si">:</span><span class="s2">3d</span><span class="si">}</span><span class="s2">)  &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;a=</span><span class="si">{</span><span class="n">lat</span><span class="o">.</span><span class="n">a</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">  c=</span><span class="si">{</span><span class="n">lat</span><span class="o">.</span><span class="n">c</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> A   rho=</span><span class="si">{</span><span class="n">struct</span><span class="o">.</span><span class="n">density</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> g/cm3&quot;</span><span class="p">)</span>
+
+<span class="n">d_ana</span><span class="p">,</span> <span class="n">d_rut</span> <span class="o">=</span> <span class="n">tio2</span><span class="p">[</span><span class="s2">&quot;anatase&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">density</span><span class="p">,</span> <span class="n">tio2</span><span class="p">[</span><span class="s2">&quot;rutile&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">density</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">密度差 = </span><span class="si">{</span><span class="p">(</span><span class="n">d_rut</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">d_ana</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">d_ana</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">（金红石更致密）——&quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;这正是工业上可以用沉降法把两相分开的原因。&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 局部配位环境对比：两个相里 Ti 周围都是 6 个 O 构成的八面体，但畸变方式不同</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">tio2</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">ti_idx</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">site</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">sites</span><span class="p">)</span> <span class="k">if</span> <span class="n">site</span><span class="o">.</span><span class="n">specie</span><span class="o">.</span><span class="n">symbol</span> <span class="o">==</span> <span class="s2">&quot;Ti&quot;</span><span class="p">)</span>
+    <span class="n">dists</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">nn_distance</span> <span class="k">for</span> <span class="n">nn</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">get_neighbors</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">ti_idx</span><span class="p">],</span> <span class="n">r</span><span class="o">=</span><span class="mf">2.5</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">8s</span><span class="si">}</span><span class="s2"> Ti 的近邻 O 个数 = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dists</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;&#39;</span><span class="si">:</span><span class="s2">8s</span><span class="si">}</span><span class="s2"> Ti-O 键长 = </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">d</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">&#39;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">dists</span><span class="p">)</span><span class="si">}</span><span class="s2"> A&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;&#39;</span><span class="si">:</span><span class="s2">8s</span><span class="si">}</span><span class="s2"> 平均 </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dists</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> A，畸变度 (max-min)/mean = &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">dists</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">min</span><span class="p">(</span><span class="n">dists</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dists</span><span class="p">)</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">4.4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tio2</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s2">&quot;3d&quot;</span><span class="p">)</span>
+    <span class="n">plot_structure</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;TiO2 - </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>两个相的 <span class="math-inline" data-tex="\text{TiO}_6">\(\text{TiO}_6\)</span> 八面体都由 1 个 Ti 和 6 个 O 组成，键长也都在 1.95 Å 附近——<strong>局部环境几乎一样</strong>。它们的区别完全在于<strong>八面体之间怎么连接</strong>：金红石是共棱八面体沿 <span class="math-inline" data-tex="c">\(c\)</span> 轴排成直链，锐钛矿则以之字形连接。就是这个拓扑差异，让锐钛矿的带隙（约 3.2 eV）比金红石（约 3.0 eV）宽，密度低约 10%，光催化活性却高得多。</p>
+<p><strong>这正是晶体信息学和分子信息学最根本的区别</strong>：分子的性质主要由“有哪些原子、怎么连”决定；晶体的性质还要加上“这些单元在空间里怎么堆”。</p>
+<hr />
+<h2 id="7-materials-project-api-可选加餐">7. Materials Project API（可选加餐）</h2>
+<p><strong>Materials Project（MP，materialsproject.org）</strong> 是目前规模最大的计算材料数据库：15 万以上的无机化合物，每一条都有 DFT 算出的形成能、带隙、弹性常数、磁矩、能带结构、态密度。它和 COD 的分工是：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>COD</th>
+<th>Materials Project</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数据来源</td>
+<td><strong>实验</strong>测定的晶体结构</td>
+<td><strong>DFT 计算</strong>的结构与性质</td>
+</tr>
+<tr>
+<td>性质数据</td>
+<td>基本没有</td>
+<td>形成能、带隙、弹性、磁性……</td>
+</tr>
+<tr>
+<td>访问方式</td>
+<td>完全开放</td>
+<td>免费，但需注册拿 API Key</td>
+</tr>
+<tr>
+<td>典型用途</td>
+<td>查“这个相实验上存在吗”</td>
+<td>高通量筛选、相图、稳定性判据</td>
+</tr>
+</tbody>
+</table>
+<p>用 MP 需要先在 materialsproject.org 注册并在个人页面拿一个 API Key，然后：</p>
+<pre><code class="language-bash"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>mp-api
+</pre></div>
+</code></pre>
+<pre><code class="language-python"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mp_api.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">MPRester</span>
+
+<span class="k">with</span> <span class="n">MPRester</span><span class="p">(</span><span class="s2">&quot;你的_API_KEY&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">mpr</span><span class="p">:</span>
+    <span class="c1"># 按化学体系批量检索</span>
+    <span class="n">docs</span> <span class="o">=</span> <span class="n">mpr</span><span class="o">.</span><span class="n">materials</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
+        <span class="n">chemsys</span><span class="o">=</span><span class="s2">&quot;Ti-O&quot;</span><span class="p">,</span>
+        <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;material_id&quot;</span><span class="p">,</span> <span class="s2">&quot;formula_pretty&quot;</span><span class="p">,</span> <span class="s2">&quot;symmetry&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;formation_energy_per_atom&quot;</span><span class="p">,</span> <span class="s2">&quot;energy_above_hull&quot;</span><span class="p">,</span> <span class="s2">&quot;band_gap&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="c1"># 按性质窗口筛选（高通量筛选的入口）</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="n">mpr</span><span class="o">.</span><span class="n">materials</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
+        <span class="n">band_gap</span><span class="o">=</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.7</span><span class="p">),</span>            <span class="c1"># 光伏吸收层的最佳带隙窗口</span>
+        <span class="n">energy_above_hull</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>    <span class="c1"># 亚稳范围内</span>
+        <span class="n">num_elements</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;material_id&quot;</span><span class="p">,</span> <span class="s2">&quot;formula_pretty&quot;</span><span class="p">,</span> <span class="s2">&quot;band_gap&quot;</span><span class="p">,</span> <span class="s2">&quot;energy_above_hull&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="n">structure</span> <span class="o">=</span> <span class="n">mpr</span><span class="o">.</span><span class="n">get_structure_by_material_id</span><span class="p">(</span><span class="s2">&quot;mp-2657&quot;</span><span class="p">)</span>   <span class="c1"># 金红石 TiO2</span>
+</pre></div>
+</code></pre>
+<blockquote>
+<p><strong>⚠️ 不要把 API Key 写进 Notebook 再提交到 GitHub。</strong> 正确做法是放进环境变量：</p>
+<pre><code class="language-python"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;MP_API_KEY&quot;</span><span class="p">]</span>      <span class="c1"># 缺失时直接 KeyError，而不是静默出错</span>
+</pre></div>
+</code></pre>
+<p>这条规则对所有需要密钥的服务都成立。</p>
+</blockquote>
+<p><strong>本讲剩下的内容完全不依赖 MP。</strong> 下一节 <code>06b</code> 要用的形成能、带隙、<span class="math-inline" data-tex="E_{\text{hull}}">\(E_{\text{hull}}\)</span> 数据，已经以 CSV 的形式打包在 <code>data/</code> 里（来自 AFLOW 与已发表的钙钛矿数据集），所以没有 API Key 也能完整跑完。</p>
+<p>下面这一格会检测环境变量里有没有 Key：有就真的去查一次，没有就跳过。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">mp_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MP_API_KEY&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="n">mp_key</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;未检测到环境变量 MP_API_KEY，跳过在线检索。&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;想试的话：注册 materialsproject.org -&gt; 拿 API Key -&gt; 设置环境变量 MP_API_KEY -&gt; 重跑本格。&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">mp_api.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">MPRester</span>
+        <span class="k">with</span> <span class="n">MPRester</span><span class="p">(</span><span class="n">mp_key</span><span class="p">)</span> <span class="k">as</span> <span class="n">mpr</span><span class="p">:</span>
+            <span class="n">docs</span> <span class="o">=</span> <span class="n">mpr</span><span class="o">.</span><span class="n">materials</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
+                <span class="n">chemsys</span><span class="o">=</span><span class="s2">&quot;Ti-O&quot;</span><span class="p">,</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;material_id&quot;</span><span class="p">,</span> <span class="s2">&quot;formula_pretty&quot;</span><span class="p">,</span> <span class="s2">&quot;symmetry&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;formation_energy_per_atom&quot;</span><span class="p">,</span> <span class="s2">&quot;energy_above_hull&quot;</span><span class="p">,</span> <span class="s2">&quot;band_gap&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="n">mp_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([{</span>
+            <span class="s2">&quot;mp_id&quot;</span><span class="p">:</span>          <span class="n">d</span><span class="o">.</span><span class="n">material_id</span><span class="p">,</span>
+            <span class="s2">&quot;formula&quot;</span><span class="p">:</span>        <span class="n">d</span><span class="o">.</span><span class="n">formula_pretty</span><span class="p">,</span>
+            <span class="s2">&quot;spacegroup&quot;</span><span class="p">:</span>     <span class="n">d</span><span class="o">.</span><span class="n">symmetry</span><span class="o">.</span><span class="n">symbol</span><span class="p">,</span>
+            <span class="s2">&quot;Ef_eV_atom&quot;</span><span class="p">:</span>     <span class="n">d</span><span class="o">.</span><span class="n">formation_energy_per_atom</span><span class="p">,</span>
+            <span class="s2">&quot;E_hull_eV_atom&quot;</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">energy_above_hull</span><span class="p">,</span>
+            <span class="s2">&quot;band_gap_eV&quot;</span><span class="p">:</span>    <span class="n">d</span><span class="o">.</span><span class="n">band_gap</span><span class="p">,</span>
+        <span class="p">}</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">])</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;E_hull_eV_atom&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Materials Project 中的 Ti-O 体系共 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">mp_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> 条：&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">mp_df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;未安装 mp-api，请先 pip install mp-api&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MP 检索失败:&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-06a-3-用-cod-做一次真实的物相调研">🏋️ 练习 06a-3：用 COD 做一次真实的物相调研</h3>
+<p>假设你在实验上合成了一个 <span class="math-inline" data-tex="\text{BaTiO}_3">\(\text{BaTiO}_3\)</span> 样品，需要搞清楚它在文献里一共有哪些已知的多晶型。</p>
+<ol>
+<li>用本节的 <code>cod_search()</code> 按化学式检索 <span class="math-inline" data-tex="\text{BaTiO}_3">\(\text{BaTiO}_3\)</span>（注意 COD 的化学式格式：元素按<strong>字母序</strong>、空格分隔、省略下标 1，所以写成 <code>&quot;Ba O3 Ti&quot;</code>）；</li>
+<li>统计返回结果里 <code>sg</code>（空间群）列的取值分布，找出出现次数最多的 3 个空间群；</li>
+<li>从其中两个主要空间群里各挑一条记录，下载 CIF、用 <code>CifParser</code> 解析，打印化学式、晶胞参数 <span class="math-inline" data-tex="a, b, c">\(a, b, c\)</span>、密度，以及 <code>SpacegroupAnalyzer</code> 重新判定的空间群；</li>
+<li><strong>讨论</strong>：<span class="math-inline" data-tex="\text{BaTiO}_3">\(\text{BaTiO}_3\)</span> 室温下是四方相 <span class="math-inline" data-tex="P4mm">\(P4mm\)</span>（具有铁电性），高温下是立方相 <span class="math-inline" data-tex="Pm\bar{3}m">\(Pm\bar{3}m\)</span>（顺电）。对比你找到的四方相与立方相，计算四方畸变量 <span class="math-inline" data-tex="c/a - 1">\(c/a - 1\)</span>。这个数值只有百分之一量级。现在把 <code>SpacegroupAnalyzer</code> 的 <code>symprec</code> 从 <code>0.01</code> 一路扫到 <code>0.5</code>（建议取 <code>0.01, 0.05, 0.1, 0.2, 0.3, 0.5</code>），记录每个取值下判定出的空间群和对称操作数，找出四方相被“抹平”成立方相的<strong>临界 symprec</strong>。结合你算出的 <span class="math-inline" data-tex="c/a - 1">\(c/a - 1\)</span> 和 Ti/O 的位移量，解释这个临界值为什么落在那个量级。</li>
+</ol>
+<blockquote>
+<p><strong>提示</strong>：<code>hits[&quot;sg&quot;].value_counts()</code> 可以直接统计空间群分布。如果课堂网络不通，用内置参数自己搭：立方相 <span class="math-inline" data-tex="a = 4.006">\(a = 4.006\)</span> Å（<code>Pm-3m</code>，坐标同正文的 <span class="math-inline" data-tex="\text{SrTiO}_3">\(\text{SrTiO}_3\)</span>）；四方相 <span class="math-inline" data-tex="a = 3.994">\(a = 3.994\)</span> Å、<span class="math-inline" data-tex="c = 4.038">\(c = 4.038\)</span> Å（<code>P4mm</code>，Ti 位 <span class="math-inline" data-tex="(0.5, 0.5, 0.515)">\((0.5, 0.5, 0.515)\)</span>，O 位 <span class="math-inline" data-tex="(0.5, 0.5, -0.025)">\((0.5, 0.5, -0.025)\)</span> 与 <span class="math-inline" data-tex="(0.5, 0, 0.485)">\((0.5, 0, 0.485)\)</span>）。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="小结">小结</h2>
+<table>
+<thead>
+<tr>
+<th>核心概念</th>
+<th>pymatgen 实现</th>
+<th>材料科学意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>晶格 + 基元</strong></td>
+<td><code>Lattice.cubic(a)</code> + <code>Structure(lattice, species, coords)</code></td>
+<td>分数坐标把“结构”与“尺寸”解耦；周期性边界条件下 <span class="math-inline" data-tex="(0.9,0,0)">\((0.9,0,0)\)</span> 与 <span class="math-inline" data-tex="(-0.1,0,0)">\((-0.1,0,0)\)</span> 是同一个原子</td>
+</tr>
+<tr>
+<td><strong>空间群建模</strong></td>
+<td><code>Structure.from_spacegroup(sg, lat, species, coords)</code></td>
+<td>只需给出不等价位置，230 个空间群的对称操作自动生成全部原子</td>
+</tr>
+<tr>
+<td><strong>对称性分析</strong></td>
+<td><code>SpacegroupAnalyzer(s, symprec=0.01)</code></td>
+<td>原始胞 vs 常规胞决定 DFT 计算量（NaCl: 2 vs 8 个原子）；<code>symprec</code> 必须随空间群一起报告</td>
+</tr>
+<tr>
+<td><strong>超胞与点缺陷</strong></td>
+<td><code>struct * (2,2,2)</code>、<code>remove_sites</code>、<code>replace</code></td>
+<td>缺陷浓度由超胞大小决定；<strong>缺陷即对称性破缺</strong>，是铁电、极化子、掺杂导电的根源</td>
+</tr>
+<tr>
+<td><strong>CIF 往返</strong></td>
+<td><code>CifWriter</code> / <code>CifParser</code></td>
+<td>晶体学的通用交换格式，等价于分子世界的 SMILES</td>
+</tr>
+<tr>
+<td><strong>COD 数据库</strong></td>
+<td><code>requests</code> + REST，无需 Key</td>
+<td>50 万条<strong>实验</strong>结构；锐钛矿 vs 金红石：局部 <span class="math-inline" data-tex="\text{TiO}_6">\(\text{TiO}_6\)</span> 八面体几乎相同，差别全在八面体的连接拓扑</td>
+</tr>
+<tr>
+<td><strong>Materials Project</strong></td>
+<td><code>mp-api</code> + <code>MPRester</code>（需 Key）</td>
+<td>15 万条 <strong>DFT</strong> 计算性质，高通量筛选的主力数据源；密钥走环境变量，绝不写进 Notebook</td>
+</tr>
+</tbody>
+</table>
+<p><strong>下一节预告（<code>06b_xrd_phase_diagram_screening.ipynb</code>）</strong>：有了结构，就能算出它的<strong>模拟 XRD 谱图</strong>——这是把计算结构和实验衍射图谱对上号的桥梁，也是判断“我合成出来的到底是锐钛矿还是金红石”的标准手段。再往前一步，我们要回答材料信息学最核心的一个问题：<strong>这个化合物到底能不能稳定存在？</strong> 答案藏在热力学凸包（convex hull）里。最后，我们会把化学式变成特征向量、训练带隙预测模型，走通一条完整的高通量虚拟筛选漏斗——并看到一个触目惊心的现象：随机划分时 <span class="math-inline" data-tex="R^2 = 0.83">\(R^2 = 0.83\)</span> 的模型，一旦要求它外推到没见过的化学体系，<span class="math-inline" data-tex="R^2">\(R^2\)</span> 会掉到 <span class="math-inline" data-tex="0.19">\(0.19\)</span>。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/06-materials-informatics.html">返回模块 06</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../modules/06-materials-informatics.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">模块 06 · 无机与晶体材料信息学</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">06b — 模拟 XRD、热力学凸包与高通量虚拟筛选</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-环境准备">0. 环境准备</a></li>      <li class="toc-l2"><a href="#1-从分子到晶体-周期性边界条件">1. 从分子到晶体：周期性边界条件</a></li>      <li class="toc-l2"><a href="#2-用空间群搭建晶体-三个经典结构">2. 用空间群搭建晶体：三个经典结构</a></li>      <li class="toc-l3"><a href="#练习-06a-1-搭建卤化物钙钛矿并比较晶胞">🏋️ 练习 06a-1：搭建卤化物钙钛矿并比较晶胞</a></li>      <li class="toc-l2"><a href="#3-对称性分析-spacegroupanalyzer">3. 对称性分析：SpacegroupAnalyzer</a></li>      <li class="toc-l2"><a href="#4-超胞与点缺陷-从理想晶体到真实材料">4. 超胞与点缺陷：从理想晶体到真实材料</a></li>      <li class="toc-l3"><a href="#练习-06a-2-掺杂浓度与超胞大小">🏋️ 练习 06a-2：掺杂浓度与超胞大小</a></li>      <li class="toc-l2"><a href="#5-cif-晶体学的通用语言">5. CIF：晶体学的通用语言</a></li>      <li class="toc-l2"><a href="#6-cod-完全开放的晶体结构数据库">6. COD：完全开放的晶体结构数据库</a></li>      <li class="toc-l2"><a href="#7-materials-project-api-可选加餐">7. Materials Project API（可选加餐）</a></li>      <li class="toc-l3"><a href="#练习-06a-3-用-cod-做一次真实的物相调研">🏋️ 练习 06a-3：用 COD 做一次真实的物相调研</a></li>      <li class="toc-l2"><a href="#小结">小结</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

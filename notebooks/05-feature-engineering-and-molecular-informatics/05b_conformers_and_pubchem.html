@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="05b — 三维分子构象、3D 描述符与 PubChem API 实战 上一节 05a 里所有描述符——MolWt、TPSA、BertzCT、Kappa2——都是从 SMILES 的 二维拓扑图 上数出来的：数原子、数环、数键。它们能把水溶解度预测到 ，但剩下那 25% 的误差里，藏着两件二维图永远算不出来的东西： 1" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="05b — 三维分子构象、3D 描述符与 PubChem API 实战 | AI for Materials Science" />
+  <meta property="og:description" content="05b — 三维分子构象、3D 描述符与 PubChem API 实战 上一节 05a 里所有描述符——MolWt、TPSA、BertzCT、Kappa2——都是从 SMILES 的 二维拓扑图 上数出来的：数原子、数环、数键。它们能把水溶解度预测到 ，但剩下那 25% 的误差里，藏着两件二维图永远算不出来的东西： 1" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>05b — 三维分子构象、3D 描述符与 PubChem API 实战 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html"
+           data-progress-mark="notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html"
+>📓 05a_feature_selection_and_shap.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html"
+           data-progress-mark="notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html"
+class="active">📓 05b_conformers_and_pubchem.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html"
+           data-progress-mark="notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html"
+>🏋️ 05c_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/05-feature-engineering-and-molecular-informatics.html">模块 05：特征工程、SHAP 与 3D 分子</a> /  <span>05b_conformers_and_pubchem.ipynb</span>
+</div>
+<h1>05b — 三维分子构象、3D 描述符与 PubChem API 实战</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    课件文件：<code>05b_conformers_and_pubchem.ipynb</code>（51.9 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/05%20-%20Feature%20Engineering%20and%20Molecular%20Informatics/05b_conformers_and_pubchem.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/fd8d94326ca1-05b_conformers_and_pubchem.ipynb" download="05b_conformers_and_pubchem.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/05-feature-engineering-and-molecular-informatics/05_feature_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>上一节 <code>05a</code> 里所有描述符——<code>MolWt</code>、<code>TPSA</code>、<code>BertzCT</code>、<code>Kappa2</code>——都是从 SMILES 的<strong>二维拓扑图</strong>上数出来的：数原子、数环、数键。它们能把水溶解度预测到 <span class="math-inline" data-tex="R^2 \approx 0.75">\(R^2 \approx 0.75\)</span>，但剩下那 25% 的误差里，藏着两件二维图永远算不出来的东西：</p>
+<ol>
+<li><strong>分子的三维形状</strong>：<code>C8-BTBT</code> 的两条正辛基侧链是伸展成一条直线，还是蜷曲成一团？这决定了薄膜里的分子堆积方式、<span class="math-inline" data-tex="\pi">\(\pi\)</span>–<span class="math-inline" data-tex="\pi">\(\pi\)</span> 距离，进而决定载流子迁移率。二维 SMILES 对这两种构象的写法<strong>一模一样</strong>。</li>
+<li><strong>晶格能 / 熔点 <span class="math-inline" data-tex="T_m">\(T_m\)</span></strong>：从第二讲 <code>02c</code> 开始我们就反复引用 Yalkowsky 通用溶解度方程
+<div class="math-block" data-tex="\log S \approx 0.5 - \log P - 0.01\,(T_m - 25)">\[\log S \approx 0.5 - \log P - 0.01\,(T_m - 25)\]</div>
+其中 <span class="math-inline" data-tex="-\log P">\(-\log P\)</span> 那一项被 <code>MolLogP</code> 很好地覆盖了（<code>05a</code> 的 SHAP 蜂群图就是证据），但 <span class="math-inline" data-tex="-0.01(T_m - 25)">\(-0.01(T_m - 25)\)</span> 这一项——<strong>破坏晶格所需的能量</strong>——是三维晶体堆积的集体性质，任何单分子 2D 描述符都算不准。</li>
+</ol>
+<p>本节分两步补上这两块拼图：</p>
+<ul>
+<li><strong>前半程（第 1–4 节）</strong>：用 RDKit 的 <strong>ETKDG</strong> 距离几何算法把分子从 SMILES “站起来”变成三维坐标，用 <strong>MMFF94</strong> 力场优化，生成**构象系综（Conformer Ensemble）**并按 Boltzmann 权重加权，再计算 <strong>PMI / NPR 形状三角、Asphericity、回转半径、PBF</strong> 等 3D 描述符，老实检验它们对 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 预测到底有多少增益；</li>
+<li><strong>后半程（第 5–7 节）</strong>：用 <strong>PubChem PUG-REST / PUG-View API</strong> 从全球最大的公开化学数据库批量抓取真实的<strong>实验熔点</strong>，亲手把 Yalkowsky 方程里缺失的 <span class="math-inline" data-tex="T_m">\(T_m\)</span> 填进去，验证它能把预测误差压低多少——<strong>这是从第一讲就埋下的伏笔，到这里兑现</strong>。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="0-环境准备与数据读取辅助函数">0. 环境准备与数据读取辅助函数</h2>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mpl_toolkits.mplot3d</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes3D</span>            <span class="c1"># noqa: F401  (注册 3d 投影)</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">AllChem</span><span class="p">,</span> <span class="n">Descriptors</span><span class="p">,</span> <span class="n">Descriptors3D</span><span class="p">,</span> <span class="n">Draw</span><span class="p">,</span> <span class="n">rdMolDescriptors</span><span class="p">,</span> <span class="n">rdMolAlign</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">cross_val_score</span><span class="p">,</span> <span class="n">cross_val_predict</span><span class="p">,</span> <span class="n">KFold</span><span class="p">,</span> <span class="n">LeaveOneOut</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearRegression</span>
+
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">find_file</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;../data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">path</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">google.colab</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;请上传 </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">name</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;找不到 </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">，请确保它位于 data/ 文件夹或当前目录下&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="1-从-smiles-到三维坐标-etkdg-距离几何算法">1. 从 SMILES 到三维坐标：ETKDG 距离几何算法</h2>
+<p><code>Chem.MolFromSmiles(&quot;CCO&quot;)</code> 得到的分子对象里<strong>没有任何坐标</strong>，只有“哪个原子连哪个原子”的拓扑图。要得到三维构象，RDKit 走两步：</p>
+<p><strong>第一步：ETKDG 距离几何嵌入（Distance Geometry Embedding）</strong></p>
+<p><strong>ETKDG</strong>（Experimental-Torsion-angle preference with Knowledge-based basic Distance Geometry，Riniker &amp; Landrum, <em>J. Chem. Inf. Model.</em> <strong>55</strong>, 2562, 2015）的思路是：</p>
+<ol>
+<li>根据成键关系、键长键角的标准值、环的闭合约束，为<strong>每一对</strong>原子 <span class="math-inline" data-tex="(i, j)">\((i, j)\)</span> 推出一个距离上下界 <span class="math-inline" data-tex="[l_{ij}, u_{ij}]">\([l_{ij}, u_{ij}]\)</span>，构成<strong>界限矩阵（Bounds Matrix）</strong>；</li>
+<li>在界限内随机取一个满足三角不等式的距离矩阵，用特征值分解把它嵌入到三维欧氏空间，得到一组初始坐标；</li>
+<li><strong>这是 ETKDG 相对于裸距离几何的关键改进</strong>：再叠加一层从剑桥晶体数据库（CSD）统计出来的<strong>二面角（扭转角）偏好</strong>作为惩罚项——例如告诉算法“联苯的两个苯环之间大约扭 <span class="math-inline" data-tex="40^\circ">\(40^\circ\)</span>”“酰胺键是平面的”，而不是让它随机乱转。</li>
+</ol>
+<p><strong>第二步：力场优化</strong></p>
+<p>嵌入出来的坐标只是“大致合理”，键长键角都还有误差。再用 <strong>MMFF94（Merck Molecular Force Field）</strong> 或 <strong>UFF（Universal Force Field）</strong> 做几百步能量最小化，把结构收敛到一个局部能量极小点，同时得到该构象的力场能量（单位 kcal/mol）。</p>
+<blockquote>
+<p><strong>⚠️ 一个重要的认识</strong>：力场能量<strong>只能在同一个分子的不同构象之间比较</strong>（谁更稳定），<strong>绝不能跨分子比较</strong>（说 A 分子的 MMFF 能量 47 kcal/mol 比 B 分子的 92 kcal/mol “更稳定”是无意义的，因为两者的能量零点不同）。</p>
+</blockquote>
+<p>下面我们把第四讲就反复出现的有机半导体分子 <strong>C8-BTBT</strong>（2,7-二辛基[1]苯并噻吩并[3,2-b][1]苯并噻吩，OTFT 领域的明星材料）站起来：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">SMI_C8BTBT</span> <span class="o">=</span> <span class="s2">&quot;CCCCCCCCc1ccc2c(c1)sc1c2sc2cc(CCCCCCCC)ccc21&quot;</span>
+
+<span class="n">mol2d</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">SMI_C8BTBT</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;二维拓扑图：&quot;</span><span class="p">,</span> <span class="n">mol2d</span><span class="o">.</span><span class="n">GetNumAtoms</span><span class="p">(),</span> <span class="s2">&quot;个重原子，&quot;</span><span class="p">,</span> <span class="n">mol2d</span><span class="o">.</span><span class="n">GetNumBonds</span><span class="p">(),</span> <span class="s2">&quot;根键&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;此时的构象数（Conformer）：&quot;</span><span class="p">,</span> <span class="n">mol2d</span><span class="o">.</span><span class="n">GetNumConformers</span><span class="p">())</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">Draw</span><span class="o">.</span><span class="n">MolToImage</span><span class="p">(</span><span class="n">mol2d</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">470</span><span class="p">,</span> <span class="mi">200</span><span class="p">)))</span>
+
+<span class="c1"># 1) 加氢——三维构象必须显式包含氢原子，否则立体化学与空间位阻都是错的</span>
+<span class="n">mol3d</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">AddHs</span><span class="p">(</span><span class="n">mol2d</span><span class="p">)</span>
+
+<span class="c1"># 2) ETKDG 嵌入</span>
+<span class="n">params</span> <span class="o">=</span> <span class="n">AllChem</span><span class="o">.</span><span class="n">ETKDGv3</span><span class="p">()</span>
+<span class="n">params</span><span class="o">.</span><span class="n">randomSeed</span> <span class="o">=</span> <span class="mi">42</span>
+<span class="n">status</span> <span class="o">=</span> <span class="n">AllChem</span><span class="o">.</span><span class="n">EmbedMolecule</span><span class="p">(</span><span class="n">mol3d</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ETKDG 嵌入返回码 = </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">（0 表示成功）&quot;</span><span class="p">)</span>
+
+<span class="c1"># 3) MMFF94 力场优化</span>
+<span class="n">converged</span> <span class="o">=</span> <span class="n">AllChem</span><span class="o">.</span><span class="n">MMFFOptimizeMolecule</span><span class="p">(</span><span class="n">mol3d</span><span class="p">,</span> <span class="n">maxIters</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">mp_props</span> <span class="o">=</span> <span class="n">AllChem</span><span class="o">.</span><span class="n">MMFFGetMoleculeProperties</span><span class="p">(</span><span class="n">mol3d</span><span class="p">)</span>
+<span class="n">ff</span> <span class="o">=</span> <span class="n">AllChem</span><span class="o">.</span><span class="n">MMFFGetMoleculeForceField</span><span class="p">(</span><span class="n">mol3d</span><span class="p">,</span> <span class="n">mp_props</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MMFF 优化收敛码 = </span><span class="si">{</span><span class="n">converged</span><span class="si">}</span><span class="s2">（0 表示已收敛）&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MMFF 能量 = </span><span class="si">{</span><span class="n">ff</span><span class="o">.</span><span class="n">CalcEnergy</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> kcal/mol&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;加氢后原子数 = </span><span class="si">{</span><span class="n">mol3d</span><span class="o">.</span><span class="n">GetNumAtoms</span><span class="p">()</span><span class="si">}</span><span class="s2">，构象数 = </span><span class="si">{</span><span class="n">mol3d</span><span class="o">.</span><span class="n">GetNumConformers</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">mol3d</span><span class="o">.</span><span class="n">GetConformer</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">前 5 个原子的三维坐标 (x, y, z) / Angstrom：&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">conf</span><span class="o">.</span><span class="n">GetAtomPosition</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  atom </span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">2d</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">mol3d</span><span class="o">.</span><span class="n">GetAtomWithIdx</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">GetSymbol</span><span class="p">()</span><span class="si">:</span><span class="s2">2s</span><span class="si">}</span><span class="s2">): &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pos</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">7.3f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">pos</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s2">7.3f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">pos</span><span class="o">.</span><span class="n">z</span><span class="si">:</span><span class="s2">7.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_mol_3d</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">conf_id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">show_h</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;用 matplotlib 把一个 RDKit 构象画成三维骨架图（重原子 + 键）。&quot;&quot;&quot;</span>
+    <span class="n">conf</span> <span class="o">=</span> <span class="n">mol</span><span class="o">.</span><span class="n">GetConformer</span><span class="p">(</span><span class="n">conf_id</span><span class="p">)</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">list</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">GetAtomPosition</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mol</span><span class="o">.</span><span class="n">GetNumAtoms</span><span class="p">())])</span>
+    <span class="n">symbols</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">GetSymbol</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">mol</span><span class="o">.</span><span class="n">GetAtoms</span><span class="p">()]</span>
+    <span class="n">palette</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="s2">&quot;#3a3a3a&quot;</span><span class="p">,</span> <span class="s2">&quot;S&quot;</span><span class="p">:</span> <span class="s2">&quot;#d4a017&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">:</span> <span class="s2">&quot;#c0392b&quot;</span><span class="p">,</span> <span class="s2">&quot;N&quot;</span><span class="p">:</span> <span class="s2">&quot;#2874a6&quot;</span><span class="p">,</span> <span class="s2">&quot;H&quot;</span><span class="p">:</span> <span class="s2">&quot;#bbbbbb&quot;</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s2">&quot;3d&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">mol</span><span class="o">.</span><span class="n">GetBonds</span><span class="p">():</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">GetBeginAtomIdx</span><span class="p">(),</span> <span class="n">b</span><span class="o">.</span><span class="n">GetEndAtomIdx</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">show_h</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;H&quot;</span> <span class="ow">in</span> <span class="p">(</span><span class="n">symbols</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">symbols</span><span class="p">[</span><span class="n">j</span><span class="p">])):</span>
+            <span class="k">continue</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">*</span><span class="nb">zip</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">pos</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#888888&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.3</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">keep</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">symbols</span><span class="p">)</span> <span class="k">if</span> <span class="n">show_h</span> <span class="ow">or</span> <span class="n">s</span> <span class="o">!=</span> <span class="s2">&quot;H&quot;</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="n">keep</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">pos</span><span class="p">[</span><span class="n">keep</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">pos</span><span class="p">[</span><span class="n">keep</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+               <span class="n">c</span><span class="o">=</span><span class="p">[</span><span class="n">palette</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">symbols</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="s2">&quot;#7f8c8d&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">],</span>
+               <span class="n">s</span><span class="o">=</span><span class="p">[</span><span class="mi">70</span> <span class="k">if</span> <span class="n">symbols</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;S&quot;</span> <span class="k">else</span> <span class="mi">36</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">],</span>
+               <span class="n">depthshade</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># 等比例坐标轴，否则分子会被拉变形</span>
+    <span class="n">span</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">pos</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">pos</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">mid</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">span</span><span class="p">,</span> <span class="n">mid</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">span</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">mid</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">span</span><span class="p">,</span> <span class="n">mid</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">span</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_zlim</span><span class="p">(</span><span class="n">mid</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">span</span><span class="p">,</span> <span class="n">mid</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">span</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">ax</span>
+
+<span class="n">plot_mol_3d</span><span class="p">(</span><span class="n">mol3d</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;C8-BTBT: one ETKDG + MMFF optimized conformer&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="2-构象系综-一个分子不止一个形状">2. 构象系综：一个分子不止一个形状</h2>
+<p>上面那张图只是 C8-BTBT <strong>某一个</strong>局部能量极小点。它有两条正辛基链，每条链上有 7 根可旋转单键——粗略估计构象数在 <span class="math-inline" data-tex="3^{14} \approx 5 \times 10^{6}">\(3^{14} \approx 5 \times 10^{6}\)</span> 量级。室温下分子其实在这些构象之间快速翻转，任何实验测到的性质都是整个**构象系综（Conformer Ensemble）**的 Boltzmann 加权平均。</p>
+<p>标准工作流是：</p>
+<ol>
+<li><code>EmbedMultipleConfs(mol, numConfs=N, params=ETKDGv3())</code> 一次生成 <span class="math-inline" data-tex="N">\(N\)</span> 个初始构象（随机种子各不相同）；</li>
+<li><code>MMFFOptimizeMoleculeConfs(mol)</code> 批量优化，返回每个构象的 <code>(收敛码, 能量)</code>；</li>
+<li>按能量排序，用 <strong>RMSD（均方根偏差）</strong> 去掉彼此重复的构象；</li>
+<li>按 Boltzmann 因子 <span class="math-inline" data-tex="w_i \propto \exp(-\Delta E_i / k_B T)">\(w_i \propto \exp(-\Delta E_i / k_B T)\)</span> 加权（室温下 <span class="math-inline" data-tex="k_B T \approx 0.593">\(k_B T \approx 0.593\)</span> kcal/mol）。</li>
+</ol>
+<p><span class="math-inline" data-tex="N">\(N\)</span> 该取多少？一个被广泛引用的经验规则（Ebejer et al., <em>J. Chem. Inf. Model.</em> <strong>52</strong>, 1146, 2012）按可旋转键数 <code>NumRotatableBonds</code> 分档：<span class="math-inline" data-tex="\le 7">\(\le 7\)</span> 根取 50 个，8–12 根取 200 个，更多取 300 个。本节为了课堂速度只取 30 个。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">N_CONFS</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="n">KT_298</span> <span class="o">=</span> <span class="mf">0.593</span>          <span class="c1"># k_B * T，单位 kcal/mol（T = 298 K）</span>
+
+<span class="n">mol_ens</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">AddHs</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">SMI_C8BTBT</span><span class="p">))</span>
+<span class="n">params</span> <span class="o">=</span> <span class="n">AllChem</span><span class="o">.</span><span class="n">ETKDGv3</span><span class="p">()</span>
+<span class="n">params</span><span class="o">.</span><span class="n">randomSeed</span> <span class="o">=</span> <span class="mi">42</span>
+<span class="n">params</span><span class="o">.</span><span class="n">pruneRmsThresh</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>        <span class="c1"># 先不剪枝，后面手动按 RMSD 去重</span>
+
+<span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">cids</span> <span class="o">=</span> <span class="n">AllChem</span><span class="o">.</span><span class="n">EmbedMultipleConfs</span><span class="p">(</span><span class="n">mol_ens</span><span class="p">,</span> <span class="n">numConfs</span><span class="o">=</span><span class="n">N_CONFS</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">AllChem</span><span class="o">.</span><span class="n">MMFFOptimizeMoleculeConfs</span><span class="p">(</span><span class="n">mol_ens</span><span class="p">,</span> <span class="n">maxIters</span><span class="o">=</span><span class="mi">800</span><span class="p">)</span>
+<span class="n">energies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">e</span> <span class="k">for</span> <span class="n">_conv</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">results</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;生成并优化 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cids</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个构象，用时 </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> s&quot;</span><span class="p">)</span>
+
+<span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">energies</span><span class="p">)</span>
+<span class="n">E_rel</span> <span class="o">=</span> <span class="n">energies</span> <span class="o">-</span> <span class="n">energies</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>         <span class="c1"># 相对于最稳定构象的能量差</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">E_rel</span> <span class="o">/</span> <span class="n">KT_298</span><span class="p">)</span>
+<span class="n">weights</span> <span class="o">/=</span> <span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">n_eff</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>        <span class="c1"># 有效构象数：真正参与分布的有几个</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MMFF 能量范围: </span><span class="si">{</span><span class="n">energies</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> ~ </span><span class="si">{</span><span class="n">energies</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> kcal/mol&quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;（跨度 </span><span class="si">{</span><span class="n">E_rel</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> kcal/mol）&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;最稳定构象的 Boltzmann 权重 = </span><span class="si">{</span><span class="n">weights</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;有效构象数 n_eff = 1 / sum(w^2) = </span><span class="si">{</span><span class="n">n_eff</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">10.5</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">E_rel</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">E_rel</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">navy</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Conformer rank (sorted by energy)&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Relative MMFF energy  [kcal/mol]&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Conformer Energy Ladder&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">KT_298</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">crimson</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;kT at 298 K = 0.59&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">weights</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">gold</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Conformer rank&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Boltzmann weight&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Boltzmann Populations at 298 K  (n_eff = </span><span class="si">{</span><span class="n">n_eff</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 用 RMSD 判断“两个构象是不是其实长得一样”</span>
+<span class="n">mol_noH</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">RemoveHs</span><span class="p">(</span><span class="n">mol_ens</span><span class="p">)</span>
+<span class="n">best</span><span class="p">,</span> <span class="n">second</span><span class="p">,</span> <span class="n">worst</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">order</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="n">rms_12</span> <span class="o">=</span> <span class="n">rdMolAlign</span><span class="o">.</span><span class="n">GetBestRMS</span><span class="p">(</span><span class="n">mol_noH</span><span class="p">,</span> <span class="n">mol_noH</span><span class="p">,</span> <span class="n">prbId</span><span class="o">=</span><span class="n">second</span><span class="p">,</span> <span class="n">refId</span><span class="o">=</span><span class="n">best</span><span class="p">)</span>
+<span class="n">rms_1N</span> <span class="o">=</span> <span class="n">rdMolAlign</span><span class="o">.</span><span class="n">GetBestRMS</span><span class="p">(</span><span class="n">mol_noH</span><span class="p">,</span> <span class="n">mol_noH</span><span class="p">,</span> <span class="n">prbId</span><span class="o">=</span><span class="n">worst</span><span class="p">,</span>  <span class="n">refId</span><span class="o">=</span><span class="n">best</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;最稳定构象 vs 次稳定构象 RMSD = </span><span class="si">{</span><span class="n">rms_12</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> Angstrom&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;最稳定构象 vs 最高能构象 RMSD = </span><span class="si">{</span><span class="n">rms_1N</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> Angstrom&quot;</span><span class="p">)</span>
+
+<span class="c1"># 贪心去重：RMSD &lt; 0.5 A 视为同一个构象</span>
+<span class="n">RMS_THRESH</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">unique</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">order</span><span class="p">:</span>
+    <span class="n">cid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">rdMolAlign</span><span class="o">.</span><span class="n">GetBestRMS</span><span class="p">(</span><span class="n">mol_noH</span><span class="p">,</span> <span class="n">mol_noH</span><span class="p">,</span> <span class="n">prbId</span><span class="o">=</span><span class="n">cid</span><span class="p">,</span> <span class="n">refId</span><span class="o">=</span><span class="n">u</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">RMS_THRESH</span>
+           <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">unique</span><span class="p">):</span>
+        <span class="n">unique</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">按 RMSD &lt; </span><span class="si">{</span><span class="n">RMS_THRESH</span><span class="si">}</span><span class="s2"> A 去重后：</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cids</span><span class="p">)</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unique</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个独立构象&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">cid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="n">best</span><span class="p">,</span> <span class="n">second</span><span class="p">,</span> <span class="n">worst</span><span class="p">]):</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s2">&quot;3d&quot;</span><span class="p">)</span>
+    <span class="n">plot_mol_3d</span><span class="p">(</span><span class="n">mol_ens</span><span class="p">,</span> <span class="n">cid</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;conf </span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">:  dE = </span><span class="si">{</span><span class="n">E_rel</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> kcal/mol,  w = </span><span class="si">{</span><span class="n">weights</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>三张图并排放在一起，差别一目了然：最稳定构象的两条辛基链<strong>伸展</strong>成近乎平面的 all-anti 构型（这正是 C8-BTBT 能在薄膜里形成层状堆积、获得高迁移率的结构基础），而最高能构象的链<strong>蜷曲</strong>折叠了起来。二维 SMILES 对这两者的描述完全相同。</p>
+<p>另外注意去重那一行的结果：C8-BTBT 的 30 个构象<strong>一个都没有被合并</strong>——对于一个有 14 根可旋转键的分子，30 次嵌入连构象空间的皮毛都没摸到，彼此之间自然没有重复。这反过来说明：<strong>柔性越大的分子，<code>numConfs</code> 就必须开得越大</strong>，否则你算出来的&quot;Boltzmann 加权 3D 描述符&quot;只是对一小撮随机构象求了平均。</p>
+<h3 id="练习-05b-1-构象数与可旋转键数的关系">🏋️ 练习 05b-1：构象数与可旋转键数的关系</h3>
+<p>对下面四个可旋转键数递增的分子：</p>
+<ul>
+<li><code>Benzene</code>: <code>&quot;c1ccccc1&quot;</code>（0 根）</li>
+<li><code>Biphenyl</code>: <code>&quot;c1ccc(-c2ccccc2)cc1&quot;</code>（1 根）</li>
+<li><code>Dibutyl phthalate</code>: <code>&quot;CCCCOC(=O)c1ccccc1C(=O)OCCCC&quot;</code>（约 9 根）</li>
+<li><code>C8-BTBT</code>: 上面的 <code>SMI_C8BTBT</code>（14 根）</li>
+</ul>
+<ol>
+<li>用 <code>Descriptors.NumRotatableBonds</code> 读出每个分子的可旋转键数；</li>
+<li>对每个分子用 <code>EmbedMultipleConfs(numConfs=50)</code> + <code>MMFFOptimizeMoleculeConfs</code> 生成系综，并用 <code>RMSD &gt; 0.5 A</code> 的贪心去重算出<strong>独立构象数</strong>；</li>
+<li>画出“可旋转键数 vs 独立构象数”的散点图，并报告每个分子的能量跨度 <code>E_rel.max()</code>。</li>
+</ol>
+<blockquote>
+<p><strong>提示</strong>：苯和联苯会返回很少的独立构象——这正说明刚性稠环体系用单构象近似是安全的，而柔性侧链体系必须做系综。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="3-3d-描述符-把形状变成数字">3. 3D 描述符：把形状变成数字</h2>
+<p>有了三维坐标，就能计算一类二维图完全无法企及的描述符。它们大多基于<strong>主惯性矩（Principal Moments of Inertia, PMI）</strong> <span class="math-inline" data-tex="I_1 \le I_2 \le I_3">\(I_1 \le I_2 \le I_3\)</span>——把分子看成一个刚体，这三个数描述了它绕三根主轴转动的惯性。</p>
+<table>
+<thead>
+<tr>
+<th>描述符</th>
+<th>定义 / 取值范围</th>
+<th>物理含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>NPR1, NPR2</strong></td>
+<td><span class="math-inline" data-tex="I_1/I_3">\(I_1/I_3\)</span> 与 <span class="math-inline" data-tex="I_2/I_3">\(I_2/I_3\)</span>，均 <span class="math-inline" data-tex="\in [0, 1]">\(\in [0, 1]\)</span></td>
+<td><strong>归一化主惯性比</strong>，最常用的一对形状坐标</td>
+</tr>
+<tr>
+<td><strong>Asphericity</strong></td>
+<td><span class="math-inline" data-tex="0">\(0\)</span>（球）<span class="math-inline" data-tex="\to 1">\(\to 1\)</span>（线）</td>
+<td>偏离球形的程度</td>
+</tr>
+<tr>
+<td><strong>SpherocityIndex</strong></td>
+<td><span class="math-inline" data-tex="0 \to 1">\(0 \to 1\)</span>（完美球）</td>
+<td>球形度</td>
+</tr>
+<tr>
+<td><strong>RadiusOfGyration</strong></td>
+<td>单位 Å</td>
+<td>回转半径，刻画分子“摊开”得多大</td>
+</tr>
+<tr>
+<td><strong>PBF</strong></td>
+<td>Plane of Best Fit，单位 Å</td>
+<td>全部原子到最佳拟合平面的平均距离；完全平面的稠环分子接近 0</td>
+</tr>
+<tr>
+<td><strong>InertialShapeFactor</strong></td>
+<td><span class="math-inline" data-tex="I_2 / (I_1 I_3)">\(I_2 / (I_1 I_3)\)</span></td>
+<td>另一种形状不变量</td>
+</tr>
+</tbody>
+</table>
+<p><strong>NPR 形状三角（PMI Triangle）</strong> 是这类描述符最著名的可视化：把每个分子画在 <span class="math-inline" data-tex="(\text{NPR1}, \text{NPR2})">\((\text{NPR1}, \text{NPR2})\)</span> 平面上，所有分子都落在一个三角形内，三个顶点分别是：</p>
+<ul>
+<li><span class="math-inline" data-tex="(0, 1)">\((0, 1)\)</span> —— <strong>棒状（rod）</strong>：如乙炔、直链烷烃；</li>
+<li><span class="math-inline" data-tex="(0.5, 0.5)">\((0.5, 0.5)\)</span> —— <strong>盘状（disc）</strong>：如苯、并五苯等平面稠环；</li>
+<li><span class="math-inline" data-tex="(1, 1)">\((1, 1)\)</span> —— <strong>球状（sphere）</strong>：如金刚烷、立方烷、<span class="math-inline" data-tex="\text{C}_{60}">\(\text{C}_{60}\)</span>。</li>
+</ul>
+<p>这张图在药物化学里被用来评价化合物库的“形状多样性”，在有机半导体里则直接关联分子堆积模式——盘状分子才容易形成 <span class="math-inline" data-tex="\pi">\(\pi\)</span>–<span class="math-inline" data-tex="\pi">\(\pi\)</span> 柱状或鱼骨堆积。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">SHAPE_PROBES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Acetylene (rod)&quot;</span><span class="p">:</span>     <span class="s2">&quot;C#C&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Hexane (rod-ish)&quot;</span><span class="p">:</span>    <span class="s2">&quot;CCCCCC&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Benzene (disc)&quot;</span><span class="p">:</span>      <span class="s2">&quot;c1ccccc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Anthracene (disc)&quot;</span><span class="p">:</span>   <span class="s2">&quot;c1ccc2cc3ccccc3cc2c1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Pentacene (disc)&quot;</span><span class="p">:</span>    <span class="s2">&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Adamantane (sphere)&quot;</span><span class="p">:</span> <span class="s2">&quot;C1C2CC3CC1CC(C2)C3&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Cubane (sphere)&quot;</span><span class="p">:</span>     <span class="s2">&quot;C12C3C4C1C5C4C3C25&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Triphenylamine&quot;</span><span class="p">:</span>      <span class="s2">&quot;c1ccc(N(c2ccccc2)c2ccccc2)cc1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;C8-BTBT&quot;</span><span class="p">:</span>             <span class="n">SMI_C8BTBT</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">DESC_3D</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;NPR1&quot;</span><span class="p">:</span>                <span class="n">Descriptors3D</span><span class="o">.</span><span class="n">NPR1</span><span class="p">,</span>
+    <span class="s2">&quot;NPR2&quot;</span><span class="p">:</span>                <span class="n">Descriptors3D</span><span class="o">.</span><span class="n">NPR2</span><span class="p">,</span>
+    <span class="s2">&quot;Asphericity&quot;</span><span class="p">:</span>         <span class="n">Descriptors3D</span><span class="o">.</span><span class="n">Asphericity</span><span class="p">,</span>
+    <span class="s2">&quot;SpherocityIndex&quot;</span><span class="p">:</span>     <span class="n">Descriptors3D</span><span class="o">.</span><span class="n">SpherocityIndex</span><span class="p">,</span>
+    <span class="s2">&quot;RadiusOfGyration&quot;</span><span class="p">:</span>    <span class="n">Descriptors3D</span><span class="o">.</span><span class="n">RadiusOfGyration</span><span class="p">,</span>
+    <span class="s2">&quot;Eccentricity&quot;</span><span class="p">:</span>        <span class="n">Descriptors3D</span><span class="o">.</span><span class="n">Eccentricity</span><span class="p">,</span>
+    <span class="s2">&quot;InertialShapeFactor&quot;</span><span class="p">:</span> <span class="n">Descriptors3D</span><span class="o">.</span><span class="n">InertialShapeFactor</span><span class="p">,</span>
+    <span class="s2">&quot;PBF&quot;</span><span class="p">:</span>                 <span class="n">rdMolDescriptors</span><span class="o">.</span><span class="n">CalcPBF</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">embed_best_conformer</span><span class="p">(</span><span class="n">smi</span><span class="p">,</span> <span class="n">n_confs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">600</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;生成 n_confs 个构象、MMFF 优化后返回能量最低的那一个（单构象近似）。&quot;&quot;&quot;</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">AddHs</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span>
+    <span class="n">ps</span> <span class="o">=</span> <span class="n">AllChem</span><span class="o">.</span><span class="n">ETKDGv3</span><span class="p">()</span>
+    <span class="n">ps</span><span class="o">.</span><span class="n">randomSeed</span> <span class="o">=</span> <span class="n">seed</span>
+    <span class="n">cids_</span> <span class="o">=</span> <span class="n">AllChem</span><span class="o">.</span><span class="n">EmbedMultipleConfs</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">numConfs</span><span class="o">=</span><span class="n">n_confs</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">ps</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cids_</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">AllChem</span><span class="o">.</span><span class="n">MMFFOptimizeMoleculeConfs</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">maxIters</span><span class="o">=</span><span class="n">max_iters</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">best_cid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">([</span><span class="n">e</span> <span class="k">for</span> <span class="n">_c</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">res</span><span class="p">]))</span>
+    <span class="n">keep</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">Mol</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span>
+    <span class="n">keep</span><span class="o">.</span><span class="n">RemoveAllConformers</span><span class="p">()</span>
+    <span class="n">keep</span><span class="o">.</span><span class="n">AddConformer</span><span class="p">(</span><span class="n">mol</span><span class="o">.</span><span class="n">GetConformer</span><span class="p">(</span><span class="n">best_cid</span><span class="p">),</span> <span class="n">assignId</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">keep</span>
+
+<span class="n">shape_rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">SHAPE_PROBES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">embed_best_conformer</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">continue</span>
+    <span class="n">row</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;molecule&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">}</span>
+    <span class="n">row</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="n">fn</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">DESC_3D</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+    <span class="n">shape_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+<span class="n">shape_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">shape_rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;molecule&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">shape_df</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># 形状三角的三条边</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#999999&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>   <span class="c1"># rod  -&gt; disc</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#999999&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>   <span class="c1"># disc -&gt; sphere</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#999999&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>   <span class="c1"># rod  -&gt; sphere</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">shape_df</span><span class="p">[</span><span class="s2">&quot;NPR1&quot;</span><span class="p">],</span> <span class="n">shape_df</span><span class="p">[</span><span class="s2">&quot;NPR2&quot;</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">crimson</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">shape_df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;NPR1&quot;</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;NPR2&quot;</span><span class="p">]),</span> <span class="n">textcoords</span><span class="o">=</span><span class="s2">&quot;offset points&quot;</span><span class="p">,</span>
+                <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">lab</span> <span class="ow">in</span> <span class="p">[((</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="s2">&quot;ROD&quot;</span><span class="p">),</span> <span class="p">((</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="s2">&quot;DISC&quot;</span><span class="p">),</span> <span class="p">((</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="s2">&quot;SPHERE&quot;</span><span class="p">)]:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">lab</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">textcoords</span><span class="o">=</span><span class="s2">&quot;offset points&quot;</span><span class="p">,</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">8</span><span class="p">,</span> <span class="o">-</span><span class="mi">24</span><span class="p">),</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">navy</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;NPR1 = I1 / I3&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;NPR2 = I2 / I3&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.08</span><span class="p">,</span> <span class="mf">1.12</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">0.42</span><span class="p">,</span> <span class="mf">1.08</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;PMI Shape Triangle of Representative Molecules&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>并苯家族（苯 → 蒽 → 并五苯）沿着“盘状”顶点附近排成一列，且随着环数增加越来越贴近 rod–disc 那条边——它们是<strong>完美的平面盘状分子</strong>，<code>PBF</code> 几乎为 0。这正是并苯类材料能形成 herringbone（鱼骨）堆积、获得高迁移率的几何根源。金刚烷和立方烷则牢牢占据球状顶点。</p>
+<h3 id="练习-05b-2-构象系综会让-3d-描述符飘多少">🏋️ 练习 05b-2：构象系综会让 3D 描述符飘多少？</h3>
+<p>3D 描述符的致命弱点是<strong>构象依赖</strong>：同一个分子的不同构象，<code>RadiusOfGyration</code> 可以差出 2 Å。</p>
+<p>对 <code>Dibutyl phthalate</code>（<code>&quot;CCCCOC(=O)c1ccccc1C(=O)OCCCC&quot;</code>）：</p>
+<ol>
+<li>生成 50 个构象并 MMFF 优化，对<strong>每一个</strong>构象计算 <code>RadiusOfGyration</code>、<code>Asphericity</code> 和 <code>NPR1</code>；</li>
+<li>画出这三个描述符在系综中的分布直方图，报告它们的<strong>最小值、最大值与标准差</strong>；</li>
+<li>分别计算三者的<strong>简单平均</strong>与 <strong>Boltzmann 加权平均</strong>（用第 2 节的 <code>KT_298</code>），比较两者的差异。</li>
+</ol>
+<blockquote>
+<p><strong>思考</strong>：如果一篇论文只说“用 RDKit 算了 3D 描述符”而不交代构象是怎么选的，你能复现它的结果吗？</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="4-老实检验-3d-描述符对-log-s-预测有多少增益">4. 老实检验：3D 描述符对 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 预测有多少增益？</h2>
+<p>3D 描述符听上去更“物理”，但它贵得多：每个分子要做 ETKDG 嵌入 + 力场优化，比算 <code>MolWt</code> 慢三四个数量级。它值吗？</p>
+<p>我们做一个干净的对照实验：从 AqSolDB 里取 800 个中等大小、柔性不太高的分子（这样单构象近似还算合理），分别用</p>
+<ul>
+<li><strong>2D only</strong>：10 个经典 2D 描述符；</li>
+<li><strong>3D only</strong>：8 个 3D 描述符；</li>
+<li><strong>2D + 3D</strong>：全部 18 个；</li>
+</ul>
+<p>训练随机森林，比较五折交叉验证 <span class="math-inline" data-tex="R^2">\(R^2\)</span>。（下面这格要为 800 个分子做构象嵌入，约需 30–90 秒。）</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">df_sol</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">find_file</span><span class="p">(</span><span class="s2">&quot;solubility.csv&quot;</span><span class="p">))</span>
+<span class="n">pool</span> <span class="o">=</span> <span class="n">df_sol</span><span class="p">[(</span><span class="n">df_sol</span><span class="p">[</span><span class="s2">&quot;MolWt&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">400</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df_sol</span><span class="p">[</span><span class="s2">&quot;NumRotatableBonds&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">12</span><span class="p">)]</span>
+<span class="n">pool</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">D2_COLS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHDonors&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHAcceptors&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;NumRotatableBonds&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">,</span> <span class="s2">&quot;RingCount&quot;</span><span class="p">,</span> <span class="s2">&quot;BertzCT&quot;</span><span class="p">,</span> <span class="s2">&quot;BalabanJ&quot;</span><span class="p">]</span>
+
+<span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">rows3d</span><span class="p">,</span> <span class="n">ok_idx</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">smi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pool</span><span class="p">[</span><span class="s2">&quot;SMILES&quot;</span><span class="p">]):</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">embed_best_conformer</span><span class="p">(</span><span class="n">smi</span><span class="p">,</span> <span class="n">n_confs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">continue</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">rows3d</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="n">fn</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">DESC_3D</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">continue</span>
+    <span class="n">ok_idx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;为 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ok_idx</span><span class="p">)</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个分子成功生成三维构象，用时 </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> s&quot;</span><span class="p">)</span>
+
+<span class="n">pool_ok</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ok_idx</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">X_3d</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows3d</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">X_2d</span> <span class="o">=</span> <span class="n">pool_ok</span><span class="p">[</span><span class="n">D2_COLS</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">X_23</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">X_2d</span><span class="p">,</span> <span class="n">X_3d</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">y_sol</span> <span class="o">=</span> <span class="n">pool_ok</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">cv5</span> <span class="o">=</span> <span class="n">KFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">bench</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">X_</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;2D only (10)&quot;</span><span class="p">,</span> <span class="n">X_2d</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;3D only (8)&quot;</span><span class="p">,</span> <span class="n">X_3d</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;2D + 3D (18)&quot;</span><span class="p">,</span> <span class="n">X_23</span><span class="p">)]:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">cross_val_score</span><span class="p">(</span><span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+                        <span class="n">X_</span><span class="p">,</span> <span class="n">y_sol</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">cv5</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s2">&quot;r2&quot;</span><span class="p">)</span>
+    <span class="n">bench</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;features&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="n">X_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                  <span class="s2">&quot;cv_r2_mean&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="mi">4</span><span class="p">),</span> <span class="s2">&quot;cv_r2_std&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">std</span><span class="p">(),</span> <span class="mi">4</span><span class="p">)})</span>
+
+<span class="n">bench</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">bench</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">bench</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">bench</span><span class="p">[</span><span class="s2">&quot;features&quot;</span><span class="p">],</span> <span class="n">bench</span><span class="p">[</span><span class="s2">&quot;cv_r2_mean&quot;</span><span class="p">],</span> <span class="n">yerr</span><span class="o">=</span><span class="n">bench</span><span class="p">[</span><span class="s2">&quot;cv_r2_std&quot;</span><span class="p">],</span>
+       <span class="n">capsize</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">[</span><span class="n">C</span><span class="o">.</span><span class="n">navy</span><span class="p">,</span> <span class="n">C</span><span class="o">.</span><span class="n">gold</span><span class="p">,</span> <span class="n">C</span><span class="o">.</span><span class="n">crimson</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.55</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">bench</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;cv_r2_mean&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;cv_r2_std&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.015</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;cv_r2_mean&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;5-fold CV R2&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Do 3D Descriptors Help Predicting logS?&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>结果是一记有益的清醒剂</strong>：3D 描述符单独使用时远不如 2D（它们完全没有编码极性、氢键这些对水溶解度至关重要的信息），加进 2D 之后带来的提升也只有一两个百分点——而计算代价增加了几千倍。</p>
+<p>这不是说 3D 描述符没用，而是说<strong>要用在对的地方</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>适合 3D 描述符的性质</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>蛋白–配体结合亲和力</td>
+<td>结合口袋的形状互补性是决定性的</td>
+</tr>
+<tr>
+<td>载流子迁移率、<span class="math-inline" data-tex="\pi">\(\pi\)</span>–<span class="math-inline" data-tex="\pi">\(\pi\)</span> 堆积</td>
+<td>平面度（<code>PBF</code>）、分子长宽比直接决定堆积模式</td>
+</tr>
+<tr>
+<td>液晶相行为、熔点</td>
+<td>形状各向异性决定能否形成有序相</td>
+</tr>
+<tr>
+<td>膜渗透性、口服生物利用度</td>
+<td>3D 极性表面积比 2D TPSA 更准</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>不太需要 3D 的性质</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>水溶解度 <span class="math-inline" data-tex="\log S">\(\log S\)</span></td>
+<td>主要由极性/疏水平衡决定，2D 描述符已捕捉</td>
+</tr>
+<tr>
+<td><span class="math-inline" data-tex="\log P">\(\log P\)</span></td>
+<td>本身就是原子贡献加和模型</td>
+</tr>
+<tr>
+<td>简单的毒性/活性分类</td>
+<td>子结构指纹通常已经够用</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>📌 工程准则</strong>：先用便宜的 2D 描述符做基线，<strong>只有当某个物理机制明确依赖三维形状时</strong>才付出 3D 的代价，并且一定要说明构象是怎么选的（单构象？能量最低？Boltzmann 加权？）。</p>
+</blockquote>
+<hr />
+<h2 id="5-pubchem-pug-rest-从数据库里-要-数据">5. PubChem PUG-REST：从数据库里“要”数据</h2>
+<p>到目前为止，本课程所有数据都来自预先下载好的 CSV。但真实课题的第一步往往是：<strong>我有一张 50 个化合物的名单，我需要它们的实验性质</strong>。</p>
+<p><strong>PubChem</strong> 是 NIH 维护的全球最大公开化学数据库（超过 1 亿个化合物），它提供两套 HTTP API：</p>
+<table>
+<thead>
+<tr>
+<th>接口</th>
+<th>用途</th>
+<th>URL 前缀</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PUG-REST</strong></td>
+<td>查<strong>计算性质</strong>与标识符（分子式、分子量、XLogP、SMILES、InChI、CID）</td>
+<td><code>https://pubchem.ncbi.nlm.nih.gov/rest/pug</code></td>
+</tr>
+<tr>
+<td><strong>PUG-View</strong></td>
+<td>查<strong>实验性质注释</strong>（熔点、沸点、溶解度、光谱），带文献出处</td>
+<td><code>https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound</code></td>
+</tr>
+</tbody>
+</table>
+<p>PUG-REST 的 URL 遵循一个非常规整的三段式语法：</p>
+<pre><code><div class="highlight"><pre><span></span>.../rest/pug / &lt;输入域&gt; / &lt;操作&gt; / &lt;输出格式&gt;
+
+compound/name/aspirin  /  property/MolecularWeight,XLogP  /  JSON
+compound/cid/2244      /  property/MolecularFormula       /  CSV
+compound/smiles/CCO    /  cids                            /  TXT
+</pre></div>
+</code></pre>
+<blockquote>
+<p><strong>⚠️ 使用礼仪（这是硬性要求，不是建议）</strong>：PubChem 限制<strong>每秒不超过 5 次请求</strong>，超限会返回 <code>503</code>。批量抓取时务必 <code>time.sleep(0.2)</code> 以上，并且<strong>能批量就不要循环单查</strong>——<code>compound/cid/2244,931,8418/property/...</code> 一次可以要回上百个 CID 的结果。</p>
+</blockquote>
+<blockquote>
+<p><strong>⚠️ 关于属性名</strong>：PubChem 会不定期调整 property 名称（例如 <code>CanonicalSMILES</code> 近年被 <code>SMILES</code> / <code>ConnectivitySMILES</code> 取代）。写批量脚本时最好<strong>只请求少数几个稳定属性</strong>，并对返回的列名做容错处理。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">PUG_REST</span> <span class="o">=</span> <span class="s2">&quot;https://pubchem.ncbi.nlm.nih.gov/rest/pug&quot;</span>
+<span class="n">PUG_VIEW</span> <span class="o">=</span> <span class="s2">&quot;https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound&quot;</span>
+<span class="n">PAUSE</span>    <span class="o">=</span> <span class="mf">0.25</span>        <span class="c1"># 每次请求后的礼貌等待，满足 &lt;= 5 req/s 的限制</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">pug_get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">retries</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;带重试与限速的 GET；失败时返回 None 而不是抛异常，便于批量抓取时跳过。&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">retries</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">PAUSE</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">r</span>
+            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>         <span class="c1"># PubChem 里没有这个条目，重试也没用</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">attempt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>  <span class="c1"># 503 / 限流：退避后重试</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">RequestException</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">attempt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+<span class="c1"># —— 演示 1：按名称查 CID ——</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">pug_get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">PUG_REST</span><span class="si">}</span><span class="s2">/compound/name/anthracene/cids/JSON&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;按名称查 CID:&quot;</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span> <span class="k">if</span> <span class="n">r</span> <span class="k">else</span> <span class="s2">&quot;请求失败（可能是网络不通）&quot;</span><span class="p">)</span>
+
+<span class="c1"># —— 演示 2：按 CID 查计算性质 ——</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">pug_get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">PUG_REST</span><span class="si">}</span><span class="s2">/compound/cid/8418/property/MolecularFormula,MolecularWeight,XLogP,TPSA/JSON&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">r</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">按 CID 查性质:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;PropertyTable&quot;</span><span class="p">][</span><span class="s2">&quot;Properties&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+<span class="c1"># —— 演示 3：按 SMILES 反查 CID（结构检索）——</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">pug_get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">PUG_REST</span><span class="si">}</span><span class="s2">/compound/smiles/</span><span class="si">{</span><span class="n">requests</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="s1">&#39;c1ccc2cc3ccccc3cc2c1&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">/cids/TXT&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">按 SMILES 反查 CID:&quot;</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[:</span><span class="mi">3</span><span class="p">]</span> <span class="k">if</span> <span class="n">r</span> <span class="k">else</span> <span class="s2">&quot;请求失败&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [14] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># —— 批量抓取：一次请求拿回几十个化合物的性质 ——</span>
+<span class="n">PROBE_CIDS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">241</span><span class="p">,</span> <span class="mi">931</span><span class="p">,</span> <span class="mi">8418</span><span class="p">,</span> <span class="mi">995</span><span class="p">,</span> <span class="mi">31423</span><span class="p">,</span> <span class="mi">9171</span><span class="p">,</span> <span class="mi">9142</span><span class="p">,</span> <span class="mi">6853</span><span class="p">,</span> <span class="mi">8030</span><span class="p">,</span> <span class="mi">7047</span><span class="p">]</span>  <span class="c1"># 苯、萘、蒽、菲……</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_properties</span><span class="p">(</span><span class="n">cids_</span><span class="p">,</span> <span class="n">props</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;MolecularFormula&quot;</span><span class="p">,</span> <span class="s2">&quot;MolecularWeight&quot;</span><span class="p">,</span> <span class="s2">&quot;XLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">),</span>
+                     <span class="n">chunk</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;分批调用 PUG-REST 的 property 接口，返回一张 DataFrame。&quot;&quot;&quot;</span>
+    <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cids_</span><span class="p">),</span> <span class="n">chunk</span><span class="p">):</span>
+        <span class="n">part</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cids_</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">chunk</span><span class="p">])</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">pug_get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">PUG_REST</span><span class="si">}</span><span class="s2">/compound/cid/</span><span class="si">{</span><span class="n">part</span><span class="si">}</span><span class="s2">/property/</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">props</span><span class="p">)</span><span class="si">}</span><span class="s2">/JSON&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;PropertyTable&quot;</span><span class="p">][</span><span class="s2">&quot;Properties&quot;</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">if</span> <span class="n">frames</span> <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+<span class="n">props_df</span> <span class="o">=</span> <span class="n">fetch_properties</span><span class="p">(</span><span class="n">PROBE_CIDS</span><span class="p">)</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">props_df</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">props_df</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;网络不可用，跳过在线抓取（后面的分析会自动改用随课程打包的本地数据）&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="6-pug-view-抓取实验熔点并解析自由文本">6. PUG-View：抓取实验熔点并解析自由文本</h2>
+<p>实验性质比计算性质难拿得多：PubChem 把它们存成<strong>带文献出处的自由文本注释</strong>，形态五花八门——<code>&quot;135 °C&quot;</code>、<code>&quot;216-218 °C&quot;</code>、<code>&quot;80.2 deg C&quot;</code>、<code>&quot;300 °F&quot;</code>、<code>&quot;MP: 122.4 °C (lit.)&quot;</code>。要把它们变成一列干净的浮点数，必须自己写解析器。</p>
+<p>我们的策略：</p>
+<ol>
+<li>请求 <code>pug_view/data/compound/&lt;CID&gt;/JSON?heading=Melting+Point</code>；</li>
+<li><strong>递归</strong>遍历返回的嵌套 JSON，把其中所有字符串收集起来（PubChem 的注释层级很深，写死路径会很脆）；</li>
+<li>用正则匹配 <code>数值 [区间] [单位]</code>，区间取中点，华氏转摄氏，再用常识范围过滤掉明显不是温度的数字；</li>
+<li>同一个化合物常有多条来源（Merck Index、NTP、OSHA……），<strong>取中位数</strong>比取第一条稳健得多。</li>
+</ol>
+<p>这就是真实数据工程的日常：<strong>大半的时间花在把别人的文本变成自己的数字上</strong>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [15] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">MP_PATTERN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">&quot;(-?\d+(?:\.\d+)?)\s*(?:-|to|–)?\s*(-?\d+(?:\.\d+)?)?\s*°?\s*([CF])&quot;</span>
+<span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">iter_strings</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;递归遍历任意嵌套的 JSON，产出其中所有字符串。&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">yield from</span> <span class="n">iter_strings</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="n">iter_strings</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="n">obj</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_melting_point</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;从一条自由文本里解析摄氏熔点；解析不出来返回 None。&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;http&quot;</span> <span class="ow">in</span> <span class="n">text</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">60</span><span class="p">:</span>        <span class="c1"># 跳过参考文献与长段落</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">MP_PATTERN</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\u00b0</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;deg&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">lo</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">hi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="k">else</span> <span class="n">lo</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">lo</span> <span class="o">+</span> <span class="n">hi</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;F&quot;</span><span class="p">:</span>                       <span class="c1"># 华氏 -&gt; 摄氏</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="mi">32</span><span class="p">)</span> <span class="o">*</span> <span class="mi">5</span> <span class="o">/</span> <span class="mi">9</span>
+    <span class="k">return</span> <span class="n">t</span> <span class="k">if</span> <span class="o">-</span><span class="mi">180</span> <span class="o">&lt;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">600</span> <span class="k">else</span> <span class="kc">None</span>        <span class="c1"># 常识范围过滤</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_melting_point</span><span class="p">(</span><span class="n">cid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;抓取并解析某个 CID 的实验熔点（取所有来源的中位数）。&quot;&quot;&quot;</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">pug_get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">PUG_VIEW</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">/JSON&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;heading&quot;</span><span class="p">:</span> <span class="s2">&quot;Melting Point&quot;</span><span class="p">})</span>
+    <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">iter_strings</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">parse_melting_point</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">vals</span><span class="p">))</span> <span class="k">if</span> <span class="n">vals</span> <span class="k">else</span> <span class="kc">None</span>
+
+<span class="c1"># 在几个熟悉的分子上试一试（文献值：萘 80.2、蒽 216、菲 100、芘 151、咖啡因 236 ℃）</span>
+<span class="n">DEMO</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;naphthalene&quot;</span><span class="p">:</span> <span class="mi">931</span><span class="p">,</span> <span class="s2">&quot;anthracene&quot;</span><span class="p">:</span> <span class="mi">8418</span><span class="p">,</span> <span class="s2">&quot;phenanthrene&quot;</span><span class="p">:</span> <span class="mi">995</span><span class="p">,</span>
+        <span class="s2">&quot;pyrene&quot;</span><span class="p">:</span> <span class="mi">31423</span><span class="p">,</span> <span class="s2">&quot;caffeine&quot;</span><span class="p">:</span> <span class="mi">2519</span><span class="p">}</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;molecule&#39;</span><span class="si">:</span><span class="s2">&lt;16s</span><span class="si">}{</span><span class="s1">&#39;CID&#39;</span><span class="si">:</span><span class="s2">&gt;8s</span><span class="si">}{</span><span class="s1">&#39;Tm / degC&#39;</span><span class="si">:</span><span class="s2">&gt;14s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">DEMO</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">tm</span> <span class="o">=</span> <span class="n">fetch_melting_point</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;16s</span><span class="si">}{</span><span class="n">cid</span><span class="si">:</span><span class="s2">&gt;8d</span><span class="si">}{</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tm</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">tm</span><span class="w"> </span><span class="ow">is</span><span class="w"> </span><span class="ow">not</span><span class="w"> </span><span class="kc">None</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;n/a&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">&gt;14s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="7-补全伏笔-把-t_m-填进-yalkowsky-方程">7. 补全伏笔：把 <span class="math-inline" data-tex="T_m">\(T_m\)</span> 填进 Yalkowsky 方程</h2>
+<p>现在我们有了抓取熔点的能力。为了让课堂不受网络状况影响，课程随数据集打包了一张 <strong><code>data/melting_points.csv</code></strong>——它正是用上面这套代码对 79 个常见有机分子（并苯、杂环、酚类、羧酸、农药、甾体激素等）批量抓取 PubChem 实验熔点，并按<strong>规范化 SMILES</strong> 与 AqSolDB 的实测 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 对齐后的结果。</p>
+<blockquote>
+<p><strong>为什么要按规范化 SMILES（canonical SMILES）对齐，而不是按名字？</strong> 同一个分子在 PubChem 叫 <code>naphthalen-1-ol</code>，在 AqSolDB 叫 <code>1-naphthol</code>，按名字匹配会大量漏掉。把两边的 SMILES 都用 <code>Chem.MolToSmiles(Chem.MolFromSmiles(smi))</code> 过一遍 RDKit 的规范化算法，得到的字符串就是唯一的——<strong>这是跨数据库合并化学数据的标准做法</strong>。</p>
+</blockquote>
+<p>Yalkowsky 通用溶解度方程（General Solubility Equation, GSE）：</p>
+<div class="math-block" data-tex="\log S \approx 0.5 - \log P - 0.01\,(T_m - 25)">\[\log S \approx 0.5 - \log P - 0.01\,(T_m - 25)\]</div>
+<p>它由两项构成：<span class="math-inline" data-tex="-\log P">\(-\log P\)</span> 是<strong>溶剂化项</strong>（把分子从自身液相搬进水里），<span class="math-inline" data-tex="-0.01(T_m - 25)">\(-0.01(T_m - 25)\)</span> 是<strong>晶格破坏项</strong>（把分子从晶体里拆出来；熔点越高说明晶格越稳，越难溶）。下面我们正面检验：加上 <span class="math-inline" data-tex="T_m">\(T_m\)</span> 到底能把误差压低多少。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [16] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">mp_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">find_file</span><span class="p">(</span><span class="s2">&quot;melting_points.csv&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;本地熔点数据集: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">mp_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个分子&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mp_df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">熔点范围: </span><span class="si">{</span><span class="n">mp_df</span><span class="p">[</span><span class="s1">&#39;Tm_C&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> ~ </span><span class="si">{</span><span class="n">mp_df</span><span class="p">[</span><span class="s1">&#39;Tm_C&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> degC；&quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;logS 范围: </span><span class="si">{</span><span class="n">mp_df</span><span class="p">[</span><span class="s1">&#39;logS&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> ~ </span><span class="si">{</span><span class="n">mp_df</span><span class="p">[</span><span class="s1">&#39;logS&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [17] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 可选：抽样校验本地熔点与此刻 PubChem 线上值是否一致</span>
+<span class="n">CHECK_N</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">check</span> <span class="o">=</span> <span class="n">mp_df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">CHECK_N</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;name&#39;</span><span class="si">:</span><span class="s2">&lt;22s</span><span class="si">}{</span><span class="s1">&#39;local Tm&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}{</span><span class="s1">&#39;live Tm&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">check</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+    <span class="n">live</span> <span class="o">=</span> <span class="n">fetch_melting_point</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;cid&quot;</span><span class="p">]))</span>
+    <span class="n">live_s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">live</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">live</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;n/a&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">&lt;22s</span><span class="si">}{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Tm_C&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;10.1f</span><span class="si">}{</span><span class="n">live_s</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">（显示 n/a 通常只是当前网络不通，不影响下面使用本地数据的分析）&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [18] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">logP</span> <span class="o">=</span> <span class="n">mp_df</span><span class="p">[</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">Tm</span>   <span class="o">=</span> <span class="n">mp_df</span><span class="p">[</span><span class="s2">&quot;Tm_C&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">logS</span> <span class="o">=</span> <span class="n">mp_df</span><span class="p">[</span><span class="s2">&quot;logS&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+<span class="n">gse_full</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">logP</span> <span class="o">-</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="p">(</span><span class="n">Tm</span> <span class="o">-</span> <span class="mi">25</span><span class="p">)</span>      <span class="c1"># 完整 Yalkowsky 方程</span>
+<span class="n">gse_noTm</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">logP</span>                          <span class="c1"># 砍掉晶格项</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+    <span class="n">rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">pred</span> <span class="o">-</span> <span class="n">logS</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">mae</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">pred</span> <span class="o">-</span> <span class="n">logS</span><span class="p">))</span>
+    <span class="n">r</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">logS</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">&lt;36s</span><span class="si">}</span><span class="s2"> RMSE = </span><span class="si">{</span><span class="n">rmse</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">   MAE = </span><span class="si">{</span><span class="n">mae</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">   r = </span><span class="si">{</span><span class="n">r</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">rmse</span>
+
+<span class="n">rmse_no</span> <span class="o">=</span> <span class="n">report</span><span class="p">(</span><span class="n">gse_noTm</span><span class="p">,</span> <span class="s2">&quot;GSE without Tm  (0.5 - logP)&quot;</span><span class="p">)</span>
+<span class="n">rmse_tm</span> <span class="o">=</span> <span class="n">report</span><span class="p">(</span><span class="n">gse_full</span><span class="p">,</span> <span class="s2">&quot;GSE with    Tm  (full Yalkowsky)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">加入实验熔点后 RMSE 下降 </span><span class="si">{</span><span class="n">rmse_no</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">rmse_tm</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> 个对数单位&quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;（相对改善 </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">rmse_no</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">rmse_tm</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">rmse_no</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%）&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">10.8</span><span class="p">,</span> <span class="mf">4.6</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">rmse</span> <span class="ow">in</span> <span class="p">[</span>
+    <span class="p">(</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">gse_noTm</span><span class="p">,</span> <span class="s2">&quot;Without melting point&quot;</span><span class="p">,</span> <span class="n">rmse_no</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">gse_full</span><span class="p">,</span> <span class="s2">&quot;Full Yalkowsky GSE (with Tm)&quot;</span><span class="p">,</span> <span class="n">rmse_tm</span><span class="p">),</span>
+<span class="p">]:</span>
+    <span class="n">sc</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">logS</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">Tm</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;plasma&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">)</span>
+    <span class="n">lims</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">9.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">lims</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#888888&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">lims</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">lims</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Measured logS&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="se">\n</span><span class="s2">RMSE = </span><span class="si">{</span><span class="n">rmse</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Predicted logS&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Melting point / degC&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>左图里<strong>高熔点分子（亮黄色点）系统性地落在对角线上方</strong>——不含 <span class="math-inline" data-tex="T_m">\(T_m\)</span> 的公式一律高估了它们的溶解度，因为它完全不知道这些分子的晶格有多稳。右图加上晶格项后，黄点被整体拉回对角线，误差分布也不再有明显的颜色梯度。</p>
+<p><strong>这正是第二讲 <code>02c</code> 里“模型漏报高对称性难溶分子”现象的物理解释</strong>：那些被随机森林判成“应该挺好溶”却实际难溶的分子，正是熔点很高的 brick-dust（砖头粉）型化合物，而我们当时的 2D 描述符里根本没有熔点这一维。</p>
+<h3 id="7-1-让数据自己拟合系数-yalkowsky-的三个常数对不对">7.1 让数据自己拟合系数：Yalkowsky 的三个常数对不对？</h3>
+<p>GSE 里的三个常数 <span class="math-inline" data-tex="0.5">\(0.5\)</span>、<span class="math-inline" data-tex="-1">\(-1\)</span>、<span class="math-inline" data-tex="-0.01">\(-0.01\)</span> 是 Yalkowsky 在 1980 年代从大量实验数据里总结出来的。现在我们有 79 个分子，可以用最小二乘让数据自己说话：</p>
+<div class="math-block" data-tex="\log S = \beta_0 + \beta_1 \log P + \beta_2 T_m">\[\log S = \beta_0 + \beta_1 \log P + \beta_2 T_m\]</div>
+<p>把 GSE 展开成同样的形式是 <span class="math-inline" data-tex="\log S = (0.5 + 0.25) - 1 \cdot \log P - 0.01\,T_m">\(\log S = (0.5 + 0.25) - 1 \cdot \log P - 0.01\,T_m\)</span>，所以理论值应当是 <span class="math-inline" data-tex="(\beta_0, \beta_1, \beta_2) \approx (0.75,\ -1,\ -0.01)">\((\beta_0, \beta_1, \beta_2) \approx (0.75,\ -1,\ -0.01)\)</span>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [19] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">X_gse</span> <span class="o">=</span> <span class="n">mp_df</span><span class="p">[[</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;Tm_C&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">lr</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_gse</span><span class="p">,</span> <span class="n">logS</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;数据拟合结果：&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  logS = </span><span class="si">{</span><span class="n">lr</span><span class="o">.</span><span class="n">intercept_</span><span class="si">:</span><span class="s2">+.3f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">lr</span><span class="o">.</span><span class="n">coef_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">+.3f</span><span class="si">}</span><span class="s2"> * logP </span><span class="si">{</span><span class="n">lr</span><span class="o">.</span><span class="n">coef_</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">+.4f</span><span class="si">}</span><span class="s2"> * Tm&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Yalkowsky 理论值：&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  logS =  +0.750  -1.000 * logP  -0.0100 * Tm&quot;</span><span class="p">)</span>
+
+<span class="c1"># 用留一交叉验证（LOO）公平比较“有没有 Tm”</span>
+<span class="k">for</span> <span class="n">cols</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">[([</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">],</span> <span class="s2">&quot;logP only&quot;</span><span class="p">),</span> <span class="p">([</span><span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;Tm_C&quot;</span><span class="p">],</span> <span class="s2">&quot;logP + Tm&quot;</span><span class="p">)]:</span>
+    <span class="n">pred</span> <span class="o">=</span> <span class="n">cross_val_predict</span><span class="p">(</span><span class="n">LinearRegression</span><span class="p">(),</span> <span class="n">mp_df</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">logS</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">LeaveOneOut</span><span class="p">())</span>
+    <span class="n">rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">pred</span> <span class="o">-</span> <span class="n">logS</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">r2</span>   <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">pred</span> <span class="o">-</span> <span class="n">logS</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">logS</span> <span class="o">-</span> <span class="n">logS</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">LOO 交叉验证  </span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">&lt;12s</span><span class="si">}</span><span class="s2">: RMSE = </span><span class="si">{</span><span class="n">rmse</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, R2 = </span><span class="si">{</span><span class="n">r2</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>拟合出来的斜率与 Yalkowsky 四十年前给出的 <span class="math-inline" data-tex="-1">\(-1\)</span> 和 <span class="math-inline" data-tex="-0.01">\(-0.01\)</span> 处在同一量级且方向一致——<strong>一个 1980 年代的半经验方程，在今天的数据上依然立得住</strong>。留一交叉验证则显示：仅仅加入一列熔点，<span class="math-inline" data-tex="R^2">\(R^2\)</span> 就有可观提升，RMSE 下降了 0.2 个对数单位以上。</p>
+<p>这也回应了第七讲 <code>07a</code> 里留下的那个问题（“梯度下降拟合 <span class="math-inline" data-tex="\log S">\(\log S\)</span>–<span class="math-inline" data-tex="\log P">\(\log P\)</span> 得到的斜率约 <span class="math-inline" data-tex="-0.41">\(-0.41\)</span>，为什么比 Yalkowsky 的 <span class="math-inline" data-tex="-1">\(-1\)</span> 平缓得多？”）：在全量 AqSolDB 上，大量高熔点分子的晶格效应被<strong>吸收进了残差</strong>，把回归斜率压平了；一旦把 <span class="math-inline" data-tex="T_m">\(T_m\)</span> 显式放进模型，<span class="math-inline" data-tex="\log P">\(\log P\)</span> 的系数立刻朝理论值靠拢。</p>
+<h3 id="练习-05b-3-把熔点加进机器学习模型">🏋️ 练习 05b-3：把熔点加进机器学习模型</h3>
+<p><code>data/melting_points.csv</code> 里有 79 个分子的 <code>SMILES</code>、<code>Tm_C</code> 和 <code>logS</code>。</p>
+<ol>
+<li>用 <code>05a</code> 的方式为这 79 个分子计算一组 2D 描述符（至少包含 <code>MolWt</code>、<code>MolLogP</code>、<code>TPSA</code>、<code>NumAromaticRings</code>、<code>NumHDonors</code>、<code>BertzCT</code>）；</li>
+<li>用留一交叉验证（<code>LeaveOneOut</code>）比较三个随机森林（<code>n_estimators=300, random_state=0</code>）：
+<ul>
+<li><strong>A</strong>：只用 2D 描述符；</li>
+<li><strong>B</strong>：2D 描述符 + <code>Tm_C</code>；</li>
+<li><strong>C</strong>：只用 <code>MolLogP</code> 和 <code>Tm_C</code>（即 Yalkowsky 的两个变量）；</li>
+</ul>
+</li>
+<li>报告三者的 LOO RMSE 与 <span class="math-inline" data-tex="R^2">\(R^2\)</span>，并画出 B 模型的预测–实测散点图；</li>
+<li><strong>讨论</strong>：模型 C 只用两个变量，表现与用了一堆描述符的 B 差多少？这说明什么？</li>
+</ol>
+<blockquote>
+<p><strong>提示</strong>：79 个样本非常少，<code>KFold(5)</code> 的折间方差会很大，所以这里用 LOO；随机森林在这种小样本上会有一定过拟合，属于预期内的现象。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [20] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="小结">小结</h2>
+<table>
+<thead>
+<tr>
+<th>核心概念</th>
+<th>方法与实现</th>
+<th>材料与化学意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ETKDG 距离几何嵌入</strong></td>
+<td><code>AllChem.EmbedMolecule(mol, ETKDGv3())</code>，<strong>必须先 <code>AddHs</code></strong></td>
+<td>界限矩阵 + CSD 统计的二面角偏好，把拓扑图变成合理的三维坐标</td>
+</tr>
+<tr>
+<td><strong>MMFF94 力场优化</strong></td>
+<td><code>AllChem.MMFFOptimizeMolecule</code></td>
+<td>收敛到局部能量极小点；能量<strong>只能在同分子的不同构象间比较</strong></td>
+</tr>
+<tr>
+<td><strong>构象系综与 Boltzmann 权重</strong></td>
+<td><code>EmbedMultipleConfs</code> + <code>GetBestRMS</code> 去重 + <span class="math-inline" data-tex="w_i \propto e^{-\Delta E_i / k_B T}">\(w_i \propto e^{-\Delta E_i / k_B T}\)</span></td>
+<td>C8-BTBT 的辛基链伸展构象最稳定，正是其层状堆积、高迁移率的几何基础</td>
+</tr>
+<tr>
+<td><strong>PMI 形状三角（NPR1/NPR2）</strong></td>
+<td><code>Descriptors3D.NPR1 / NPR2</code></td>
+<td>并苯类聚在“盘状”顶点（<code>PBF</code> 接近 0），金刚烷、立方烷在“球状”顶点</td>
+</tr>
+<tr>
+<td><strong>3D 描述符的收益边界</strong></td>
+<td>2D vs 3D vs 2D+3D 的五折 CV 对照</td>
+<td>对 <span class="math-inline" data-tex="\log S">\(\log S\)</span> 增益很小；真正值得付出 3D 代价的是结合亲和力、堆积与迁移率</td>
+</tr>
+<tr>
+<td><strong>PUG-REST 批量抓取</strong></td>
+<td><code>compound/cid/&lt;多个CID&gt;/property/&lt;属性&gt;/JSON</code>，不超过 5 req/s</td>
+<td>能批量就不要循环单查；带重试与退避的 <code>pug_get</code> 是生产级写法</td>
+</tr>
+<tr>
+<td><strong>PUG-View 实验性质解析</strong></td>
+<td><code>heading=Melting Point</code> + 递归遍历 + 正则 + 多来源取中位数</td>
+<td>实验数据是带文献出处的自由文本，解析器本身就是数据工程的主体</td>
+</tr>
+<tr>
+<td><strong>规范化 SMILES 跨库对齐</strong></td>
+<td><code>Chem.MolToSmiles(Chem.MolFromSmiles(s))</code></td>
+<td>PubChem 的 <code>naphthalen-1-ol</code> 与 AqSolDB 的 <code>1-naphthol</code> 靠它才能对上</td>
+</tr>
+<tr>
+<td><strong>Yalkowsky GSE 伏笔兑现</strong></td>
+<td><span class="math-inline" data-tex="\log S \approx 0.5 - \log P - 0.01(T_m - 25)">\(\log S \approx 0.5 - \log P - 0.01(T_m - 25)\)</span></td>
+<td>加入实验熔点后 RMSE 显著下降，拟合系数与 1980 年代的理论值方向、量级一致</td>
+</tr>
+</tbody>
+</table>
+<h3 id="第五讲全景回顾">第五讲全景回顾</h3>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th><code>05a</code> 的回答</th>
+<th><code>05b</code> 的回答</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>描述符太多怎么办？</td>
+<td>方差过滤 + 共线性剪枝 + RFE，29 → 10 维而精度不变</td>
+<td>—</td>
+</tr>
+<tr>
+<td>模型为什么这么判？</td>
+<td>Shapley 四公理 + TreeSHAP 全局/局部归因</td>
+<td>—</td>
+</tr>
+<tr>
+<td>二维表示的尽头在哪？</td>
+<td>SHAP 显示 <code>MolLogP</code> 一家独大，其余描述符贡献很薄</td>
+<td>三维形状与晶格能根本不在 2D 描述符的表达范围内</td>
+</tr>
+<tr>
+<td>缺的数据从哪来？</td>
+<td>—</td>
+<td>PubChem PUG-REST / PUG-View 批量抓取 + 文本解析</td>
+</tr>
+</tbody>
+</table>
+<h3 id="下一讲预告">下一讲预告</h3>
+<p>第五讲处理的始终是<strong>单个有机分子</strong>——它有明确的 SMILES、明确的分子量、明确的熔点。但如果研究对象是 <span class="math-inline" data-tex="\text{BaTiO}_3">\(\text{BaTiO}_3\)</span> 这样的<strong>无机晶体</strong>呢？它没有“分子”，只有周期性重复的晶胞；它的性质由空间群对称性、离子半径、配位环境共同决定。</p>
+<p>下一讲 <strong><code>06 - Materials Informatics</code>（无机与晶体材料信息学）</strong> 将换一套完全不同的工具：用 <code>pymatgen</code> 操作晶胞与空间群、从 Materials Project 数据库批量检索形成能与带隙、模拟 XRD 谱图、构建热力学凸包相图，并用元素组成描述符做高通量虚拟筛选。</p>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/05-feature-engineering-and-molecular-informatics.html">返回模块 05</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">05a — 特征工程与模型可解释性：特征选择与 SHAP 归因分析</span>
+  </a>  <a class="pager-link pager-next" href="../../notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">05c — 第五讲基础习题：特征工程、SHAP 与三维分子巩固练习</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-环境准备与数据读取辅助函数">0. 环境准备与数据读取辅助函数</a></li>      <li class="toc-l2"><a href="#1-从-smiles-到三维坐标-etkdg-距离几何算法">1. 从 SMILES 到三维坐标：ETKDG 距离几何算法</a></li>      <li class="toc-l2"><a href="#2-构象系综-一个分子不止一个形状">2. 构象系综：一个分子不止一个形状</a></li>      <li class="toc-l3"><a href="#练习-05b-1-构象数与可旋转键数的关系">🏋️ 练习 05b-1：构象数与可旋转键数的关系</a></li>      <li class="toc-l2"><a href="#3-3d-描述符-把形状变成数字">3. 3D 描述符：把形状变成数字</a></li>      <li class="toc-l3"><a href="#练习-05b-2-构象系综会让-3d-描述符飘多少">🏋️ 练习 05b-2：构象系综会让 3D 描述符飘多少？</a></li>      <li class="toc-l2"><a href="#4-老实检验-3d-描述符对-log-s-预测有多少增益">4. 老实检验：3D 描述符对 \(\log S\) 预测有多少增益？</a></li>      <li class="toc-l2"><a href="#5-pubchem-pug-rest-从数据库里-要-数据">5. PubChem PUG-REST：从数据库里“要”数据</a></li>      <li class="toc-l2"><a href="#6-pug-view-抓取实验熔点并解析自由文本">6. PUG-View：抓取实验熔点并解析自由文本</a></li>      <li class="toc-l2"><a href="#7-补全伏笔-把-t_m-填进-yalkowsky-方程">7. 补全伏笔：把 \(T_m\) 填进 Yalkowsky 方程</a></li>      <li class="toc-l3"><a href="#7-1-让数据自己拟合系数-yalkowsky-的三个常数对不对">7.1 让数据自己拟合系数：Yalkowsky 的三个常数对不对？</a></li>      <li class="toc-l3"><a href="#练习-05b-3-把熔点加进机器学习模型">🏋️ 练习 05b-3：把熔点加进机器学习模型</a></li>      <li class="toc-l2"><a href="#小结">小结</a></li>      <li class="toc-l3"><a href="#第五讲全景回顾">第五讲全景回顾</a></li>      <li class="toc-l3"><a href="#下一讲预告">下一讲预告</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

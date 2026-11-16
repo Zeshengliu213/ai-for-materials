@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="&lt;! colab badge 02f · 第二模块综合习题：经典监督学习算法与防坑实战 本套习题覆盖 02a–02e 的全部核心技能（线性/正则化、kNN/SVR、决策树/随机森林、逻辑回归/阈值调节、防泄漏 Pipeline 与 Murcko 骨架划分）。每道题只需编写 4–8 行代码 ，完成后可对照 solutio" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="02f · 第二模块综合习题：经典监督学习算法与防坑实战 | AI for Materials Science" />
+  <meta property="og:description" content="&lt;! colab badge 02f · 第二模块综合习题：经典监督学习算法与防坑实战 本套习题覆盖 02a–02e 的全部核心技能（线性/正则化、kNN/SVR、决策树/随机森林、逻辑回归/阈值调节、防泄漏 Pipeline 与 Murcko 骨架划分）。每道题只需编写 4–8 行代码 ，完成后可对照 solutio" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02f_exercises.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02f_exercises.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>02f · 第二模块综合习题：经典监督学习算法与防坑实战 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/020_ml_for_materials_overview.html"
+           data-progress-mark="notebooks/02-supervised-learning/020_ml_for_materials_overview.html"
+>📓 020_ml_for_materials_overview.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02a_linear_models.html"
+           data-progress-mark="notebooks/02-supervised-learning/02a_linear_models.html"
+>📓 02a_linear_models.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02b_knn_and_svm.html"
+           data-progress-mark="notebooks/02-supervised-learning/02b_knn_and_svm.html"
+>📓 02b_knn_and_svm.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02c_trees_and_ensembles.html"
+           data-progress-mark="notebooks/02-supervised-learning/02c_trees_and_ensembles.html"
+>📓 02c_trees_and_ensembles.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02d_classification.html"
+           data-progress-mark="notebooks/02-supervised-learning/02d_classification.html"
+>📓 02d_classification.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02e_validation_and_tuning.html"
+           data-progress-mark="notebooks/02-supervised-learning/02e_validation_and_tuning.html"
+>📓 02e_validation_and_tuning.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/02-supervised-learning/02f_exercises.html"
+           data-progress-mark="notebooks/02-supervised-learning/02f_exercises.html"
+class="active">🏋️ 02f_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/02-supervised-learning.html">模块 02：监督学习与模型评估防坑</a> /  <a href="../../exercises.html">习题</a> /  <span>02f_exercises.ipynb</span>
+</div>
+<h1><span class="kind-badge kind-exercise">习题</span> 02f · 第二模块综合习题：经典监督学习算法与防坑实战</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    习题文件：<code>02f_exercises.ipynb</code>（13.5 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02f_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/3000b9d8f6bf-02f_exercises.ipynb" download="02f_exercises.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/02-supervised-learning/02_exercises_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/02-supervised-learning/02f_exercises.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02f_exercises.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>02f · 第二模块综合习题：经典监督学习算法与防坑实战</h1>
+<p>本套习题覆盖 <code>02a</code>–<code>02e</code> 的全部核心技能（线性/正则化、kNN/SVR、决策树/随机森林、逻辑回归/阈值调节、防泄漏 Pipeline 与 Murcko 骨架划分）。每道题只需编写 <strong>4–8 行代码</strong>，完成后可对照 <code>solutions/02_exercises_solutions.ipynb</code> 自查。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;02 - Supervised Learning&quot;</span><span class="p">))</span>
+    <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">run_line_magic</span><span class="p">(</span><span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install -q rdkit&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h2 id="0-公共环境与-aqsoldb-数据准备">0. 公共环境与 AqSolDB 数据准备</h2>
+<p>请先运行下方单元格加载清洗后的 9480 个分子及 17 个 RDKit 描述符：</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span><span class="p">,</span> <span class="n">RDLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem.Scaffolds</span><span class="w"> </span><span class="kn">import</span> <span class="n">MurckoScaffold</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span><span class="p">,</span> <span class="n">KFold</span><span class="p">,</span> <span class="n">cross_val_score</span><span class="p">,</span> <span class="n">GroupShuffleSplit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.dummy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyRegressor</span><span class="p">,</span> <span class="n">DummyClassifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearRegression</span><span class="p">,</span> <span class="n">Ridge</span><span class="p">,</span> <span class="n">Lasso</span><span class="p">,</span> <span class="n">LogisticRegression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.neighbors</span><span class="w"> </span><span class="kn">import</span> <span class="n">KNeighborsRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.svm</span><span class="w"> </span><span class="kn">import</span> <span class="n">SVR</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.tree</span><span class="w"> </span><span class="kn">import</span> <span class="n">DecisionTreeRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span><span class="p">,</span> <span class="n">RandomForestClassifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">root_mean_squared_error</span><span class="p">,</span> <span class="n">r2_score</span><span class="p">,</span>
+    <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">precision_score</span><span class="p">,</span> <span class="n">recall_score</span><span class="p">,</span> <span class="n">f1_score</span><span class="p">,</span> <span class="n">roc_auc_score</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">RDLogger</span><span class="o">.</span><span class="n">DisableLog</span><span class="p">(</span><span class="s2">&quot;rdApp.*&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;data/solubility.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;../data/solubility.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;../01 - Basics/data/solubility.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;../../01 - Basics/data/solubility.csv&quot;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">break</span>
+
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;SMILES&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">feature_cols</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;MolWt&quot;</span><span class="p">,</span> <span class="s2">&quot;MolLogP&quot;</span><span class="p">,</span> <span class="s2">&quot;MolMR&quot;</span><span class="p">,</span> <span class="s2">&quot;HeavyAtomCount&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHAcceptors&quot;</span><span class="p">,</span> <span class="s2">&quot;NumHDonors&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumHeteroatoms&quot;</span><span class="p">,</span> <span class="s2">&quot;NumRotatableBonds&quot;</span><span class="p">,</span> <span class="s2">&quot;NumValenceElectrons&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAromaticRings&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumSaturatedRings&quot;</span><span class="p">,</span> <span class="s2">&quot;NumAliphaticRings&quot;</span><span class="p">,</span> <span class="s2">&quot;RingCount&quot;</span><span class="p">,</span> <span class="s2">&quot;TPSA&quot;</span><span class="p">,</span> <span class="s2">&quot;LabuteASA&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BalabanJ&quot;</span><span class="p">,</span> <span class="s2">&quot;BertzCT&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">y_reg</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Solubility&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">y_cls</span> <span class="o">=</span> <span class="p">(</span><span class="n">y_reg</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">4.0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y_reg</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> molecules | X_train: </span><span class="si">{</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> | X_test: </span><span class="si">{</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+<div class="nb-outputs"><div class="nb-output-label">Out:</div>
+<pre class="nb-output-stream">Loaded 9480 molecules | X_train: (7584, 17) | X_test: (1896, 17)
+</pre>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第一部分-线性模型与正则化-对应-02a">第一部分：线性模型与正则化（对应 <code>02a</code>）</h2>
+<h3 id="习题-1-均值猜测基线-vs-多元线性回归">🏋️ 习题 1：均值猜测基线 vs 多元线性回归</h3>
+<ol>
+<li>使用 <code>DummyRegressor(strategy=&quot;mean&quot;)</code> 在 <code>X_train, y_train</code> 上拟合并预测 <code>X_test</code>，计算测试集 RMSE；</li>
+<li>使用 <code>LinearRegression()</code> 在 <code>X_train, y_train</code> 上拟合并预测 <code>X_test</code>，打印测试集 RMSE 与 <span class="math-inline" data-tex="R^2">\(R^2\)</span>（参考值：基线 RMSE <span class="math-inline" data-tex="\approx 2.42">\(\approx 2.42\)</span>，OLS RMSE <span class="math-inline" data-tex="\approx 1.64">\(\approx 1.64\)</span>）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里编写习题代码（ex1）</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-2-对比-ols-与-ridge-正则化对共线性权重膨胀的抑制">🏋️ 习题 2：对比 OLS 与 Ridge 正则化对共线性权重膨胀的抑制</h3>
+<ol>
+<li>先用只在 <code>X_train</code> 上 <code>fit</code> 的 <code>StandardScaler</code> 生成标准化矩阵 <code>X_train_s, X_test_s</code>；</li>
+<li>分别拟合 <code>LinearRegression()</code> 和 <code>Ridge(alpha=100.0)</code>，打印两者学到的 <strong>最大权重绝对值 <code>np.max(np.abs(model.coef_))</code></strong>（观察共线特征导致的对冲大权重如何被 Ridge 瞬间压小！）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里编写习题代码（ex2）</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第二部分-距离与核边界模型-对应-02b">第二部分：距离与核边界模型（对应 <code>02b</code>）</h2>
+<h3 id="习题-3-验证特征标准化对-k-近邻-knn-与-rbf-svr-的决定性影响">🏋️ 习题 3：验证特征标准化对 k 近邻（kNN）与 RBF-SVR 的决定性影响</h3>
+<ol>
+<li>对比 <code>KNeighborsRegressor(n_neighbors=6)</code> 在原始特征 <code>(X_train, X_test)</code> 与标准化特征 <code>(X_train_s, X_test_s)</code> 上的测试集 RMSE；</li>
+<li>在标准化特征 <code>(X_train_s, X_test_s)</code> 上训练 <code>SVR(kernel=&quot;rbf&quot;, C=5.0, epsilon=0.2)</code> 并打印测试集 RMSE（参考值：缩放后 kNN <span class="math-inline" data-tex="\approx 1.23">\(\approx 1.23\)</span>，RBF-SVR <span class="math-inline" data-tex="\approx 1.23">\(\approx 1.23\)</span>）。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里编写习题代码（ex3）</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第三部分-决策树与集成学习-对应-02c">第三部分：决策树与集成学习（对应 <code>02c</code>）</h2>
+<h3 id="习题-4-单棵深树的过拟合诊断-vs-随机森林-bagging-降方差">🏋️ 习题 4：单棵深树的过拟合诊断 vs 随机森林 Bagging 降方差</h3>
+<p>分别在 <code>X_train, y_train</code> 上训练一棵不限深度的 <code>DecisionTreeRegressor(random_state=42)</code> 和包含 120 棵树的 <code>RandomForestRegressor(n_estimators=120, random_state=42, n_jobs=-1)</code>，打印两者各自的<strong>训练集 RMSE</strong> 与<strong>测试集 RMSE</strong>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里编写习题代码（ex4）</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第四部分-分类模型-概率与阈值移动-对应-02d">第四部分：分类模型、概率与阈值移动（对应 <code>02d</code>）</h2>
+<h3 id="习题-5-分层抽样与逻辑回归-vs-随机森林二分类评估">🏋️ 习题 5：分层抽样与逻辑回归 vs 随机森林二分类评估</h3>
+<p>使用二分类标签 <code>y_cls</code>（<span class="math-inline" data-tex="\log S &lt; -4">\(\log S &lt; -4\)</span> 为难溶正类 <code>1</code>）：</p>
+<ol>
+<li>用 <code>train_test_split(X, y_cls, test_size=0.2, stratify=y_cls, random_state=42)</code> 划分 <code>Xc_tr, Xc_te, yc_tr, yc_te</code>；</li>
+<li>分别拟合 <code>make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000))</code> 和 <code>RandomForestClassifier(n_estimators=150, random_state=42, n_jobs=-1)</code>；</li>
+<li>打印两者在测试集上的 Accuracy、Precision、Recall、F1 与 ROC-AUC。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里编写习题代码（ex5）</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-6-按实验室容错需求下调报警概率阈值">🏋️ 习题 6：按实验室容错需求下调报警概率阈值</h3>
+<p>取出上一题 <code>rf_clf</code> 对 <code>Xc_te</code> 预测的难溶概率 <code>probs = rf_clf.predict_proba(Xc_te)[:, 1]</code>，对比默认阈值 <code>0.50</code> 与保守拦截阈值 <code>0.25</code> 下的 <strong>Recall（召回率）</strong> 与 <strong>Precision（精确率）</strong>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里编写习题代码（ex6）</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第五部分-防泄漏交叉验证与骨架划分-对应-02e">第五部分：防泄漏交叉验证与骨架划分（对应 <code>02e</code>）</h2>
+<h3 id="习题-7-使用-make_pipeline-执行无泄漏-5-折交叉验证">🏋️ 习题 7：使用 <code>make_pipeline</code> 执行无泄漏 5 折交叉验证</h3>
+<p>构建 <code>pipe = make_pipeline(StandardScaler(), KNeighborsRegressor(n_neighbors=6, weights=&quot;distance&quot;))</code>，在回归训练集 <code>X_train, y_train</code> 上用 <code>KFold(n_splits=5, shuffle=True, random_state=42)</code> 计算 5 折交叉验证 RMSE 的均值与标准差。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里编写习题代码（ex7）</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-8-实现-murcko-骨架划分-scaffold-split-检验跨家族泛化">🏋️ 习题 8：实现 Murcko 骨架划分（Scaffold Split）检验跨家族泛化</h3>
+<ol>
+<li>用 <code>MurckoScaffold.MurckoScaffoldSmiles(mol=m)</code> 提取 <code>df[&quot;mol&quot;]</code> 中每个分子的核心骨架（空字符串替换为 <code>&quot;acyclic&quot;</code>）；</li>
+<li>用 <code>GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)</code> 按骨架分组切分 <code>(X, y_reg)</code>，训练 <code>RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)</code> 并打印全新骨架测试集上的 RMSE。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在这里编写习题代码（ex8）</span>
+</pre></div>
+</div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/02-supervised-learning/02f_exercises.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/02-supervised-learning.html">返回模块 02</a>  <a class="btn btn-secondary" href="../../exercises.html">全部习题汇总</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/02-supervised-learning/02e_validation_and_tuning.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">02e · 模型验证、调参与适用域：从论文高分到真实泛化</span>
+  </a>  <a class="pager-link pager-next" href="../../modules/03-unsupervised-learning.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">模块 03 · 无监督学习：化学空间与发现</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-公共环境与-aqsoldb-数据准备">0. 公共环境与 AqSolDB 数据准备</a></li>      <li class="toc-l2"><a href="#第一部分-线性模型与正则化-对应-02a">第一部分：线性模型与正则化（对应 02a）</a></li>      <li class="toc-l3"><a href="#习题-1-均值猜测基线-vs-多元线性回归">🏋️ 习题 1：均值猜测基线 vs 多元线性回归</a></li>      <li class="toc-l3"><a href="#习题-2-对比-ols-与-ridge-正则化对共线性权重膨胀的抑制">🏋️ 习题 2：对比 OLS 与 Ridge 正则化对共线性权重膨胀的抑制</a></li>      <li class="toc-l2"><a href="#第二部分-距离与核边界模型-对应-02b">第二部分：距离与核边界模型（对应 02b）</a></li>      <li class="toc-l3"><a href="#习题-3-验证特征标准化对-k-近邻-knn-与-rbf-svr-的决定性影响">🏋️ 习题 3：验证特征标准化对 k 近邻（kNN）与 RBF-SVR 的决定性影响</a></li>      <li class="toc-l2"><a href="#第三部分-决策树与集成学习-对应-02c">第三部分：决策树与集成学习（对应 02c）</a></li>      <li class="toc-l3"><a href="#习题-4-单棵深树的过拟合诊断-vs-随机森林-bagging-降方差">🏋️ 习题 4：单棵深树的过拟合诊断 vs 随机森林 Bagging 降方差</a></li>      <li class="toc-l2"><a href="#第四部分-分类模型-概率与阈值移动-对应-02d">第四部分：分类模型、概率与阈值移动（对应 02d）</a></li>      <li class="toc-l3"><a href="#习题-5-分层抽样与逻辑回归-vs-随机森林二分类评估">🏋️ 习题 5：分层抽样与逻辑回归 vs 随机森林二分类评估</a></li>      <li class="toc-l3"><a href="#习题-6-按实验室容错需求下调报警概率阈值">🏋️ 习题 6：按实验室容错需求下调报警概率阈值</a></li>      <li class="toc-l2"><a href="#第五部分-防泄漏交叉验证与骨架划分-对应-02e">第五部分：防泄漏交叉验证与骨架划分（对应 02e）</a></li>      <li class="toc-l3"><a href="#习题-7-使用-make_pipeline-执行无泄漏-5-折交叉验证">🏋️ 习题 7：使用 make_pipeline 执行无泄漏 5 折交叉验证</a></li>      <li class="toc-l3"><a href="#习题-8-实现-murcko-骨架划分-scaffold-split-检验跨家族泛化">🏋️ 习题 8：实现 Murcko 骨架划分（Scaffold Split）检验跨家族泛化</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

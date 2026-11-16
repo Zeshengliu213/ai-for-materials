@@ -9,10 +9,13 @@
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/01-basics/01d_rdkit_basics.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/01-basics/01e_exercises.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/modules/02-supervised-learning.html</loc></url>
-  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02a_regression.html</loc></url>
-  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02b_validation_and_tuning.html</loc></url>
-  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02c_classification.html</loc></url>
-  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02d_exercises.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/020_ml_for_materials_overview.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02a_linear_models.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02b_knn_and_svm.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02c_trees_and_ensembles.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02d_classification.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02e_validation_and_tuning.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/02-supervised-learning/02f_exercises.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/modules/03-unsupervised-learning.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/03-unsupervised-learning/03a_dimensionality_reduction.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/03-unsupervised-learning/03b_clustering.html</loc></url>
@@ -23,7 +26,13 @@
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/04-bayesian-optimization/04b_bayesian_optimization.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/04-bayesian-optimization/04c_exercises.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/modules/05-feature-engineering-and-molecular-informatics.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/05-feature-engineering-and-molecular-informatics/05a_feature_selection_and_shap.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/05-feature-engineering-and-molecular-informatics/05b_conformers_and_pubchem.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/modules/06-materials-informatics.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/06-materials-informatics/06c_exercises.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/modules/07-neural-networks-and-cnns.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/07-neural-networks-and-cnns/07a_neural_networks.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/notebooks/07-neural-networks-and-cnns/07b_cnn_microstructure.html</loc></url>
@@ -49,6 +58,10 @@
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/solutions/03-unsupervised-learning/03_unsupervised_solutions.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/solutions/04-bayesian-optimization/04_bo_solutions.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/solutions/04-bayesian-optimization/04_exercises_solutions.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/solutions/05-feature-engineering-and-molecular-informatics/05_exercises_solutions.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/solutions/05-feature-engineering-and-molecular-informatics/05_feature_solutions.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/solutions/06-materials-informatics/06_exercises_solutions.html</loc></url>
+  <url><loc>https://zeshengliu213.github.io/ai-for-materials/solutions/06-materials-informatics/06_materials_solutions.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/solutions/07-neural-networks-and-cnns/07_exercises_solutions.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/solutions/07-neural-networks-and-cnns/07_nn_solutions.html</loc></url>
   <url><loc>https://zeshengliu213.github.io/ai-for-materials/solutions/08-sequence-models-and-transformers/08_exercises_solutions.html</loc></url>

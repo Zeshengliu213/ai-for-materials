@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习 本套习题帮助你一步步巩固第三讲（03a–03c）中降维可视化、聚类分析与化学空间近邻检索的核心代码操作。每道题只需填写 2–6 行代码 ，并附有预期输出提示供你自查。完成后可对照 solutions/03 exercises solutions.ipyn" />
+  <meta name="description" content="&lt;! colab badge 03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习 本套习题帮助你一步步巩固第三讲（03a–03c）中降维可视化、聚类分析与化学空间近邻检索的核心代码操作。每道题只需填写 2–6 行代码 ，并附有预期输出提示供你自查。完成后可对照 solutions/03 exercises" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习 | AI for Materials Science" />
-  <meta property="og:description" content="03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习 本套习题帮助你一步步巩固第三讲（03a–03c）中降维可视化、聚类分析与化学空间近邻检索的核心代码操作。每道题只需填写 2–6 行代码 ，并附有预期输出提示供你自查。完成后可对照 solutions/03 exercises solutions.ipyn" />
+  <meta property="og:description" content="&lt;! colab badge 03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习 本套习题帮助你一步步巩固第三讲（03a–03c）中降维可视化、聚类分析与化学空间近邻检索的核心代码操作。每道题只需填写 2–6 行代码 ，并附有预期输出提示供你自查。完成后可对照 solutions/03 exercises" />
   <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/03-unsupervised-learning/03d_exercises.html" />
   <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/03-unsupervised-learning/03d_exercises.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
   <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
@@ -153,20 +153,35 @@ class="active">🏋️ 03d_exercises.ipynb</a>
 <h1><span class="kind-badge kind-exercise">习题</span> 03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习</h1>
 <div class="action-toolbar">
   <div class="toolbar-meta">
-    习题文件：<code>03d_exercises.ipynb</code>（12.6 KB）
+    习题文件：<code>03d_exercises.ipynb</code>（13.9 KB）
   </div>
-  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03d_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/664d4a2c0de3-03d_exercises.ipynb" download="03d_exercises.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/03-unsupervised-learning/03_exercises_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03d_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/638c8804767d-03d_exercises.ipynb" download="03d_exercises.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/03-unsupervised-learning/03_exercises_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
             data-progress-key="notebooks/03-unsupervised-learning/03d_exercises.html"
             aria-pressed="false">☐ 标记为已学完</button>
   </div>
 </div>
-<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>本套习题帮助你一步步巩固第三讲（<code>03a</code>–<code>03c</code>）中降维可视化、聚类分析与化学空间近邻检索的核心代码操作。每道题只需填写 <strong>2–6 行代码</strong>，并附有预期输出提示供你自查。完成后可对照 <code>solutions/03_exercises_solutions.ipynb</code> 查看完整解答。</p>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- colab-badge -->
+<p><a href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03d_exercises.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
 </div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h1>03d — 第三讲基础习题：PCA 降维、聚类与化学空间巩固练习</h1>
+<p>本套习题帮助你一步步巩固第三讲（<code>03a</code>–<code>03c</code>）中降维可视化、聚类分析与化学空间近邻检索的核心代码操作。每道题只需填写 <strong>2–6 行代码</strong>，并附有预期输出提示供你自查。完成后可对照 <code>solutions/03_exercises_solutions.ipynb</code> 查看完整解答。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># colab-setup (本地运行时自动跳过)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">_repo_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/ai-for-materials&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;git clone --depth 1 https://github.com/Zeshengliu213/ai-for-materials.git &quot;</span> <span class="o">+</span> <span class="n">_repo_dir</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_repo_dir</span><span class="p">,</span> <span class="s2">&quot;03 - Unsupervised Learning&quot;</span><span class="p">))</span>
+    <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">run_line_magic</span><span class="p">(</span><span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install -q rdkit&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 <div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
 <h2 id="0-公共环境与分子特征准备">0. 公共环境与分子特征准备</h2>
 <p>为了保证每道习题都能在 1 秒内快速运行完毕，我们从 <code>data/solubility.csv</code>（AqSolDB）中固定抽取前 1,000 个分子作为练习子集 <code>df_sub</code>，并提取其 17 个物理化学描述符矩阵 <code>X_raw</code>。</p>
 </div></div>
-<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
@@ -203,7 +218,7 @@ class="active">🏋️ 03d_exercises.ipynb</a>
 <p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
 </blockquote>
 </div></div>
-<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
 
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
@@ -223,7 +238,7 @@ class="active">🏋️ 03d_exercises.ipynb</a>
 <li><strong>预期输出</strong>：前 3 个主成分约 <code>[0.501, 0.163, 0.088]</code>，累计解释方差比约 <code>0.752</code></li>
 </ul>
 </div></div>
-<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.decomposition</span><span class="w"> </span><span class="kn">import</span> <span class="n">PCA</span>
 
 <span class="c1"># 在下方填写你的代码：</span>
@@ -236,7 +251,7 @@ class="active">🏋️ 03d_exercises.ipynb</a>
 <li>分别打印 <code>loadings[&quot;PC1&quot;].abs().nlargest(3)</code> 和 <code>loadings[&quot;PC2&quot;].abs().nlargest(3)</code>，查看主导前两个主轴的物理化学量。</li>
 </ol>
 </div></div>
-<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
 </pre></div>
 </div>
 <div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-3-绘制二维-pca-散点图并将新分子投影上去">🏋️ 习题 3：绘制二维 PCA 散点图并将新分子投影上去</h3>
@@ -246,7 +261,7 @@ class="active">🏋️ 03d_exercises.ipynb</a>
 <li>将背景数据集 <code>pcs[:, 0], pcs[:, 1]</code> 画成浅灰色散点，把两个新分子画成红色五角星（<code>marker=&quot;*&quot;, s=180, color=&quot;red&quot;</code>）。</li>
 </ol>
 </div></div>
-<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">new_smiles</span> <span class="o">=</span> <span class="p">{</span>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">new_smiles</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;aspirin&quot;</span><span class="p">:</span>   <span class="s2">&quot;CC(=O)Oc1ccccc1C(=O)O&quot;</span><span class="p">,</span>
     <span class="s2">&quot;pentacene&quot;</span><span class="p">:</span> <span class="s2">&quot;c1ccc2cc3cc4cc5ccccc5cc4cc3cc2c1&quot;</span><span class="p">,</span>
 <span class="p">}</span>
@@ -267,7 +282,7 @@ class="active">🏋️ 03d_exercises.ipynb</a>
 <li>使用 <code>df_sub.groupby(&quot;cluster&quot;)[[&quot;MolWt&quot;, &quot;MolLogP&quot;, &quot;Solubility&quot;]].agg([&quot;count&quot;, &quot;mean&quot;])</code> 查看这 3 个簇的分子数量以及平均分子量、平均 <span class="math-inline" data-tex="\log P">\(\log P\)</span> 和平均溶解度。</li>
 </ol>
 </div></div>
-<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.cluster</span><span class="w"> </span><span class="kn">import</span> <span class="n">KMeans</span>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.cluster</span><span class="w"> </span><span class="kn">import</span> <span class="n">KMeans</span>
 
 <span class="c1"># 在下方填写你的代码：</span>
 </pre></div>
@@ -278,7 +293,7 @@ class="active">🏋️ 03d_exercises.ipynb</a>
 <li><strong>预期输出</strong>：<code>k=2</code> 时轮廓系数最高（约 <code>0.335</code>）</li>
 </ul>
 </div></div>
-<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">silhouette_score</span>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">silhouette_score</span>
 
 <span class="c1"># 在下方填写你的代码：</span>
 </pre></div>
@@ -293,7 +308,7 @@ class="active">🏋️ 03d_exercises.ipynb</a>
 <li><strong>预期输出</strong>：共生成 <code>207</code> 个簇，第 1 大簇包含 <code>12</code> 个分子。</li>
 </ul>
 </div></div>
-<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fp_gen</span> <span class="o">=</span> <span class="n">rdFingerprintGenerator</span><span class="o">.</span><span class="n">GetMorganGenerator</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fpSize</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fp_gen</span> <span class="o">=</span> <span class="n">rdFingerprintGenerator</span><span class="o">.</span><span class="n">GetMorganGenerator</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fpSize</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
 <span class="n">mols_300</span> <span class="o">=</span> <span class="n">df_sub</span><span class="p">[</span><span class="s2">&quot;mol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">300</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 <span class="n">fps_300</span> <span class="o">=</span> <span class="p">[</span><span class="n">fp_gen</span><span class="o">.</span><span class="n">GetFingerprint</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mols_300</span><span class="p">]</span>
 
@@ -318,7 +333,7 @@ class="active">🏋️ 03d_exercises.ipynb</a>
 <li><strong>预期输出</strong>：<code>Random 5-Fold RMSE = 0.870 | Cluster 5-Fold RMSE = 1.119</code></li>
 </ul>
 </div></div>
-<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">KFold</span><span class="p">,</span> <span class="n">GroupKFold</span><span class="p">,</span> <span class="n">cross_val_score</span>
 
 <span class="n">groups</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)</span>
@@ -338,7 +353,7 @@ class="active">🏋️ 03d_exercises.ipynb</a>
 <li><strong>预期输出</strong>：除 16 号自身（距离 <code>0.0</code>）外，最近的配体编号依次为 <code>116, 17, 15, 53, 54</code>（注意其中 <code>54</code> 号恰好也是论文的 4 个已知正例之一！）。</li>
 </ul>
 </div></div>
-<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;data/LKB_P.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;../data/LKB_P.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;LKB_P.csv&quot;</span><span class="p">]:</span>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;data/LKB_P.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;../data/LKB_P.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;LKB_P.csv&quot;</span><span class="p">]:</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
         <span class="n">ligands</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">break</span>

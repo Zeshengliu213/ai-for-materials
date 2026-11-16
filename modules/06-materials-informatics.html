@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Pymatgen 晶体结构分析、MP/COD 数据库、模拟 XRD、凸包相图与高通量筛选。" />
+  <meta name="description" content="Pymatgen 晶体结构与对称性、COD/MP 数据库、模拟 XRD、Ti–O 凸包与容差因子、组成描述符带隙模型与高通量筛选。" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="模块 06：无机与晶体材料信息学 | AI for Materials Science" />
-  <meta property="og:description" content="Pymatgen 晶体结构分析、MP/COD 数据库、模拟 XRD、凸包相图与高通量筛选。" />
+  <meta property="og:description" content="Pymatgen 晶体结构与对称性、COD/MP 数据库、模拟 XRD、Ti–O 凸包与容差因子、组成描述符带隙模型与高通量筛选。" />
   <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/modules/06-materials-informatics.html" />
   <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/modules/06-materials-informatics.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
   <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
@@ -103,6 +103,18 @@
 class="active">
           <strong>06</strong> · 无机与晶体材料信息学
         </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html"
+           data-progress-mark="notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html"
+>📓 06a_crystal_structures_and_databases.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html"
+           data-progress-mark="notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html"
+>📓 06b_xrd_phase_diagram_screening.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/06-materials-informatics/06c_exercises.html"
+           data-progress-mark="notebooks/06-materials-informatics/06c_exercises.html"
+>🏋️ 06c_exercises.ipynb</a>
       </li>      <li>
         <a href="../modules/07-neural-networks-and-cnns.html"
 >
@@ -133,20 +145,213 @@ class="active">
 <div class="breadcrumb"><a href="../index.html">课程主页</a> / <span>模块 06</span></div>
 <div class="module-head">
   <span class="module-num">Module 06</span>
-  <span class="status-badge status-todo">待编写</span>
+  <span class="status-badge status-done">已完成</span>
   <span class="module-head-en">Materials Informatics</span>
 </div>
-<h1>无机与晶体材料信息学</h1><h2>本模块编写计划</h2>
-<div class="academic-box">
-  <ul class="outline-list">    <li><code>06a</code> Pymatgen 晶体结构操作：晶胞、对称性与空间群、超胞与缺陷构建。</li>    <li><code>06a</code> Materials Project API 与 COD 数据库：批量检索形成能、带隙与弹性常数。</li>    <li><code>06b</code> 模拟 XRD 谱图、热力学凸包相图（convex hull）与稳定性判据。</li>    <li><code>06b</code> SOAP / 元素组成描述符与高通量虚拟筛选流程。</li>  </ul>
-  <p class="hint-inline">内容正在编写中，欢迎先浏览已上线的其他模块。</p>
-</div>
-<h2>模块导读与教学设计</h2><div class="academic-box"><strong>模块简介：</strong>Pymatgen 晶体结构分析、MP/COD 数据库、模拟 XRD、凸包相图与高通量筛选。</div><nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../modules/05-feature-engineering-and-molecular-informatics.html" rel="prev">
+<h1>无机与晶体材料信息学</h1><div class="progress-panel" data-progress-keys="notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html,notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html,notebooks/06-materials-informatics/06c_exercises.html">
+  <div class="progress-head">
+    <strong>本模块学习进度</strong>
+    <span class="progress-count" data-progress-count>0 / 3</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+  <p class="hint-inline">进度只保存在你当前浏览器（localStorage），不会上传到任何服务器。</p>
+</div><h2 id="lectures">互动实战课件（Notebooks）</h2>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>课件名称</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html"
+                 aria-label="把 06a_crystal_structures_and_databases.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html"><strong>06a — 晶体结构、对称性与材料数据库（Pymatgen · CIF · COD · Materials Project）</strong></a><br/>
+          <code>06a_crystal_structures_and_databases.ipynb</code></td>
+        <td>40.0 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/99e0b02dde89-06a_crystal_structures_and_databases.ipynb" download="06a_crystal_structures_and_databases.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/06%20-%20Materials%20Informatics/06a_crystal_structures_and_databases.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html"
+                 aria-label="把 06b_xrd_phase_diagram_screening.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html"><strong>06b — 模拟 XRD、热力学凸包与高通量虚拟筛选</strong></a><br/>
+          <code>06b_xrd_phase_diagram_screening.ipynb</code></td>
+        <td>69.4 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/6b92c0ddf3b1-06b_xrd_phase_diagram_screening.ipynb" download="06b_xrd_phase_diagram_screening.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/06%20-%20Materials%20Informatics/06b_xrd_phase_diagram_screening.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="exercises">课后习题（Exercises）<span class="kind-badge kind-exercise">习题</span></h2>
+<p class="hint-inline">建议在完成本模块全部课件后再做习题；参考答案默认折叠，请先独立完成。
+  也可以在<a href="../exercises.html">全部习题汇总页</a>统一查看各模块习题。</p>
+<div class="markdown-body">
+  <table class="nb-table">
+    <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/06-materials-informatics/06c_exercises.html"
+                 aria-label="把 06c_exercises.ipynb 标记为已完成" />
+        </td>
+        <td><a href="../notebooks/06-materials-informatics/06c_exercises.html"><strong>06c — 第六讲基础习题：晶体结构、XRD、凸包与组成描述符</strong></a><br/>
+          <code>06c_exercises.ipynb</code></td>
+        <td>14.0 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/06-materials-informatics/06c_exercises.html">开始做题</a>
+          <a class="btn btn-secondary" href="../files/_shared/71d821058a29-06c_exercises.ipynb" download="06c_exercises.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/06%20-%20Materials%20Informatics/06c_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>          <a class="btn btn-secondary" href="../solutions/06-materials-informatics/06_exercises_solutions.html">参考答案</a>        </td>
+      </tr>    </tbody>
+  </table>
+</div><h2 id="solutions">参考答案（Solutions）</h2>
+<p class="hint-inline">答案页默认折叠，请先独立完成练习再展开。</p>
+<ul class="solution-list">  <li><span class="kind-badge kind-exercise">习题答案</span>
+    <a href="../solutions/06-materials-informatics/06_exercises_solutions.html">✅ 06c — 第六讲基础习题参考答案（Solutions）</a>
+    (<code>06_exercises_solutions.ipynb</code> · 30.8 KB) —
+    <a href="../files/_shared/989114fc5e3c-06_exercises_solutions.ipynb" download="06_exercises_solutions.ipynb">下载 .ipynb</a></li>  <li><span class="kind-badge kind-lecture">课件答案</span>
+    <a href="../solutions/06-materials-informatics/06_materials_solutions.html">✅ 06 — 无机与晶体材料信息学：随堂练习参考答案（Solutions）</a>
+    (<code>06_materials_solutions.ipynb</code> · 37.5 KB) —
+    <a href="../files/_shared/e7d6f5c434b5-06_materials_solutions.ipynb" download="06_materials_solutions.ipynb">下载 .ipynb</a></li></ul><h2>配套数据集（Datasets）</h2>
+<ul>  <li><code>bandgap_aflow.csv</code> (434.8 KB) —
+    <a href="../files/_shared/46c26140208e-bandgap_aflow.csv" download="bandgap_aflow.csv">下载数据集</a></li>  <li><code>energy_per_atom_aflow.csv</code> (573.7 KB) —
+    <a href="../files/_shared/9b8054725f30-energy_per_atom_aflow.csv" download="energy_per_atom_aflow.csv">下载数据集</a></li>  <li><code>magpie_element_properties.csv</code> (10.8 KB) —
+    <a href="../files/_shared/b57629d68445-magpie_element_properties.csv" download="magpie_element_properties.csv">下载数据集</a></li>  <li><code>perovskite_stability.csv</code> (162.5 KB) —
+    <a href="../files/_shared/284362a90b93-perovskite_stability.csv" download="perovskite_stability.csv">下载数据集</a></li></ul>
+<h2>模块导读与教学设计</h2><div class="markdown-body"><h1>06 — 无机与晶体材料信息学（Materials Informatics）</h1>
+<p>前五讲的研究对象都是<strong>分子</strong>：一个 SMILES 唯一确定一个有边界的原子团。但 <span class="math-inline" data-tex="\text{SrTiO}_3">\(\text{SrTiO}_3\)</span>、<span class="math-inline" data-tex="\text{TiO}_2">\(\text{TiO}_2\)</span>、<span class="math-inline" data-tex="\text{CsPbI}_3">\(\text{CsPbI}_3\)</span> 这样的无机晶体<strong>没有分子</strong>，只有无限重复的周期性点阵；同一个化学式 <span class="math-inline" data-tex="\text{TiO}_2">\(\text{TiO}_2\)</span> 还对应着金红石、锐钛矿、板钛矿三种性质迥异的材料——<strong>组成不足以确定材料</strong>。</p>
+<p>本讲换一套工具：用 <strong>pymatgen</strong> 表示晶体结构、做对称性分析、构建超胞与点缺陷；打通 <strong>CIF / COD / Materials Project</strong> 三个数据源；再回答材料信息学最实际的三个问题——<strong>合成出来的是什么相（模拟 XRD）、这个化合物能不能存在（热力学凸包）、怎么从几万个候选里挑出值得做的（组成描述符 + 高通量筛选）</strong>。</p>
+<p>贯穿全讲的一条主线是<strong>诚实</strong>：一条脏数据能污染上千条形成能；一个随机划分下 <span class="math-inline" data-tex="R^2 = 0.83">\(R^2 = 0.83\)</span> 的模型外推到氟化物只剩 <span class="math-inline" data-tex="0.19">\(0.19\)</span>；一个照搬教科书带隙窗口的筛选漏斗，会把已知的光伏材料全部筛掉。</p>
+<hr />
+<h2>课程模块结构</h2>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>Notebook</th>
+<th>核心内容</th>
+<th>建议课时</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>06a</strong></td>
+<td><code>06a_crystal_structures_and_databases.ipynb</code></td>
+<td><strong>晶体结构、对称性与数据库</strong>：晶格 + 基元与分数坐标、周期性边界与最小镜像约定、<code>Structure.from_spacegroup</code> 搭建岩盐/钙钛矿/金刚石、<code>SpacegroupAnalyzer</code> 原始胞 vs 常规胞与 Wyckoff 位置、<code>symprec</code> 的陷阱、超胞与点缺陷（氧空位、La 掺杂）即对称性破缺、CIF 读写往返、<strong>COD 在线检索</strong>锐钛矿与金红石的实验结构（带离线回退）、Materials Project API 用法与密钥管理</td>
+<td>60–75 min</td>
+</tr>
+<tr>
+<td><strong>06b</strong></td>
+<td><code>06b_xrd_phase_diagram_screening.ipynb</code></td>
+<td><strong>XRD、凸包与高通量筛选</strong>：布拉格定律与结构因子、NaCl / KCl / Si 的系统消光、锐钛矿 <span class="math-inline" data-tex="(101)">\((101)\)</span> vs 金红石 <span class="math-inline" data-tex="(110)">\((110)\)</span> 物相鉴别与 Spurr–Myers 估算、<strong>元素参考态的脏数据</strong>（<code>S8 = -23.6 eV/atom</code>）与稳健剔除、Ti–O 体系热力学凸包与 Magnéli 相（手写 <code>ConvexHull</code> + <code>PhaseDiagram</code>）、Goldschmidt 容差因子 vs 1,929 条 DFT <span class="math-inline" data-tex="E_{\text{hull}}">\(E_{\text{hull}}\)</span>、Magpie 组成特征向量（CBFV）、带隙回归与金属分类、<strong>外推悬崖</strong>（随机 0.83 → 留出氟化物 0.19）、光伏吸收层筛选漏斗与<strong>两次健全性检验</strong></td>
+<td>80–95 min</td>
+</tr>
+<tr>
+<td><strong>06c</strong></td>
+<td><code>06c_exercises.ipynb</code></td>
+<td><strong>第六讲基础巩固习题</strong>：闪锌矿 GaAs 建模与键长、对称性与原始胞、碘铅钙钛矿容差因子、模拟 XRD 与布拉格反算、bcc 铁的系统消光、稳健的形成能计算、Cu–O 凸包、CBFV 与留出氯化物的外推测试，共 8 道分步练习</td>
+<td>40–50 min</td>
+</tr>
+<tr>
+<td><strong>参考答案</strong></td>
+<td><code>solutions/06_materials_solutions.ipynb</code><br><code>solutions/06_exercises_solutions.ipynb</code></td>
+<td>分别汇总 <code>06a</code>–<code>06b</code> 随堂练习（6 道）与 <code>06c</code> 基础巩固习题（8 道）的完整可运行代码、图表与解析</td>
+<td>课后自查</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>与前几讲的前后呼应</h2>
+<table>
+<thead>
+<tr>
+<th>前序模块埋下的伏笔</th>
+<th>本讲在何处兑现与深化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>01d</code>：SMILES 唯一描述一个分子</td>
+<td><strong><code>06a</code> 第 1 节</strong>：晶体需要“晶格 + 基元 + 空间群”三件套；<span class="math-inline" data-tex="\text{TiO}_2">\(\text{TiO}_2\)</span> 一个化学式对应三种多晶型，CIF 才是晶体世界的 SMILES</td>
+</tr>
+<tr>
+<td><code>02b</code>：随机划分 vs Scaffold Split，随机划分会高估外推能力</td>
+<td><strong><code>06b</code> 第 8 节</strong>：材料版的同一教训——留出整类化学后 <span class="math-inline" data-tex="R^2">\(R^2\)</span> 从 0.83 崩到 0.19（氟化物）、0.32（氧化物）</td>
+</tr>
+<tr>
+<td><code>02b</code> / <code>04a</code>：适用域检查与高斯过程不确定性 <span class="math-inline" data-tex="\sigma(x)">\(\sigma(x)\)</span></td>
+<td><strong><code>06c</code> 习题 8</strong>：外推难度取决于留出的化学离训练分布多远（氯化物 0.76 → 0.51，跌幅远小于氟化物）</td>
+</tr>
+<tr>
+<td><code>05a</code>：描述符要有物理意义，SHAP 告诉我们模型在用什么</td>
+<td><strong><code>06b</code> 第 6–7 节</strong>：Magpie CBFV 是分子描述符思想在无机材料上的平移；随机森林自己学到“元素带隙与电负性最重要”</td>
+</tr>
+<tr>
+<td><code>05b</code>：PubChem 自由文本要自己写解析器，数据工程是主体</td>
+<td><strong><code>06b</code> 第 4 节</strong>：公开 DFT 数据库里一条 <code>S8 = -23.6 eV/atom</code> 会把含硫化合物的形成能带偏约 10 eV/atom；中位数 + 2 eV 容差的稳健参考态</td>
+</tr>
+<tr>
+<td><code>05b</code>：Yalkowsky 方程揭示熔点（晶格能）不在 2D 描述符里</td>
+<td><strong><code>06b</code> 第 4–5 节</strong>：晶格稳定性的正式判据——热力学凸包与 <span class="math-inline" data-tex="E_{\text{hull}}">\(E_{\text{hull}}\)</span>；以及纯几何的 Goldschmidt 容差因子为何只是窗口型判据（<span class="math-inline" data-tex="r = 0.07">\(r = 0.07\)</span>）</td>
+</tr>
+<tr>
+<td>本讲 → <code>10</code>：DFT 计算量随原子数三次方增长</td>
+<td><strong><code>06a</code> 练习 06a-2</strong>：模拟 1% 掺杂需要 625 原子超胞、约 <span class="math-inline" data-tex="2\times10^6">\(2\times10^6\)</span> 倍计算量——这正是第十讲机器学习势函数（MACE）要解决的问题</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>数据集说明</h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>规模</th>
+<th>内容与来源</th>
+<th>用于</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data/bandgap_aflow.csv</code></td>
+<td>27,767 行（<code>formula, band_gap</code>）</td>
+<td>AFLOW 数据库 DFT（PBE）带隙，经 Wang 等人 <em>Chem. Mater.</em> <strong>32</strong>, 4954 (2020) 整理去重</td>
+<td><code>06b</code> 第 7–9 节、<code>06c</code> 习题 8</td>
+</tr>
+<tr>
+<td><code>data/energy_per_atom_aflow.csv</code></td>
+<td>27,770 行（<code>formula, energy_per_atom</code>）</td>
+<td>同一来源的 DFT 每原子总能（eV/atom），含 144 条单质参考态；<strong>其中 <code>S8</code>、<code>Ta8</code> 两条为异常值</strong>，本讲用作数据清洗案例</td>
+<td><code>06b</code> 第 4、9 节，<code>06c</code> 习题 6–7</td>
+</tr>
+<tr>
+<td><code>data/magpie_element_properties.csv</code></td>
+<td>97 个元素 × 22 个属性</td>
+<td>Magpie 元素属性表（Ward et al., <em>npj Comput. Mater.</em> <strong>2</strong>, 16028, 2016）</td>
+<td><code>06b</code> 第 6 节、<code>06c</code> 习题 8</td>
+</tr>
+<tr>
+<td><code>data/perovskite_stability.csv</code></td>
+<td>1,929 行（<code>formula, e_above_hull_meV, formation_energy_eV_atom, citation</code>）</td>
+<td>已发表的氧化物钙钛矿 DFT 稳定性数据（每行保留原始文献 DOI）</td>
+<td><code>06b</code> 第 5 节</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>所有数据都已打包在 <code>data/</code> 中，<strong>本讲不需要任何 API Key、也不依赖网络即可完整跑通</strong>。<code>06a</code> 的 COD 在线检索与 Materials Project 查询均为可选加餐，网络不通或没有密钥时会自动跳过并改用内置的文献晶胞参数。</p>
+</blockquote>
+<hr />
+<h2>依赖说明</h2>
+<p>本讲依赖 <code>pymatgen</code>（已在课程 <code>requirements.txt</code> 中）：</p>
+<pre><code class="language-bash"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>pymatgen
+</pre></div>
+</code></pre>
+<p><code>pymatgen</code> 对 <code>numpy</code> / <code>scipy</code> / <code>spglib</code> 的版本比较敏感，建议在干净的虚拟环境或 Colab 中运行。Materials Project 查询需要另装 <code>mp-api</code> 并把密钥放进环境变量 <code>MP_API_KEY</code>——<strong>不要把密钥写进 Notebook</strong>。</p>
+</div><nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../notebooks/05-feature-engineering-and-molecular-informatics/05c_exercises.html" rel="prev">
     <span class="pager-label">← 上一讲</span>
-    <span class="pager-title">模块 05 · 特征工程、SHAP 与 3D 分子</span>
-  </a>  <a class="pager-link pager-next" href="../modules/07-neural-networks-and-cnns.html" rel="next">
+    <span class="pager-title">05c — 第五讲基础习题：特征工程、SHAP 与三维分子巩固练习</span>
+  </a>  <a class="pager-link pager-next" href="../notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html" rel="next">
     <span class="pager-label">下一讲 →</span>
-    <span class="pager-title">模块 07 · 神经网络与材料显微视觉 CNN</span>
+    <span class="pager-title">06a — 晶体结构、对称性与材料数据库（Pymatgen · CIF · COD · Materials Project）</span>
   </a></nav>  </main></div>
 <footer class="footer">
   <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>

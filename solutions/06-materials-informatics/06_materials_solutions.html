@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="练习参考答案与解析。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="参考答案：06 — 无机与晶体材料信息学：随堂练习参考答案（Solutions） | AI for Materials Science" />
+  <meta property="og:description" content="练习参考答案与解析。" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/solutions/06-materials-informatics/06_materials_solutions.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/solutions/06-materials-informatics/06_materials_solutions.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>参考答案：06 — 无机与晶体材料信息学：随堂练习参考答案（Solutions） | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+class="active">
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html"
+           data-progress-mark="notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html"
+>📓 06a_crystal_structures_and_databases.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html"
+           data-progress-mark="notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html"
+>📓 06b_xrd_phase_diagram_screening.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/06-materials-informatics/06c_exercises.html"
+           data-progress-mark="notebooks/06-materials-informatics/06c_exercises.html"
+>🏋️ 06c_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/06-materials-informatics.html">模块 06：无机与晶体材料信息学</a> /
+  <span>参考答案</span>
+</div>
+<h1><span class="kind-badge kind-lecture">课件答案</span>
+  06 — 无机与晶体材料信息学：随堂练习参考答案（Solutions）</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">答案文件：<code>06_materials_solutions.ipynb</code>（37.5 KB）</div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/06%20-%20Materials%20Informatics/solutions/06_materials_solutions.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/e7d6f5c434b5-06_materials_solutions.ipynb" download="06_materials_solutions.ipynb">⬇ 下载答案 .ipynb</a>
+    <a class="btn btn-secondary" href="../../modules/06-materials-informatics.html">返回模块 06</a>
+  </div>
+</div>
+<div id="solution-gate" class="academic-box solution-gate-inner">
+  <strong>先自己做一遍，再看答案。</strong>
+  <p>直接阅读答案的学习效果远低于独立实现。建议至少尝试 20 分钟，卡住时先看习题里的
+    💡 提示，再展开本页。</p>
+  <p class="hint-inline">展开状态只在当前浏览器标签页有效，关闭标签页后会重新折叠。</p>
+  <button type="button" id="solution-reveal" class="btn btn-primary">我已尝试，展开参考答案</button>
+</div>
+<div id="solution-body" hidden>
+  <div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>本 Notebook 汇总了第六讲 <code>06a_crystal_structures_and_databases.ipynb</code> 与 <code>06b_xrd_phase_diagram_screening.ipynb</code> 中全部 6 道随堂练习（<code>06a-1</code> 至 <code>06b-3</code>）的完整可运行参考代码与材料学解析。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="0-公共环境">0. 公共环境</h2>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.spatial</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConvexHull</span>
+
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Structure</span><span class="p">,</span> <span class="n">Lattice</span><span class="p">,</span> <span class="n">Composition</span><span class="p">,</span> <span class="n">Element</span><span class="p">,</span> <span class="n">Species</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.symmetry.analyzer</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpacegroupAnalyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.io.cif</span><span class="w"> </span><span class="kn">import</span> <span class="n">CifParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.analysis.diffraction.xrd</span><span class="w"> </span><span class="kn">import</span> <span class="n">XRDCalculator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.entries.computed_entries</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComputedEntry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.analysis.phase_diagram</span><span class="w"> </span><span class="kn">import</span> <span class="n">PhaseDiagram</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">r2_score</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">find_file</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;../data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">path</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;找不到 </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">xrd</span> <span class="o">=</span> <span class="n">XRDCalculator</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="s2">&quot;CuKa&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（solutions/ 子目录与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">for</span> <span class="n">_p</span> <span class="ow">in</span> <span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="p">):</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">_p</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h1><code>06a</code> — 晶体结构与数据库练习答案</h1>
+<h3 id="练习-06a-1-搭建卤化物钙钛矿并比较晶胞">练习 06a-1：搭建卤化物钙钛矿并比较晶胞</h3>
+<p><strong>题目回顾</strong>：用 <code>Pm-3m</code> 搭出 <span class="math-inline" data-tex="\text{SrTiO}_3">\(\text{SrTiO}_3\)</span>、<span class="math-inline" data-tex="\text{BaTiO}_3">\(\text{BaTiO}_3\)</span>、<span class="math-inline" data-tex="\text{CsPbI}_3">\(\text{CsPbI}_3\)</span>，打印晶胞信息与 B–X 键长，验证 <span class="math-inline" data-tex="a \approx 2 d_{B-X}">\(a \approx 2 d_{B-X}\)</span>。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">PEROVSKITES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;SrTiO3&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">3.905</span><span class="p">,</span> <span class="s2">&quot;Sr&quot;</span><span class="p">,</span> <span class="s2">&quot;Ti&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;BaTiO3&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">4.006</span><span class="p">,</span> <span class="s2">&quot;Ba&quot;</span><span class="p">,</span> <span class="s2">&quot;Ti&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;CsPbI3&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6.289</span><span class="p">,</span> <span class="s2">&quot;Cs&quot;</span><span class="p">,</span> <span class="s2">&quot;Pb&quot;</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">cubic_perovskite</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_spacegroup</span><span class="p">(</span>
+        <span class="s2">&quot;Pm-3m&quot;</span><span class="p">,</span> <span class="n">Lattice</span><span class="o">.</span><span class="n">cubic</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="p">[</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">X</span><span class="p">],</span>
+        <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]])</span>
+
+<span class="n">rows</span><span class="p">,</span> <span class="n">structs</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="ow">in</span> <span class="n">PEROVSKITES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">cubic_perovskite</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+    <span class="n">structs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span>
+    <span class="c1"># B 位和 X 位的编号要现找，不能写死</span>
+    <span class="n">i_B</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">st</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">sites</span><span class="p">)</span> <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">specie</span><span class="o">.</span><span class="n">symbol</span> <span class="o">==</span> <span class="n">B</span><span class="p">)</span>
+    <span class="n">idx_X</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">st</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">sites</span><span class="p">)</span> <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">specie</span><span class="o">.</span><span class="n">symbol</span> <span class="o">==</span> <span class="n">X</span><span class="p">]</span>
+    <span class="c1"># 周期性边界下必须对所有 X 取最小值</span>
+    <span class="n">d_BX</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get_distance</span><span class="p">(</span><span class="n">i_B</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">idx_X</span><span class="p">)</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;material&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;a_A&quot;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span> <span class="s2">&quot;n_sites&quot;</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">num_sites</span><span class="p">,</span>
+                 <span class="s2">&quot;V_A3&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">volume</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s2">&quot;rho_g_cm3&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">density</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                 <span class="s2">&quot;d_BX_A&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">d_BX</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="s2">&quot;a_over_2dBX&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">a</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">d_BX</span><span class="p">),</span> <span class="mi">4</span><span class="p">)})</span>
+
+<span class="n">tab</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tab</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">V(CsPbI3) / V(SrTiO3) = </span><span class="si">{</span><span class="n">tab</span><span class="o">.</span><span class="n">V_A3</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">tab</span><span class="o">.</span><span class="n">V_A3</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>解析</strong>：最后一列全部<strong>精确等于 1.000</strong>。这不是巧合，而是立方钙钛矿的几何恒等式：B 位在体心 <span class="math-inline" data-tex="(\frac{1}{2},\frac{1}{2},\frac{1}{2})">\((\frac{1}{2},\frac{1}{2},\frac{1}{2})\)</span>，最近的 X 位在面心 <span class="math-inline" data-tex="(\frac{1}{2},\frac{1}{2},0)">\((\frac{1}{2},\frac{1}{2},0)\)</span>，两者只差 <span class="math-inline" data-tex="\frac{1}{2}">\(\frac{1}{2}\)</span> 个 <span class="math-inline" data-tex="c">\(c\)</span> 轴，所以 <span class="math-inline" data-tex="d_{B-X} = a/2">\(d_{B-X} = a/2\)</span> 严格成立。</p>
+<p><span class="math-inline" data-tex="\text{CsPbI}_3">\(\text{CsPbI}_3\)</span> 的晶胞体积是 <span class="math-inline" data-tex="\text{SrTiO}_3">\(\text{SrTiO}_3\)</span> 的约 <strong>4.2 倍</strong>。这个“大”带来了卤化物钙钛矿一系列独特的物理性质：</p>
+<ul>
+<li>离子半径大 <span class="math-inline" data-tex="\Rightarrow">\(\Rightarrow\)</span> 晶格软、声子频率低 <span class="math-inline" data-tex="\Rightarrow">\(\Rightarrow\)</span> 强电声耦合与<strong>极化子</strong>行为；</li>
+<li>Pb 的 <span class="math-inline" data-tex="6s^2">\(6s^2\)</span> 孤对电子加上重元素效应 <span class="math-inline" data-tex="\Rightarrow">\(\Rightarrow\)</span> 介电常数高 <span class="math-inline" data-tex="\Rightarrow">\(\Rightarrow\)</span> <strong>激子结合能低</strong>（几十 meV），室温下光生载流子可以直接解离，这正是钙钛矿太阳能电池效率高的根本原因之一；</li>
+<li>对比之下 <span class="math-inline" data-tex="\text{SrTiO}_3">\(\text{SrTiO}_3\)</span> 虽然也是钙钛矿，却是带隙 3.2 eV 的绝缘体。<strong>同样的骨架，完全不同的器件用途</strong>。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-06a-2-掺杂浓度与超胞大小">练习 06a-2：掺杂浓度与超胞大小</h3>
+<p><strong>题目回顾</strong>：构建不同大小的超胞，把一个 Sr 换成 La，考察可达到的最低掺杂浓度与 DFT 计算量。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">sto</span> <span class="o">=</span> <span class="n">structs</span><span class="p">[</span><span class="s2">&quot;SrTiO3&quot;</span><span class="p">]</span>
+
+<span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+    <span class="n">sc</span> <span class="o">=</span> <span class="n">sto</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">sr_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">sites</span><span class="p">)</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">specie</span><span class="o">.</span><span class="n">symbol</span> <span class="o">==</span> <span class="s2">&quot;Sr&quot;</span><span class="p">]</span>
+    <span class="n">doped</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">doped</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">sr_idx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;La&quot;</span><span class="p">)</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;supercell&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span> <span class="s2">&quot;n_atoms&quot;</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">num_sites</span><span class="p">,</span>
+                 <span class="s2">&quot;N_Sr&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">sr_idx</span><span class="p">),</span> <span class="s2">&quot;x_min&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">sr_idx</span><span class="p">),</span> <span class="mi">5</span><span class="p">),</span>
+                 <span class="s2">&quot;doped_formula&quot;</span><span class="p">:</span> <span class="n">doped</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span><span class="p">,</span>
+                 <span class="s2">&quot;V_A3&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">volume</span><span class="p">,</span> <span class="mi">1</span><span class="p">)})</span>
+
+<span class="n">sup</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">sup</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+<span class="n">TARGET_X</span> <span class="o">=</span> <span class="mf">0.01</span>
+<span class="n">n_need</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="mi">1</span> <span class="o">/</span> <span class="n">TARGET_X</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)))</span>
+<span class="n">sc_need</span> <span class="o">=</span> <span class="n">sto</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_need</span><span class="p">,</span> <span class="n">n_need</span><span class="p">,</span> <span class="n">n_need</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">要达到 x = </span><span class="si">{</span><span class="n">TARGET_X</span><span class="si">}</span><span class="s2">: 至少需要 </span><span class="si">{</span><span class="n">n_need</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">n_need</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">n_need</span><span class="si">}</span><span class="s2"> 超胞&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  原子数 = </span><span class="si">{</span><span class="n">sc_need</span><span class="o">.</span><span class="n">num_sites</span><span class="si">}</span><span class="s2">，Sr 位 = </span><span class="si">{</span><span class="n">n_need</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mi">3</span><span class="si">}</span><span class="s2">，实际 x = </span><span class="si">{</span><span class="mi">1</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n_need</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mi">3</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  按 O(N^3) 估计，计算量约是原胞的 </span><span class="si">{</span><span class="p">(</span><span class="n">sc_need</span><span class="o">.</span><span class="n">num_sites</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">sto</span><span class="o">.</span><span class="n">num_sites</span><span class="p">)</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mi">3</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> 倍&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">7.2</span><span class="p">,</span> <span class="mf">4.3</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sup</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">sup</span><span class="o">.</span><span class="n">x_min</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.8</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">navy</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">sup</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">n_atoms</span><span class="si">}</span><span class="s2"> atoms&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">x_min</span><span class="p">),</span>
+                <span class="n">textcoords</span><span class="o">=</span><span class="s2">&quot;offset points&quot;</span><span class="p">,</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">TARGET_X</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">crimson</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;target x = </span><span class="si">{</span><span class="n">TARGET_X</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;supercell multiple n&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;lowest reachable doping level  x = 1 / N_Sr&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Supercell size sets the accessible doping concentration&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>解析</strong>：注意 <span class="math-inline" data-tex="n = 1">\(n = 1\)</span> 那一行——原胞里只有 1 个 Sr，换掉它就得到 <span class="math-inline" data-tex="\text{LaTiO}_3">\(\text{LaTiO}_3\)</span>，相当于 <strong>100% 取代</strong>，这根本不是“掺杂”。</p>
+<p>关键的数量级：</p>
+<table>
+<thead>
+<tr>
+<th>目标浓度</th>
+<th>需要的超胞</th>
+<th>原子数</th>
+<th>相对原胞的计算量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>12.5%</td>
+<td><span class="math-inline" data-tex="2\times2\times2">\(2\times2\times2\)</span></td>
+<td>40</td>
+<td><span class="math-inline" data-tex="\sim 5\times10^2">\(\sim 5\times10^2\)</span></td>
+</tr>
+<tr>
+<td>3.7%</td>
+<td><span class="math-inline" data-tex="3\times3\times3">\(3\times3\times3\)</span></td>
+<td>135</td>
+<td><span class="math-inline" data-tex="\sim 2\times10^4">\(\sim 2\times10^4\)</span></td>
+</tr>
+<tr>
+<td>1.6%</td>
+<td><span class="math-inline" data-tex="4\times4\times4">\(4\times4\times4\)</span></td>
+<td>320</td>
+<td><span class="math-inline" data-tex="\sim 3\times10^5">\(\sim 3\times10^5\)</span></td>
+</tr>
+<tr>
+<td><strong>1%</strong></td>
+<td><span class="math-inline" data-tex="5\times5\times5">\(5\times5\times5\)</span></td>
+<td><strong>625</strong></td>
+<td><span class="math-inline" data-tex="\sim 2\times10^6">\(\sim 2\times10^6\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>这就是<strong>稀磁半导体、稀土掺杂发光材料、低浓度缺陷</strong>这类问题在第一性原理层面极其昂贵的原因——625 个原子的结构优化在普通集群上要跑几天到几周。</p>
+<p>实践中的常见对策：</p>
+<ol>
+<li>用<strong>特殊准随机结构（SQS）</strong> 在较小的胞里模拟无序固溶体；</li>
+<li>用<strong>机器学习势函数（MLIP）</strong> 替代 DFT（第十讲的 MACE 正是干这个的）；</li>
+<li>接受较高的名义浓度，只提取随浓度变化的<strong>趋势</strong>而非绝对值。</li>
+</ol>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-06a-3-用-cod-做一次真实的物相调研">练习 06a-3：用 COD 做一次真实的物相调研</h3>
+<p><strong>题目回顾</strong>：检索 <span class="math-inline" data-tex="\text{BaTiO}_3">\(\text{BaTiO}_3\)</span> 的全部 COD 条目，统计空间群分布，对比四方相与立方相，并扫描 <code>symprec</code> 找出对称性被抹平的临界值。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">COD_SEARCH</span> <span class="o">=</span> <span class="s2">&quot;https://www.crystallography.net/cod/result&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">cod_search</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="n">params</span><span class="p">[</span><span class="s2">&quot;format&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;json&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">COD_SEARCH</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">())</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span> <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;COD 检索失败（可能是网络不通）:&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+<span class="c1"># 注意 COD 的化学式格式：元素按字母序、空格分隔、省略下标 1</span>
+<span class="n">hits</span> <span class="o">=</span> <span class="n">cod_search</span><span class="p">(</span><span class="n">formula</span><span class="o">=</span><span class="s2">&quot;Ba O3 Ti&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hits</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;COD 中 BaTiO3 共 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hits</span><span class="p">)</span><span class="si">}</span><span class="s2"> 条记录</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;空间群分布（前 5）：&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">hits</span><span class="p">[</span><span class="s2">&quot;sg&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;未取到 COD 数据，下面改用内置文献参数继续。&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 两个相：高温立方顺电相 与 室温四方铁电相（内置文献参数，离线也能跑）</span>
+<span class="n">cubic</span> <span class="o">=</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_spacegroup</span><span class="p">(</span>
+    <span class="s2">&quot;Pm-3m&quot;</span><span class="p">,</span> <span class="n">Lattice</span><span class="o">.</span><span class="n">cubic</span><span class="p">(</span><span class="mf">4.006</span><span class="p">),</span> <span class="p">[</span><span class="s2">&quot;Ba&quot;</span><span class="p">,</span> <span class="s2">&quot;Ti&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">],</span>
+    <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]])</span>
+
+<span class="n">tetra</span> <span class="o">=</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_spacegroup</span><span class="p">(</span>
+    <span class="s2">&quot;P4mm&quot;</span><span class="p">,</span> <span class="n">Lattice</span><span class="o">.</span><span class="n">tetragonal</span><span class="p">(</span><span class="mf">3.994</span><span class="p">,</span> <span class="mf">4.038</span><span class="p">),</span> <span class="p">[</span><span class="s2">&quot;Ba&quot;</span><span class="p">,</span> <span class="s2">&quot;Ti&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">],</span>
+    <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.515</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.025</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.485</span><span class="p">]])</span>
+
+<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;cubic (high-T)&quot;</span><span class="p">,</span> <span class="n">cubic</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;tetragonal (RT)&quot;</span><span class="p">,</span> <span class="n">tetra</span><span class="p">)]:</span>
+    <span class="n">lat</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">lattice</span>
+    <span class="n">sga</span> <span class="o">=</span> <span class="n">SpacegroupAnalyzer</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">symprec</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">16s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span><span class="si">}</span><span class="s2">  &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;a=</span><span class="si">{</span><span class="n">lat</span><span class="o">.</span><span class="n">a</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">  c=</span><span class="si">{</span><span class="n">lat</span><span class="o">.</span><span class="n">c</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">  c/a-1=</span><span class="si">{</span><span class="n">lat</span><span class="o">.</span><span class="n">c</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">lat</span><span class="o">.</span><span class="n">a</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">:</span><span class="s2">+.4f</span><span class="si">}</span><span class="s2">  &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;rho=</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">density</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">  SG=</span><span class="si">{</span><span class="n">sga</span><span class="o">.</span><span class="n">get_space_group_symbol</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- symprec 扫描：四方畸变什么时候被抹平？---&quot;</span><span class="p">)</span>
+<span class="n">scan</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">):</span>
+    <span class="n">sga</span> <span class="o">=</span> <span class="n">SpacegroupAnalyzer</span><span class="p">(</span><span class="n">tetra</span><span class="p">,</span> <span class="n">symprec</span><span class="o">=</span><span class="n">sp</span><span class="p">)</span>
+    <span class="n">scan</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;symprec&quot;</span><span class="p">:</span> <span class="n">sp</span><span class="p">,</span> <span class="s2">&quot;space_group&quot;</span><span class="p">:</span> <span class="n">sga</span><span class="o">.</span><span class="n">get_space_group_symbol</span><span class="p">(),</span>
+                 <span class="s2">&quot;SG_no&quot;</span><span class="p">:</span> <span class="n">sga</span><span class="o">.</span><span class="n">get_space_group_number</span><span class="p">(),</span>
+                 <span class="s2">&quot;n_ops&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">sga</span><span class="o">.</span><span class="n">get_symmetry_operations</span><span class="p">())})</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">scan</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">参考：c - a = </span><span class="si">{</span><span class="n">tetra</span><span class="o">.</span><span class="n">lattice</span><span class="o">.</span><span class="n">c</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">tetra</span><span class="o">.</span><span class="n">lattice</span><span class="o">.</span><span class="n">a</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> A&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;      Ti 沿 c 的位移 ~ </span><span class="si">{</span><span class="mf">0.015</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">tetra</span><span class="o">.</span><span class="n">lattice</span><span class="o">.</span><span class="n">c</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> A&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;      O  沿 c 的位移 ~ </span><span class="si">{</span><span class="mf">0.025</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">tetra</span><span class="o">.</span><span class="n">lattice</span><span class="o">.</span><span class="n">c</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> A&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>解析</strong></p>
+<p><strong>空间群分布</strong>正好对应 <span class="math-inline" data-tex="\text{BaTiO}_3">\(\text{BaTiO}_3\)</span> 著名的四个相。它随温度依次经历：</p>
+<div class="math-block" data-tex="\text{菱方 } R3m \;\longrightarrow\; \text{正交 } Amm2 \;\longrightarrow\; \text{四方 } P4mm \;\longrightarrow\; \text{立方 } Pm\bar{3}m">\[\text{菱方 } R3m \;\longrightarrow\; \text{正交 } Amm2 \;\longrightarrow\; \text{四方 } P4mm \;\longrightarrow\; \text{立方 } Pm\bar{3}m\]</div>
+<p>COD 的检索结果里这四个空间群都占了可观比例——<strong>数据库的统计分布直接反映了物理相图</strong>。前三个相都是铁电相（没有对称中心，允许自发极化），只有高温立方相是顺电的。</p>
+<p><strong><span class="math-inline" data-tex="c/a - 1 \approx 0.011">\(c/a - 1 \approx 0.011\)</span></strong>：四方畸变只有百分之一量级。正是这个微小畸变——Ti 相对氧八面体中心偏移约 0.06 Å——产生了 <span class="math-inline" data-tex="\text{BaTiO}_3">\(\text{BaTiO}_3\)</span> 的自发极化，使它成为最重要的铁电/压电材料之一。</p>
+<p><strong>symprec 扫描</strong>给出了最实际的教训：</p>
+<ul>
+<li><code>symprec</code> 从 0.01 一路到 0.2，都正确识别出 <span class="math-inline" data-tex="P4mm">\(P4mm\)</span>（8 个对称操作）；</li>
+<li>一旦超过约 <strong>0.25</strong>，spglib 就认为那点畸变在容差范围内可以忽略，于是判成立方 <span class="math-inline" data-tex="Pm\bar{3}m">\(Pm\bar{3}m\)</span>（48 个操作）。</li>
+</ul>
+<p>临界值落在 0.2–0.3 之间并不意外：Ti 的位移约 0.06 Å，O 的位移约 0.10 Å，而 <span class="math-inline" data-tex="c - a = 0.044">\(c - a = 0.044\)</span> Å。当容差超过这些位移的量级，结构就“看起来”是立方的了。</p>
+<blockquote>
+<p><strong>📌 一句话</strong>：<code>symprec</code> 设得太大，你会把一个铁电体报告成顺电体。<strong>报告空间群时必须同时报告 <code>symprec</code></strong>——这不是迂腐，是结论成立的前提。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h1><code>06b</code> — XRD、凸包与筛选练习答案</h1>
+<h3 id="练习-06b-1-晶格常数变化如何移动衍射峰">练习 06b-1：晶格常数变化如何移动衍射峰</h3>
+<p><strong>题目回顾</strong>：让金红石的晶格等比例膨胀 0–3%，记录 <span class="math-inline" data-tex="(110)">\((110)\)</span> 峰位移，并与 <span class="math-inline" data-tex="\Delta(2\theta) \approx -2\varepsilon\tan\theta">\(\Delta(2\theta) \approx -2\varepsilon\tan\theta\)</span> 对比。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">EPS</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">]</span>
+<span class="n">A0</span><span class="p">,</span> <span class="n">C0</span> <span class="o">=</span> <span class="mf">4.5937</span><span class="p">,</span> <span class="mf">2.9587</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">rutile</span><span class="p">(</span><span class="n">eps</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_spacegroup</span><span class="p">(</span>
+        <span class="s2">&quot;P4_2/mnm&quot;</span><span class="p">,</span> <span class="n">Lattice</span><span class="o">.</span><span class="n">tetragonal</span><span class="p">(</span><span class="n">A0</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">eps</span><span class="p">),</span> <span class="n">C0</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)),</span>
+        <span class="p">[</span><span class="s2">&quot;Ti&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">],</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.3053</span><span class="p">,</span> <span class="mf">0.3053</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+
+<span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">eps</span> <span class="ow">in</span> <span class="n">EPS</span><span class="p">:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">xrd</span><span class="o">.</span><span class="n">get_pattern</span><span class="p">(</span><span class="n">rutile</span><span class="p">(</span><span class="n">eps</span><span class="p">),</span> <span class="n">two_theta_range</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">60</span><span class="p">))</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;eps&quot;</span><span class="p">:</span> <span class="n">eps</span><span class="p">,</span> <span class="s2">&quot;a_A&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">A0</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">eps</span><span class="p">),</span> <span class="mi">4</span><span class="p">),</span>
+                 <span class="s2">&quot;hkl&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">hkls</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;hkl&quot;</span><span class="p">]),</span>
+                 <span class="s2">&quot;two_theta&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">k</span><span class="p">]),</span> <span class="mi">4</span><span class="p">),</span>
+                 <span class="s2">&quot;d_A&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">d_hkls</span><span class="p">[</span><span class="n">k</span><span class="p">]),</span> <span class="mi">4</span><span class="p">)})</span>
+
+<span class="n">shift</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+<span class="n">shift</span><span class="p">[</span><span class="s2">&quot;measured_shift&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">shift</span><span class="o">.</span><span class="n">two_theta</span> <span class="o">-</span> <span class="n">shift</span><span class="o">.</span><span class="n">two_theta</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+
+<span class="c1"># 理论预测：d -&gt; (1+eps)d  =&gt;  Delta(2theta) ≈ -2 * eps * tan(theta)</span>
+<span class="n">theta0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">shift</span><span class="o">.</span><span class="n">two_theta</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">shift</span><span class="p">[</span><span class="s2">&quot;predicted_shift&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">shift</span><span class="o">.</span><span class="n">eps</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">theta0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">180</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">shift</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">11.8</span><span class="p">,</span> <span class="mf">4.3</span><span class="p">))</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">eps</span> <span class="ow">in</span> <span class="n">EPS</span><span class="p">:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">xrd</span><span class="o">.</span><span class="n">get_pattern</span><span class="p">(</span><span class="n">rutile</span><span class="p">(</span><span class="n">eps</span><span class="p">),</span> <span class="n">two_theta_range</span><span class="o">=</span><span class="p">(</span><span class="mi">26</span><span class="p">,</span> <span class="mi">29</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">vlines</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">2.2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;eps = </span><span class="si">{</span><span class="n">eps</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;2theta / degree&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;I (rel.)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;(110) peak shifts to lower angle as the cell expands&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">shift</span><span class="o">.</span><span class="n">eps</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="n">shift</span><span class="o">.</span><span class="n">measured_shift</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.8</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">navy</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;pymatgen 实测&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">shift</span><span class="o">.</span><span class="n">eps</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="n">shift</span><span class="o">.</span><span class="n">predicted_shift</span><span class="p">,</span> <span class="s2">&quot;s--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">crimson</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;理论 -2*eps*tan(theta)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;lattice expansion eps / %&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;peak shift  d(2theta) / degree&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Measured vs predicted peak shift&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">p_ref</span> <span class="o">=</span> <span class="n">xrd</span><span class="o">.</span><span class="n">get_pattern</span><span class="p">(</span><span class="n">rutile</span><span class="p">(</span><span class="mf">0.0</span><span class="p">),</span> <span class="n">two_theta_range</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;同样 1% 膨胀下，不同角度峰的位移（灵敏度正比于 tan(theta)）：&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">tt</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">p_ref</span><span class="o">.</span><span class="n">x</span><span class="p">[:</span><span class="mi">8</span><span class="p">]]:</span>
+    <span class="n">th</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">tt</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  2theta = </span><span class="si">{</span><span class="n">tt</span><span class="si">:</span><span class="s2">7.2f</span><span class="si">}</span><span class="s2"> deg  -&gt;  d(2theta) = &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="o">-</span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.01</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">th</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">180</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="si">:</span><span class="s2">+7.4f</span><span class="si">}</span><span class="s2"> deg&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>解析</strong></p>
+<p><strong>推导</strong>：对布拉格定律 <span class="math-inline" data-tex="2d\sin\theta = \lambda">\(2d\sin\theta = \lambda\)</span> 两边取对数再微分（<span class="math-inline" data-tex="\lambda">\(\lambda\)</span> 固定）：</p>
+<div class="math-block" data-tex="\frac{\Delta d}{d} + \cot\theta\,\Delta\theta = 0 \quad\Longrightarrow\quad \Delta\theta = -\varepsilon\tan\theta">\[\frac{\Delta d}{d} + \cot\theta\,\Delta\theta = 0 \quad\Longrightarrow\quad \Delta\theta = -\varepsilon\tan\theta\]</div>
+<p>其中 <span class="math-inline" data-tex="\varepsilon = \Delta d / d">\(\varepsilon = \Delta d / d\)</span>。由于实验记录的是 <span class="math-inline" data-tex="2\theta">\(2\theta\)</span>，所以 <span class="math-inline" data-tex="\Delta(2\theta) = -2\varepsilon\tan\theta">\(\Delta(2\theta) = -2\varepsilon\tan\theta\)</span>。</p>
+<p>数值吻合得很好（1% 膨胀：实测 <span class="math-inline" data-tex="-0.277^\circ">\(-0.277^\circ\)</span>，预测 <span class="math-inline" data-tex="-0.280^\circ">\(-0.280^\circ\)</span>）。剩下的微小偏差来自线性化——<span class="math-inline" data-tex="\tan\theta">\(\tan\theta\)</span> 本身随 <span class="math-inline" data-tex="\theta">\(\theta\)</span> 变化，膨胀量越大偏差越明显。</p>
+<p><strong>回答第 4 问：高角度峰灵敏得多。</strong> 位移正比于 <span class="math-inline" data-tex="\tan\theta">\(\tan\theta\)</span>，而 <span class="math-inline" data-tex="\tan\theta">\(\tan\theta\)</span> 在 <span class="math-inline" data-tex="\theta \to 90^\circ">\(\theta \to 90^\circ\)</span> 时发散。最后那段输出很直观：<span class="math-inline" data-tex="2\theta \approx 27^\circ">\(2\theta \approx 27^\circ\)</span> 的峰只移动 <span class="math-inline" data-tex="0.28^\circ">\(0.28^\circ\)</span>，而 <span class="math-inline" data-tex="2\theta \approx 110^\circ">\(2\theta \approx 110^\circ\)</span> 附近的峰能移动好几度。</p>
+<blockquote>
+<p><strong>📌 实验要点</strong>：精修晶胞参数时<strong>一定要用高角度峰</strong>（通常取 <span class="math-inline" data-tex="2\theta &gt; 80^\circ">\(2\theta &gt; 80^\circ\)</span>），这是 Nelson–Riley 外推法等经典方法的理论基础。反过来，只盯着低角度的最强峰去判断“掺杂有没有进晶格”，灵敏度往往不足以分辨。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-06b-2-另一个二元体系的凸包">练习 06b-2：另一个二元体系的凸包</h3>
+<p><strong>题目回顾</strong>：把凸包流程封装成 <code>build_hull(system)</code>，对 Al–O、Li–O、Fe–O 三个体系作分析。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">ea</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">find_file</span><span class="p">(</span><span class="s2">&quot;energy_per_atom_aflow.csv&quot;</span><span class="p">))</span>
+<span class="n">TOKEN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([A-Z][a-z]?)(\d*\.?\d*)&quot;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_formula</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;把 &#39;O2Ti1&#39; 解析成 {&#39;O&#39;: 2.0, &#39;Ti&#39;: 1.0}。&quot;&quot;&quot;</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">el</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">TOKEN</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">el</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">el</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span> <span class="k">else</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+<span class="n">ea</span><span class="p">[</span><span class="s2">&quot;comp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ea</span><span class="o">.</span><span class="n">formula</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">parse_formula</span><span class="p">)</span>
+<span class="n">ea</span><span class="p">[</span><span class="s2">&quot;n_el&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ea</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
+
+<span class="n">elemental</span> <span class="o">=</span> <span class="n">ea</span><span class="p">[</span><span class="n">ea</span><span class="o">.</span><span class="n">n_el</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">elemental</span><span class="p">[</span><span class="s2">&quot;element&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">elemental</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span>
+
+<span class="n">OUTLIER_TOL</span> <span class="o">=</span> <span class="mf">2.0</span>
+<span class="n">mu</span><span class="p">,</span> <span class="n">flagged</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">el</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">elemental</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;element&quot;</span><span class="p">):</span>
+    <span class="n">med</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">energy_per_atom</span><span class="o">.</span><span class="n">median</span><span class="p">()</span>
+    <span class="n">dev</span> <span class="o">=</span> <span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">energy_per_atom</span> <span class="o">-</span> <span class="n">med</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+    <span class="n">ok</span><span class="p">,</span> <span class="n">bad</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="n">dev</span> <span class="o">&lt;=</span> <span class="n">OUTLIER_TOL</span><span class="p">],</span> <span class="n">g</span><span class="p">[</span><span class="n">dev</span> <span class="o">&gt;</span> <span class="n">OUTLIER_TOL</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bad</span><span class="o">.</span><span class="n">formula</span><span class="p">,</span> <span class="n">bad</span><span class="o">.</span><span class="n">energy_per_atom</span><span class="p">):</span>
+        <span class="n">flagged</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;element&quot;</span><span class="p">:</span> <span class="n">el</span><span class="p">,</span> <span class="s2">&quot;formula&quot;</span><span class="p">:</span> <span class="n">f</span><span class="p">,</span>
+                        <span class="s2">&quot;energy&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">&quot;median&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">med</span><span class="p">,</span> <span class="mi">3</span><span class="p">)})</span>
+    <span class="n">mu</span><span class="p">[</span><span class="n">el</span><span class="p">]</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">energy_per_atom</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ok</span><span class="p">)</span> <span class="k">else</span> <span class="n">med</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">formation_energy</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="n">e_per_atom</span><span class="p">):</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">comp</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">el</span> <span class="ow">in</span> <span class="n">mu</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">comp</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">return</span> <span class="n">e_per_atom</span> <span class="o">-</span> <span class="nb">sum</span><span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="n">mu</span><span class="p">[</span><span class="n">el</span><span class="p">]</span> <span class="k">for</span> <span class="n">el</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">comp</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+<span class="n">ea</span><span class="p">[</span><span class="s2">&quot;E_f&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">formation_energy</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ea</span><span class="o">.</span><span class="n">comp</span><span class="p">,</span> <span class="n">ea</span><span class="o">.</span><span class="n">energy_per_atom</span><span class="p">)]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个元素有参考态；异常条目 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">flagged</span><span class="p">)</span><span class="si">}</span><span class="s2"> 条&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">build_hull</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;对一个二元体系求下凸包，返回 (全部条目带 E_hull, 凸包顶点坐标)。&quot;&quot;&quot;</span>
+    <span class="n">sub</span> <span class="o">=</span> <span class="n">ea</span><span class="p">[</span><span class="n">ea</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">set</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">system</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="c1"># 横轴取其中一个元素的原子分数；含 O 的体系习惯上把 O 放右端</span>
+    <span class="n">ref</span> <span class="o">=</span> <span class="s2">&quot;O&quot;</span> <span class="k">if</span> <span class="s2">&quot;O&quot;</span> <span class="ow">in</span> <span class="n">system</span> <span class="k">else</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">system</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">sub</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="n">sub</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">Composition</span><span class="p">(</span>
+        <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}{</span><span class="n">v</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span><span class="o">.</span><span class="n">reduced_formula</span><span class="p">)</span>
+
+    <span class="c1"># 每个组成只保留能量最低的多晶型</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">sub</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">E_f</span><span class="o">.</span><span class="n">idxmin</span><span class="p">()]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">pts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">best</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">best</span><span class="o">.</span><span class="n">E_f</span><span class="o">.</span><span class="n">values</span><span class="p">])</span>
+    <span class="n">aug</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">pts</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">pts</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mf">10.0</span><span class="p">]])</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ConvexHull</span><span class="p">(</span><span class="n">aug</span><span class="p">)</span><span class="o">.</span><span class="n">vertices</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">pts</span><span class="p">))</span>
+    <span class="n">hull_pts</span> <span class="o">=</span> <span class="n">pts</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="n">sub</span><span class="p">[</span><span class="s2">&quot;E_hull&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">ef</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">hull_pts</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">hull_pts</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+                     <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">ef</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">sub</span><span class="o">.</span><span class="n">E_f</span><span class="p">)]</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">system</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">] 共 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span><span class="si">}</span><span class="s2"> 条记录，凸包上的稳定相：&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    x(</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s2">) = </span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">   </span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">label</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">10s</span><span class="si">}</span><span class="s2"> &quot;</span>
+                  <span class="sa">f</span><span class="s2">&quot;E_f = </span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">E_f</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">+.4f</span><span class="si">}</span><span class="s2"> eV/atom&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">sub</span><span class="o">.</span><span class="n">E_f</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#b0b0b0&quot;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">hull_pts</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">hull_pts</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">crimson</span><span class="p">,</span>
+                <span class="n">lw</span><span class="o">=</span><span class="mf">1.9</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">best</span><span class="o">.</span><span class="n">label</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">(</span><span class="n">best</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">best</span><span class="o">.</span><span class="n">E_f</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+                        <span class="n">textcoords</span><span class="o">=</span><span class="s2">&quot;offset points&quot;</span><span class="p">,</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">16</span><span class="p">),</span>
+                        <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">crimson</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#888888&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;x(</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;E_f / eV per atom&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sub</span><span class="p">,</span> <span class="n">hull_pts</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">closest_metastable</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">min_hull</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;找出 E_hull 最小的非稳定化合物（排除单质），并给出分解路径。&quot;&quot;&quot;</span>
+    <span class="n">cand</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[(</span><span class="n">sub</span><span class="o">.</span><span class="n">E_hull</span> <span class="o">&gt;</span> <span class="n">min_hull</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">cand</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;    （该体系没有高于凸包的化合物条目）&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">cand</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">cand</span><span class="o">.</span><span class="n">E_hull</span><span class="o">.</span><span class="n">idxmin</span><span class="p">()]</span>
+    <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span><span class="n">ComputedEntry</span><span class="p">(</span><span class="n">Composition</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}{</span><span class="n">v</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
+                             <span class="n">v</span> <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+               <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">comp</span><span class="p">,</span> <span class="n">sub</span><span class="o">.</span><span class="n">energy_per_atom</span><span class="p">)]</span>
+    <span class="n">pdg</span> <span class="o">=</span> <span class="n">PhaseDiagram</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span> <span class="o">==</span> <span class="n">r</span><span class="o">.</span><span class="n">label</span><span class="p">],</span>
+                 <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">energy_per_atom</span><span class="p">)</span>
+    <span class="n">decomp</span><span class="p">,</span> <span class="n">ehull</span> <span class="o">=</span> <span class="n">pdg</span><span class="o">.</span><span class="n">get_decomp_and_e_above_hull</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+    <span class="n">route</span> <span class="o">=</span> <span class="s2">&quot;  +  &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">amt</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span><span class="si">}</span><span class="s2">&quot;</span>
+                         <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">amt</span> <span class="ow">in</span> <span class="n">decomp</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    最接近凸包的亚稳化合物: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">  &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;E_hull = </span><span class="si">{</span><span class="n">ehull</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> meV/atom  -&gt;  </span><span class="si">{</span><span class="n">route</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="n">SYSTEMS</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;Al&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;Li&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;Fe&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">}]</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mf">4.3</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">sysset</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">SYSTEMS</span><span class="p">):</span>
+    <span class="n">sub_sys</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">build_hull</span><span class="p">(</span><span class="n">sysset</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+    <span class="n">closest_metastable</span><span class="p">(</span><span class="n">sub_sys</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>解析</strong></p>
+<p><strong>Al–O</strong>：凸包上只有 <span class="math-inline" data-tex="\text{Al}_2\text{O}_3">\(\text{Al}_2\text{O}_3\)</span>（刚玉），<span class="math-inline" data-tex="E_f \approx -3.02">\(E_f \approx -3.02\)</span> eV/atom（实验 <span class="math-inline" data-tex="-3.47">\(-3.47\)</span>）。与常识完全一致——铝只有一个稳定氧化物。</p>
+<p><strong>Li–O</strong>：<span class="math-inline" data-tex="\text{Li}_2\text{O}">\(\text{Li}_2\text{O}\)</span>（<span class="math-inline" data-tex="\approx -1.84">\(\approx -1.84\)</span>）和过氧化锂 <span class="math-inline" data-tex="\text{Li}_2\text{O}_2">\(\text{Li}_2\text{O}_2\)</span>（<span class="math-inline" data-tex="\approx -1.42">\(\approx -1.42\)</span>）<strong>都在凸包上</strong>。这个结果有直接的工程意义：锂空气电池的放电产物就是 <span class="math-inline" data-tex="\text{Li}_2\text{O}_2">\(\text{Li}_2\text{O}_2\)</span>，它既然在凸包上，就说明它是热力学稳定相，不会自发歧化成 <span class="math-inline" data-tex="\text{Li}_2\text{O} + \text{O}_2">\(\text{Li}_2\text{O} + \text{O}_2\)</span>。电池的可逆性问题出在动力学（<span class="math-inline" data-tex="\text{Li}_2\text{O}_2">\(\text{Li}_2\text{O}_2\)</span> 绝缘、充电过电位高），不在热力学。</p>
+<p><strong>Fe–O —— 这里出了问题</strong>：凸包上只有 <span class="math-inline" data-tex="\text{Fe}_3\text{O}_4">\(\text{Fe}_3\text{O}_4\)</span>（磁铁矿）。但相图教科书告诉我们，Fe–O 体系有<strong>三个</strong>常见氧化物：方铁矿 <span class="math-inline" data-tex="\text{Fe}_{1-x}\text{O}">\(\text{Fe}_{1-x}\text{O}\)</span>、磁铁矿 <span class="math-inline" data-tex="\text{Fe}_3\text{O}_4">\(\text{Fe}_3\text{O}_4\)</span>、赤铁矿 <span class="math-inline" data-tex="\text{Fe}_2\text{O}_3">\(\text{Fe}_2\text{O}_3\)</span>。<strong>赤铁矿没上凸包，这是个明确的失败。</strong></p>
+<p>原因正是题目提示的那一条：<strong>Fe 是强关联的 <span class="math-inline" data-tex="3d">\(3d\)</span> 过渡金属</strong>。</p>
+<ol>
+<li><strong>自相互作用误差</strong>：普通 GGA/PBE 泛函对局域 <span class="math-inline" data-tex="3d">\(3d\)</span> 电子存在自相互作用误差，会系统性地偏估铁氧化物的形成能，而且误差随氧化态而变——<span class="math-inline" data-tex="\text{Fe}^{3+}">\(\text{Fe}^{3+}\)</span> 与 <span class="math-inline" data-tex="\text{Fe}^{2+}">\(\text{Fe}^{2+}\)</span> 的误差不同，于是相对稳定性的顺序被搞错；</li>
+<li>标准对策是 <strong>DFT+<span class="math-inline" data-tex="U">\(U\)</span></strong>：对 Fe 的 <span class="math-inline" data-tex="3d">\(3d\)</span> 轨道加一个 Hubbard <span class="math-inline" data-tex="U">\(U\)</span>（铁氧化物常用 <span class="math-inline" data-tex="U \approx 4">\(U \approx 4\)</span> eV）。Materials Project 对过渡金属氧化物默认启用 +<span class="math-inline" data-tex="U">\(U\)</span>，正是为此；</li>
+<li>还有<strong>磁序</strong>问题：<span class="math-inline" data-tex="\text{Fe}_2\text{O}_3">\(\text{Fe}_2\text{O}_3\)</span> 是反铁磁的，<span class="math-inline" data-tex="\text{Fe}_3\text{O}_4">\(\text{Fe}_3\text{O}_4\)</span> 是亚铁磁的。磁构型设置不当，能量能差出零点几 eV/atom——足以颠覆凸包。</li>
+</ol>
+<blockquote>
+<p><strong>📌 这道题真正的教训</strong>：<strong>凸包的可靠性完全取决于底层 DFT 的可靠性</strong>。凸包方法本身没错，错的是喂给它的能量。看到一个与实验相图矛盾的凸包时，第一反应不该是“实验错了”，而应该是“我的泛函、磁构型、参考态有没有问题”。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="练习-06b-3-设计你自己的筛选流程-透明导电氧化物-tco">练习 06b-3：设计你自己的筛选流程——透明导电氧化物（TCO）</h3>
+<p><strong>题目回顾</strong>：实现 TCO 筛选漏斗，先做健全性检验，诊断 PBE 偏差，再用修正后的阈值重跑。</p>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [11] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">bg</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">find_file</span><span class="p">(</span><span class="s2">&quot;bandgap_aflow.csv&quot;</span><span class="p">))</span>
+<span class="n">bg</span><span class="p">[</span><span class="s2">&quot;comp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bg</span><span class="o">.</span><span class="n">formula</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">parse_formula</span><span class="p">)</span>
+<span class="n">bg</span><span class="p">[</span><span class="s2">&quot;n_el&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bg</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
+<span class="n">bg</span><span class="p">[</span><span class="s2">&quot;elements&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bg</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+
+<span class="n">pool</span> <span class="o">=</span> <span class="n">bg</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">ea</span><span class="p">[[</span><span class="s2">&quot;formula&quot;</span><span class="p">,</span> <span class="s2">&quot;E_f&quot;</span><span class="p">]],</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;formula&quot;</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)</span>
+<span class="n">pool</span><span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">formula</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">Composition</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">reduced_composition</span><span class="p">)</span>
+
+<span class="n">TOXIC</span>       <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="s2">&quot;Pb Cd Hg As Tl Be Cr Ni Sb&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+<span class="n">RADIOACTIVE</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="s2">&quot;Tc Pm Po At Rn Fr Ra Ac Th Pa U Np Pu&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+<span class="n">NOBLE</span>       <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="s2">&quot;He Ne Ar Kr Xe&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+<span class="n">SCARCE</span>      <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="s2">&quot;Au Pt Ir Os Rh Ru Pd Re Sc Hf Ta&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+<span class="n">BLOCKED</span>     <span class="o">=</span> <span class="n">TOXIC</span> <span class="o">|</span> <span class="n">RADIOACTIVE</span> <span class="o">|</span> <span class="n">NOBLE</span> <span class="o">|</span> <span class="n">SCARCE</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">tco_funnel</span><span class="p">(</span><span class="n">gap_min</span><span class="p">,</span> <span class="n">ef_cut</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">stages</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="s2">&quot;起始候选库&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)}]</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">pool</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gate</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+        <span class="n">stages</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)})</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">:</span><span class="s2">6d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="s1">&#39;起始候选库&#39;</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span><span class="si">:</span><span class="s2">6d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">gate</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="s2">&quot;O&quot;</span> <span class="ow">in</span> <span class="n">e</span><span class="p">)],</span> <span class="s2">&quot;① 必须含氧&quot;</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">gate</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">band_gap</span> <span class="o">&gt;</span> <span class="n">gap_min</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;② 带隙 &gt; </span><span class="si">{</span><span class="n">gap_min</span><span class="si">}</span><span class="s2"> eV&quot;</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">gate</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">n_el</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;③ 元素数 &lt;= 3&quot;</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">gate</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">E_f</span> <span class="o">&lt;</span> <span class="n">ef_cut</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;④ Ef &lt; </span><span class="si">{</span><span class="n">ef_cut</span><span class="si">}</span><span class="s2"> eV/atom&quot;</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">gate</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="o">~</span><span class="n">s</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">e</span> <span class="o">&amp;</span> <span class="n">BLOCKED</span><span class="p">))],</span> <span class="s2">&quot;⑤ 元素安全可得&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">stages</span><span class="p">)</span>
+
+<span class="n">KNOWN_TCO</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;In2O3&quot;</span><span class="p">:</span> <span class="mf">3.75</span><span class="p">,</span> <span class="s2">&quot;SnO2&quot;</span><span class="p">:</span> <span class="mf">3.60</span><span class="p">,</span> <span class="s2">&quot;ZnO&quot;</span><span class="p">:</span> <span class="mf">3.37</span><span class="p">,</span> <span class="s2">&quot;Ga2O3&quot;</span><span class="p">:</span> <span class="mf">4.80</span><span class="p">}</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== 第一次尝试：直接用实验上的透明阈值 3.0 eV ===&quot;</span><span class="p">)</span>
+<span class="n">tco_v1</span><span class="p">,</span> <span class="n">funnel_v1</span> <span class="o">=</span> <span class="n">tco_funnel</span><span class="p">(</span><span class="mf">3.0</span><span class="p">)</span>
+<span class="n">keys_v1</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">tco_v1</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  健全性检验:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">KNOWN_TCO</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">m</span><span class="si">:</span><span class="s2">8s</span><span class="si">}</span><span class="s2"> 通过筛选: </span><span class="si">{</span><span class="n">Composition</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">.</span><span class="n">reduced_composition</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">keys_v1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [12] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;诊断：这四个已知 TCO 的 PBE 带隙到底是多少？</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;material&#39;</span><span class="si">:</span><span class="s2">10s</span><span class="si">}{</span><span class="s1">&#39;PBE&#39;</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}{</span><span class="s1">&#39;实验&#39;</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}{</span><span class="s1">&#39;PBE/实验&#39;</span><span class="si">:</span><span class="s2">&gt;11s</span><span class="si">}</span><span class="s2">   卡在哪一关&quot;</span><span class="p">)</span>
+<span class="n">ratios</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">eg_exp</span> <span class="ow">in</span> <span class="n">KNOWN_TCO</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">Composition</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">.</span><span class="n">reduced_composition</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">pool</span><span class="p">[</span><span class="n">pool</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">k</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">m</span><span class="si">:</span><span class="s2">10s</span><span class="si">}{</span><span class="s1">&#39;不在候选库中&#39;</span><span class="si">:</span><span class="s2">&gt;26s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">continue</span>
+    <span class="n">row</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">ratios</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">band_gap</span> <span class="o">/</span> <span class="n">eg_exp</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">band_gap</span> <span class="o">&lt;=</span> <span class="mf">3.0</span><span class="p">:</span>
+        <span class="n">why</span> <span class="o">=</span> <span class="s2">&quot;关卡②（PBE 带隙不够宽）&quot;</span>
+    <span class="k">elif</span> <span class="n">row</span><span class="o">.</span><span class="n">n_el</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">why</span> <span class="o">=</span> <span class="s2">&quot;关卡③&quot;</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">E_f</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="n">why</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;关卡④ (Ef=</span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">E_f</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2">)&quot;</span>
+    <span class="k">elif</span> <span class="n">row</span><span class="o">.</span><span class="n">elements</span> <span class="o">&amp;</span> <span class="n">BLOCKED</span><span class="p">:</span>
+        <span class="n">why</span> <span class="o">=</span> <span class="s2">&quot;关卡⑤&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">why</span> <span class="o">=</span> <span class="s2">&quot;（通过）&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">m</span><span class="si">:</span><span class="s2">10s</span><span class="si">}{</span><span class="n">row</span><span class="o">.</span><span class="n">band_gap</span><span class="si">:</span><span class="s2">9.3f</span><span class="si">}{</span><span class="n">eg_exp</span><span class="si">:</span><span class="s2">9.2f</span><span class="si">}{</span><span class="n">row</span><span class="o">.</span><span class="n">band_gap</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">eg_exp</span><span class="si">:</span><span class="s2">11.2f</span><span class="si">}</span><span class="s2">   </span><span class="si">{</span><span class="n">why</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">mean_ratio</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ratios</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">平均 PBE/实验 比值 = </span><span class="si">{</span><span class="n">mean_ratio</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;=&gt; 实验阈值 3.0 eV 映射到 PBE 尺度约为 </span><span class="si">{</span><span class="mf">3.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mean_ratio</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> eV&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [13] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">GAP_MIN_PBE</span> <span class="o">=</span> <span class="mf">1.0</span>        <span class="c1"># 由上面的比例估计，取一个略保守的整数</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;=== 第二次尝试：PBE 尺度阈值 </span><span class="si">{</span><span class="n">GAP_MIN_PBE</span><span class="si">}</span><span class="s2"> eV ===&quot;</span><span class="p">)</span>
+<span class="n">tco</span><span class="p">,</span> <span class="n">funnel_v2</span> <span class="o">=</span> <span class="n">tco_funnel</span><span class="p">(</span><span class="n">GAP_MIN_PBE</span><span class="p">)</span>
+<span class="n">keys_v2</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">tco</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  健全性检验（修正后）：&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">KNOWN_TCO</span><span class="p">:</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">Composition</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">.</span><span class="n">reduced_composition</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">pool</span><span class="p">[</span><span class="n">pool</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">k</span><span class="p">]</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys_v2</span>
+    <span class="n">note</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">band_gap</span> <span class="o">&lt;=</span> <span class="n">GAP_MIN_PBE</span><span class="p">:</span>
+            <span class="n">note</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;仍卡在关卡②: PBE Eg=</span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">band_gap</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">E_f</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">):</span>
+            <span class="n">note</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;卡在关卡④: Ef=</span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">E_f</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">elif</span> <span class="n">row</span><span class="o">.</span><span class="n">n_el</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">note</span> <span class="o">=</span> <span class="s2">&quot;卡在关卡③&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">note</span> <span class="o">=</span> <span class="s2">&quot;卡在关卡⑤&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">m</span><span class="si">:</span><span class="s2">8s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">ok</span><span class="p">)</span><span class="si">:</span><span class="s2">6s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">note</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">12.8</span><span class="p">,</span> <span class="mf">4.7</span><span class="p">))</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">w</span> <span class="o">=</span> <span class="mf">0.38</span>
+<span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">funnel_v2</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="n">idx</span> <span class="o">-</span> <span class="n">w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">funnel_v1</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#c7c7c7&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;阈值 3.0 eV（错误）&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="n">w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">funnel_v2</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">gold</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;阈值 </span><span class="si">{</span><span class="n">GAP_MIN_PBE</span><span class="si">}</span><span class="s2"> eV（PBE 修正）&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">funnel_v1</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">funnel_v2</span><span class="o">.</span><span class="n">n</span><span class="p">)):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">n1</span> <span class="o">*</span> <span class="mf">1.1</span><span class="p">,</span> <span class="n">i</span> <span class="o">-</span> <span class="n">w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n1</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mf">7.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#666666&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">n2</span> <span class="o">*</span> <span class="mf">1.1</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n2</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mf">7.5</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">(</span><span class="n">funnel_v2</span><span class="o">.</span><span class="n">stage</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mf">8.5</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">right</span><span class="o">=</span><span class="n">funnel_v2</span><span class="o">.</span><span class="n">n</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;剩余候选数（对数坐标）&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;TCO 筛选漏斗&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s2">&quot;lower right&quot;</span><span class="p">)</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">band_gap</span><span class="p">,</span> <span class="n">pool</span><span class="o">.</span><span class="n">E_f</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.10</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#b0b0b0&quot;</span><span class="p">,</span>
+           <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;全库 (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">tco</span><span class="o">.</span><span class="n">band_gap</span><span class="p">,</span> <span class="n">tco</span><span class="o">.</span><span class="n">E_f</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">crimson</span><span class="p">,</span>
+           <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;入围 (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tco</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">KNOWN_TCO</span><span class="p">:</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">pool</span><span class="p">[</span><span class="n">pool</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">Composition</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">.</span><span class="n">reduced_composition</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">band_gap</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">E_f</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">140</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">navy</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">band_gap</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">r</span><span class="o">.</span><span class="n">E_f</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                    <span class="n">textcoords</span><span class="o">=</span><span class="s2">&quot;offset points&quot;</span><span class="p">,</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">navy</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">GAP_MIN_PBE</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">gold</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.4</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">C</span><span class="o">.</span><span class="n">navy</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.1</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">4.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;PBE band gap / eV&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Formation energy / eV per atom&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;已知 TCO 在性质空间中的位置&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mf">8.5</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s2">&quot;lower right&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p><strong>解析</strong></p>
+<p>和正文里的光伏案例是同一个剧本，只是这次更夸张：</p>
+<table>
+<thead>
+<tr>
+<th>材料</th>
+<th>PBE 带隙</th>
+<th>实验带隙</th>
+<th>比值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="math-inline" data-tex="\text{In}_2\text{O}_3">\(\text{In}_2\text{O}_3\)</span></td>
+<td><span class="math-inline" data-tex="\approx 1.11">\(\approx 1.11\)</span></td>
+<td>3.75</td>
+<td><strong>0.30</strong></td>
+</tr>
+<tr>
+<td><span class="math-inline" data-tex="\text{SnO}_2">\(\text{SnO}_2\)</span></td>
+<td><span class="math-inline" data-tex="\approx 0.00">\(\approx 0.00\)</span></td>
+<td>3.60</td>
+<td><strong>0.00</strong></td>
+</tr>
+<tr>
+<td>ZnO</td>
+<td><span class="math-inline" data-tex="\approx 1.82">\(\approx 1.82\)</span></td>
+<td>3.37</td>
+<td>0.54</td>
+</tr>
+<tr>
+<td><span class="math-inline" data-tex="\text{Ga}_2\text{O}_3">\(\text{Ga}_2\text{O}_3\)</span></td>
+<td><span class="math-inline" data-tex="\approx 2.65">\(\approx 2.65\)</span></td>
+<td>4.80</td>
+<td>0.55</td>
+</tr>
+</tbody>
+</table>
+<p>直接用 3.0 eV 作阈值，<strong>四个已知 TCO 一个都筛不出来</strong>。把阈值按比例降到 PBE 尺度（约 1.0 eV）后，<span class="math-inline" data-tex="\text{In}_2\text{O}_3">\(\text{In}_2\text{O}_3\)</span>、ZnO、<span class="math-inline" data-tex="\text{Ga}_2\text{O}_3">\(\text{Ga}_2\text{O}_3\)</span> 都回来了。</p>
+<p><strong><span class="math-inline" data-tex="\text{SnO}_2">\(\text{SnO}_2\)</span> 是救不回来的特例</strong>：PBE 直接算出 0 eV 带隙，把这个宽带隙透明氧化物判成了金属。这与正文里 <span class="math-inline" data-tex="\text{CuInSe}_2">\(\text{CuInSe}_2\)</span> 的情况同源——都是 PBE 在含满 <span class="math-inline" data-tex="d">\(d\)</span> 壳层阳离子的化合物上的系统性失败。</p>
+<p><strong>回答第 5 问</strong>：TCO 这边的 PBE 偏差<strong>比光伏那边更严重</strong>。光伏材料的比值在 0.2–0.5，TCO 在 0.0–0.55，而且绝对误差更大（<span class="math-inline" data-tex="\text{In}_2\text{O}_3">\(\text{In}_2\text{O}_3\)</span> 差了 2.6 eV，CdTe 只差 0.8 eV）。原因是带隙越宽，PBE 的自相互作用误差占比通常越大；再加上 <span class="math-inline" data-tex="\text{In}_2\text{O}_3">\(\text{In}_2\text{O}_3\)</span>、<span class="math-inline" data-tex="\text{SnO}_2">\(\text{SnO}_2\)</span> 这类材料的能带边由满 <span class="math-inline" data-tex="d">\(d\)</span> 带显著贡献，PBE 对 <span class="math-inline" data-tex="d">\(d\)</span> 态位置的描述本来就差。</p>
+<blockquote>
+<p><strong>📌 带走的结论</strong>：<strong>筛选阈值必须和数据的计算方法匹配</strong>。拿实验尺度的判据去卡 PBE 数据，不是“保守”，而是<strong>系统性地筛掉正确答案</strong>。如果一定要用实验尺度的阈值，就得先做带隙校正（线性拟合、机器学习校正），或者干脆换用 HSE / GW 级别的数据。</p>
+</blockquote>
+</div></div>
+</div>
+  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-公共环境">0. 公共环境</a></li>      <li class="toc-l3"><a href="#练习-06a-1-搭建卤化物钙钛矿并比较晶胞">练习 06a-1：搭建卤化物钙钛矿并比较晶胞</a></li>      <li class="toc-l3"><a href="#练习-06a-2-掺杂浓度与超胞大小">练习 06a-2：掺杂浓度与超胞大小</a></li>      <li class="toc-l3"><a href="#练习-06a-3-用-cod-做一次真实的物相调研">练习 06a-3：用 COD 做一次真实的物相调研</a></li>      <li class="toc-l3"><a href="#练习-06b-1-晶格常数变化如何移动衍射峰">练习 06b-1：晶格常数变化如何移动衍射峰</a></li>      <li class="toc-l3"><a href="#练习-06b-2-另一个二元体系的凸包">练习 06b-2：另一个二元体系的凸包</a></li>      <li class="toc-l3"><a href="#练习-06b-3-设计你自己的筛选流程-透明导电氧化物-tco">练习 06b-3：设计你自己的筛选流程——透明导电氧化物（TCO）</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

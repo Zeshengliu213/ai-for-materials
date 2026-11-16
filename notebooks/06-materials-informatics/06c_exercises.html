@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="06c — 第六讲基础习题：晶体结构、XRD、凸包与组成描述符 本套习题帮助你一步步巩固第六讲（06a–06b）中 pymatgen 晶体结构建模、对称性分析、模拟 XRD、形成能与热力学凸包、Goldschmidt 容差因子以及组成特征向量（CBFV）的核心操作。每道题只需填写 3–8 行代码 ，并附有预期数值提示供" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="06c — 第六讲基础习题：晶体结构、XRD、凸包与组成描述符 | AI for Materials Science" />
+  <meta property="og:description" content="06c — 第六讲基础习题：晶体结构、XRD、凸包与组成描述符 本套习题帮助你一步步巩固第六讲（06a–06b）中 pymatgen 晶体结构建模、对称性分析、模拟 XRD、形成能与热力学凸包、Goldschmidt 容差因子以及组成特征向量（CBFV）的核心操作。每道题只需填写 3–8 行代码 ，并附有预期数值提示供" />
+  <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/notebooks/06-materials-informatics/06c_exercises.html" />
+  <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/notebooks/06-materials-informatics/06c_exercises.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
+  <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%2316324f&#39;/%3E%3Ctext x=&#39;16&#39; y=&#39;21&#39; font-size=&#39;13&#39; font-family=&#39;Georgia,serif&#39; font-weight=&#39;bold&#39; fill=&#39;%23f5c86b&#39; text-anchor=&#39;middle&#39;%3EAI%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../assets/pygments.css" />
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <script>
+    window.AI4M_BASE = "../../";
+    (function () {
+      try {
+        var stored = localStorage.getItem("ai4m-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) { /* default light */ }
+    })();
+  </script>
+  <script defer src="../../assets/vendor/katex/katex.min.js"></script>
+  <script defer src="../../assets/search-index.js"></script>
+  <script defer src="../../assets/app.js"></script>  <title>06c — 第六讲基础习题：晶体结构、XRD、凸包与组成描述符 | AI for Materials Science</title>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到正文</a>
+<svg class="vz-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="vz-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse">
+      <path d="M0 1l8 4-8 4z" />
+    </marker>
+  </defs>
+</svg>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../../index.html">
+      <div class="brand-seal">AI4M</div>
+      <div class="brand-text">
+        <span class="brand-title">AI for Materials Science</span>
+        <span class="brand-sub">材料人工智能实战课程 · 研究生课程门户</span>
+      </div>
+    </a>
+    <div class="global-search">
+      <input id="site-search" type="search" autocomplete="off"
+             placeholder="搜索全站课件与讲义（如 Scaffold Split / GNN）"
+             aria-label="搜索全站课件与讲义" />
+      <div id="site-search-results" class="search-results" role="listbox" hidden></div>
+    </div>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../../index.html">课程主页</a>
+      <a href="../../index.html#syllabus" class="active">课程大纲</a>
+      <a href="../../exercises.html">习题与答案</a>
+      <a href="../../index.html#legend">学习指南</a>
+      <a href="../../index.html#setup">环境配置</a>
+      <button type="button" id="theme-toggle" class="theme-toggle"
+              aria-label="切换深色/浅色主题" title="切换深色/浅色主题">
+        <span aria-hidden="true" class="theme-icon-light">☀</span>
+        <span aria-hidden="true" class="theme-icon-dark">☾</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<div class="doc-layout doc-layout-toc">
+<aside class="sidebar" aria-label="课程模块导航">
+  <details class="sidebar-disclosure" open>
+    <summary class="sidebar-title">课程模块导航</summary>
+    <ul class="sidebar-list">      <li>
+        <a href="../../modules/01-basics.html"
+>
+          <strong>01</strong> · Python 与化学/材料数据基础
+        </a>
+      </li>      <li>
+        <a href="../../modules/02-supervised-learning.html"
+>
+          <strong>02</strong> · 监督学习与模型评估防坑
+        </a>
+      </li>      <li>
+        <a href="../../modules/03-unsupervised-learning.html"
+>
+          <strong>03</strong> · 无监督学习：化学空间与发现
+        </a>
+      </li>      <li>
+        <a href="../../modules/04-bayesian-optimization.html"
+>
+          <strong>04</strong> · 贝叶斯优化与主动实验设计
+        </a>
+      </li>      <li>
+        <a href="../../modules/05-feature-engineering-and-molecular-informatics.html"
+>
+          <strong>05</strong> · 特征工程、SHAP 与 3D 分子
+        </a>
+      </li>      <li>
+        <a href="../../modules/06-materials-informatics.html"
+>
+          <strong>06</strong> · 无机与晶体材料信息学
+        </a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html"
+           data-progress-mark="notebooks/06-materials-informatics/06a_crystal_structures_and_databases.html"
+>📓 06a_crystal_structures_and_databases.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html"
+           data-progress-mark="notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html"
+>📓 06b_xrd_phase_diagram_screening.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../../notebooks/06-materials-informatics/06c_exercises.html"
+           data-progress-mark="notebooks/06-materials-informatics/06c_exercises.html"
+class="active">🏋️ 06c_exercises.ipynb</a>
+      </li>      <li>
+        <a href="../../modules/07-neural-networks-and-cnns.html"
+>
+          <strong>07</strong> · 神经网络与材料显微视觉 CNN
+        </a>
+      </li>      <li>
+        <a href="../../modules/08-sequence-models-and-transformers.html"
+>
+          <strong>08</strong> · 序列模型、Transformer 与反应预测
+        </a>
+      </li>      <li>
+        <a href="../../modules/09-generative-models.html"
+>
+          <strong>09</strong> · 生成模型：分子设计到电镜超分
+        </a>
+      </li>      <li>
+        <a href="../../modules/10-graph-neural-networks-and-mlips.html"
+>
+          <strong>10</strong> · 图神经网络（GNN）与机器学习势函数
+        </a>
+      </li>    </ul>
+  </details>
+  <div class="sidebar-extra">
+    <a href="../../exercises.html">🏋️ 全部习题与答案</a>
+  </div>
+</aside>
+  <main class="doc-main" id="main-content">
+<div class="breadcrumb">
+  <a href="../../index.html">课程主页</a> /
+  <a href="../../modules/06-materials-informatics.html">模块 06：无机与晶体材料信息学</a> /  <a href="../../exercises.html">习题</a> /  <span>06c_exercises.ipynb</span>
+</div>
+<h1><span class="kind-badge kind-exercise">习题</span> 06c — 第六讲基础习题：晶体结构、XRD、凸包与组成描述符</h1>
+<div class="action-toolbar">
+  <div class="toolbar-meta">
+    习题文件：<code>06c_exercises.ipynb</code>（14.0 KB）
+  </div>
+  <div class="toolbar-actions">    <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/06%20-%20Materials%20Informatics/06c_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>    <a class="btn btn-secondary" href="../../files/_shared/71d821058a29-06c_exercises.ipynb" download="06c_exercises.ipynb">⬇ 下载 .ipynb</a>    <a class="btn btn-secondary" href="../../solutions/06-materials-informatics/06_exercises_solutions.html">查看参考答案</a>    <button type="button" class="btn btn-progress" data-progress-toggle
+            data-progress-key="notebooks/06-materials-informatics/06c_exercises.html"
+            aria-pressed="false">☐ 标记为已学完</button>
+  </div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><p>本套习题帮助你一步步巩固第六讲（<code>06a</code>–<code>06b</code>）中 pymatgen 晶体结构建模、对称性分析、模拟 XRD、形成能与热力学凸包、Goldschmidt 容差因子以及组成特征向量（CBFV）的核心操作。每道题只需填写 <strong>3–8 行代码</strong>，并附有预期数值提示供你自查。完成后可对照 <code>solutions/06_exercises_solutions.ipynb</code> 查看完整解答。</p>
+</div></div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="0-公共环境准备">0. 公共环境准备</h2>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [1] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.spatial</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConvexHull</span>
+
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Structure</span><span class="p">,</span> <span class="n">Lattice</span><span class="p">,</span> <span class="n">Composition</span><span class="p">,</span> <span class="n">Element</span><span class="p">,</span> <span class="n">Species</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.symmetry.analyzer</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpacegroupAnalyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.analysis.diffraction.xrd</span><span class="w"> </span><span class="kn">import</span> <span class="n">XRDCalculator</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">r2_score</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.dpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">110</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">find_file</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;../data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">path</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;找不到 </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">xrd</span> <span class="o">=</span> <span class="n">XRDCalculator</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="s2">&quot;CuKa&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;环境就绪，Cu K-alpha 波长 =&quot;</span><span class="p">,</span> <span class="n">xrd</span><span class="o">.</span><span class="n">wavelength</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><!-- ai4m-style -->
+<blockquote>
+<p><strong>📘 课程统一绘图风格</strong>：下面这格加载课程自带的 <code>ai4m.mplstyle</code>（配色与课程网站同源，无上右边框，仅横向浅网格，保存默认 300 dpi）。<code>C</code> 是课程配色，手动指定颜色时写 <code>color=C.crimson</code>。</p>
+</blockquote>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [2] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># ai4m-style：课程统一绘图风格（本地与 Colab 通用）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>   <span class="c1"># course/ 根目录</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ai4m_style</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ai4m</span>
+
+<span class="n">C</span> <span class="o">=</span> <span class="n">ai4m</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>        <span class="c1"># 应用 ai4m.mplstyle，返回课程配色</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第一部分-晶体结构与对称性-对应-06a">第一部分：晶体结构与对称性（对应 <code>06a</code>）</h2>
+<h3 id="习题-1-搭建闪锌矿结构的-gaas-并读出基本信息">🏋️ 习题 1：搭建闪锌矿结构的 GaAs 并读出基本信息</h3>
+<p>GaAs 是闪锌矿（zinc blende）结构，空间群 <code>F-43m</code>（No. 216），晶胞参数 <span class="math-inline" data-tex="a = 5.653">\(a = 5.653\)</span> Å，Ga 在 <span class="math-inline" data-tex="(0, 0, 0)">\((0, 0, 0)\)</span>，As 在 <span class="math-inline" data-tex="(\tfrac{1}{4}, \tfrac{1}{4}, \tfrac{1}{4})">\((\tfrac{1}{4}, \tfrac{1}{4}, \tfrac{1}{4})\)</span>。</p>
+<ol>
+<li>用 <code>Structure.from_spacegroup</code> 搭出来；</li>
+<li>打印化学式、晶胞原子数、体积、密度；</li>
+<li>算出最近的 Ga–As 键长——先找出 Ga 和 As 的位点编号，再<strong>对所有 As 取最小值</strong>。周期性边界下编号相邻不等于空间相邻，随手挑两个编号相减是 <code>06a</code> 里演示过的经典错误。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：8 个原子；密度约 <code>5.32</code> g/cm³；Ga–As 键长约 <code>2.448</code> Å（<span class="math-inline" data-tex="= \sqrt{3}\,a/4">\(= \sqrt{3}\,a/4\)</span>）。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [3] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-2-对称性分析与原始胞">🏋️ 习题 2：对称性分析与原始胞</h3>
+<p>延续上一题的 GaAs 结构：</p>
+<ol>
+<li>用 <code>SpacegroupAnalyzer(gaas, symprec=0.01)</code> 分析，打印空间群符号、空间群编号、晶系、点群、对称操作数；</li>
+<li>用 <code>get_primitive_standard_structure()</code> 得到原始胞，打印它的原子数和体积；</li>
+<li>计算“常规胞原子数 / 原始胞原子数”这个比值，并按原子数三次方估算：如果改用原始胞做 DFT，计算量大约能降到常规胞的百分之几。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：<code>F-43m</code>（No. 216），立方晶系，点群 <span class="math-inline" data-tex="\bar{4}3m">\(\bar{4}3m\)</span>；原始胞 2 个原子；计算量约降到 <span class="math-inline" data-tex="(2/8)^3 \approx 1.6\%">\((2/8)^3 \approx 1.6\%\)</span>。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [4] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-3-用-goldschmidt-容差因子判断钙钛矿能不能成">🏋️ 习题 3：用 Goldschmidt 容差因子判断钙钛矿能不能成</h3>
+<p>计算三个卤化物钙钛矿的容差因子</p>
+<div class="math-block" data-tex="t = \frac{r_A + r_X}{\sqrt{2}\,(r_B + r_X)}">\[t = \frac{r_A + r_X}{\sqrt{2}\,(r_B + r_X)}\]</div>
+<p>用下面这组 Shannon 离子半径（单位 Å，已按合适的配位数给出）：</p>
+<table>
+<thead>
+<tr>
+<th>离子</th>
+<th><span class="math-inline" data-tex="r">\(r\)</span> / Å</th>
+<th>离子</th>
+<th><span class="math-inline" data-tex="r">\(r\)</span> / Å</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cs<span class="math-inline" data-tex="^+">\(^+\)</span> (XII)</td>
+<td>1.88</td>
+<td>Pb<span class="math-inline" data-tex="^{2+}">\(^{2+}\)</span> (VI)</td>
+<td>1.19</td>
+</tr>
+<tr>
+<td>Rb<span class="math-inline" data-tex="^+">\(^+\)</span> (XII)</td>
+<td>1.72</td>
+<td>I<span class="math-inline" data-tex="^-">\(^-\)</span> (VI)</td>
+<td>2.20</td>
+</tr>
+<tr>
+<td>K<span class="math-inline" data-tex="^+">\(^+\)</span> (XII)</td>
+<td>1.64</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li>对 <span class="math-inline" data-tex="\text{CsPbI}_3">\(\text{CsPbI}_3\)</span>、<span class="math-inline" data-tex="\text{RbPbI}_3">\(\text{RbPbI}_3\)</span>、<span class="math-inline" data-tex="\text{KPbI}_3">\(\text{KPbI}_3\)</span> 算出 <span class="math-inline" data-tex="t">\(t\)</span>，整理成一张表；</li>
+<li>判断每一个是否落在 <span class="math-inline" data-tex="0.8 &lt; t &lt; 1.0">\(0.8 &lt; t &lt; 1.0\)</span> 的钙钛矿稳定窗口内；</li>
+<li><strong>讨论</strong>：实验上 <span class="math-inline" data-tex="\text{CsPbI}_3">\(\text{CsPbI}_3\)</span> 能形成钙钛矿（尽管室温下会相变成非钙钛矿的 <span class="math-inline" data-tex="\delta">\(\delta\)</span> 相），而 <span class="math-inline" data-tex="\text{KPbI}_3">\(\text{KPbI}_3\)</span> 完全不行。可是你会发现三个 <span class="math-inline" data-tex="t">\(t\)</span> <strong>全都落在 <span class="math-inline" data-tex="0.8 \sim 1.0">\(0.8 \sim 1.0\)</span> 的窗口里</strong>，容差因子并没有把 <span class="math-inline" data-tex="\text{KPbI}_3">\(\text{KPbI}_3\)</span> 排除掉。结合 <code>06b</code> 第 5 节的结论想一想：这说明容差因子的分辨力有多高？只拿它做高通量筛选，主要会产生哪一类错误——假阳性还是假阴性？</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：三个 <span class="math-inline" data-tex="t">\(t\)</span> 依次约为 <code>0.851</code>、<code>0.818</code>、<code>0.801</code>——一路下滑并<strong>紧贴窗口下边界 0.8</strong>，但谁也没掉出去。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [5] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="第二部分-xrd-与热力学-对应-06b">第二部分：XRD 与热力学（对应 <code>06b</code>）</h2>
+<h3 id="习题-4-模拟-xrd-并用布拉格定律反算-d-值">🏋️ 习题 4：模拟 XRD 并用布拉格定律反算 d 值</h3>
+<p>对习题 1 的 GaAs：</p>
+<ol>
+<li>用 <code>xrd.get_pattern(gaas, two_theta_range=(20, 80))</code> 算出衍射谱；</li>
+<li>打印前 5 个峰的 <span class="math-inline" data-tex="2\theta">\(2\theta\)</span>、<span class="math-inline" data-tex="d_{hkl}">\(d_{hkl}\)</span>、相对强度和 <span class="math-inline" data-tex="(hkl)">\((hkl)\)</span> 指标；</li>
+<li>取最强峰，用布拉格定律 <span class="math-inline" data-tex="d = \lambda / (2\sin\theta)">\(d = \lambda / (2\sin\theta)\)</span> <strong>手工反算</strong> <span class="math-inline" data-tex="d">\(d\)</span>，与 <code>pattern.d_hkls</code> 给出的值对比（注意 <span class="math-inline" data-tex="\theta = 2\theta / 2">\(\theta = 2\theta / 2\)</span>，波长用 <code>xrd.wavelength</code>）；</li>
+<li>用 <code>plt.vlines</code> 画出谱图。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：最强峰是 <span class="math-inline" data-tex="(111)">\((111)\)</span>，位于 <span class="math-inline" data-tex="2\theta \approx 27.3^\circ">\(2\theta \approx 27.3^\circ\)</span>；手工反算的 <span class="math-inline" data-tex="d">\(d\)</span> 与 pymatgen 的值在小数点后三位一致。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [6] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-5-体心立方的系统消光">🏋️ 习题 5：体心立方的系统消光</h3>
+<p>体心立方（bcc）点阵的消光规律是：只有 <span class="math-inline" data-tex="h + k + l">\(h + k + l\)</span> 为<strong>偶数</strong>的衍射峰才出现。</p>
+<ol>
+<li>用 <code>Structure.from_spacegroup(&quot;Im-3m&quot;, Lattice.cubic(2.866), [&quot;Fe&quot;], [[0, 0, 0]])</code> 搭出 <span class="math-inline" data-tex="\alpha">\(\alpha\)</span>-Fe（bcc，<span class="math-inline" data-tex="a = 2.866">\(a = 2.866\)</span> Å）；</li>
+<li>算出它的 XRD 谱（<span class="math-inline" data-tex="2\theta">\(2\theta\)</span> 取 <span class="math-inline" data-tex="20^\circ \sim 120^\circ">\(20^\circ \sim 120^\circ\)</span>），把每个峰的 <span class="math-inline" data-tex="(hkl)">\((hkl)\)</span> 和 <span class="math-inline" data-tex="h+k+l">\(h+k+l\)</span> 打印成一张表；</li>
+<li>验证列表里<strong>所有</strong>峰的 <span class="math-inline" data-tex="h+k+l">\(h+k+l\)</span> 都是偶数；</li>
+<li><strong>思考</strong>：如果某个样品的谱图里出现了 <span class="math-inline" data-tex="(100)">\((100)\)</span> 峰（<span class="math-inline" data-tex="h+k+l = 1">\(h+k+l = 1\)</span>，奇数），它就不可能是单质 bcc 铁。那它可能是什么？（提示：想想有序合金，比如 CsCl 型的 FeAl）</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：最强峰是 <span class="math-inline" data-tex="(110)">\((110)\)</span>，位于 <span class="math-inline" data-tex="2\theta \approx 44.7^\circ">\(2\theta \approx 44.7^\circ\)</span>；所有出现的 <span class="math-inline" data-tex="(hkl)">\((hkl)\)</span> 都满足 <span class="math-inline" data-tex="h+k+l">\(h+k+l\)</span> 为偶数。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [7] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-6-计算形成能-含元素参考态的坑">🏋️ 习题 6：计算形成能（含元素参考态的坑）</h3>
+<p>下面这一格读入 AFLOW 的每原子总能数据并解析化学式。请你：</p>
+<ol>
+<li>对每个元素，在它的所有同素异形体条目里，<strong>先用中位数剔除偏离超过 2 eV/atom 的异常条目，再取最小值</strong>作为参考态 <span class="math-inline" data-tex="\mu">\(\mu\)</span>（不能直接取 <code>min</code>，<code>06b</code> 第 4 节讲过为什么）；</li>
+<li>实现 <span class="math-inline" data-tex="E_f = E - \sum_i x_i \mu_i">\(E_f = E - \sum_i x_i \mu_i\)</span>（<span class="math-inline" data-tex="x_i">\(x_i\)</span> 是归一化的原子分数）；</li>
+<li>打印被判为异常的条目，以及 <span class="math-inline" data-tex="\text{TiO}_2">\(\text{TiO}_2\)</span>、<span class="math-inline" data-tex="\text{Al}_2\text{O}_3">\(\text{Al}_2\text{O}_3\)</span>、ZnO、CdTe 四个化合物的形成能。</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：异常条目是 <code>S8</code> 和 <code>Ta8</code>；四个形成能依次约为 <span class="math-inline" data-tex="-3.16">\(-3.16\)</span>、<span class="math-inline" data-tex="-3.02">\(-3.02\)</span>、<span class="math-inline" data-tex="-1.80">\(-1.80\)</span>、<span class="math-inline" data-tex="-0.49">\(-0.49\)</span> eV/atom。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [8] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="n">ea</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">find_file</span><span class="p">(</span><span class="s2">&quot;energy_per_atom_aflow.csv&quot;</span><span class="p">))</span>
+<span class="n">TOKEN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([A-Z][a-z]?)(\d*\.?\d*)&quot;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_formula</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">el</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">TOKEN</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">el</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">el</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span> <span class="k">else</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+<span class="n">ea</span><span class="p">[</span><span class="s2">&quot;comp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ea</span><span class="o">.</span><span class="n">formula</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">parse_formula</span><span class="p">)</span>
+<span class="n">ea</span><span class="p">[</span><span class="s2">&quot;n_el&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ea</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;读入 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ea</span><span class="p">)</span><span class="si">}</span><span class="s2"> 条记录，其中单质条目 </span><span class="si">{</span><span class="p">(</span><span class="n">ea</span><span class="o">.</span><span class="n">n_el</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> 条&quot;</span><span class="p">)</span>
+
+<span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-7-cu-o-体系的凸包">🏋️ 习题 7：Cu–O 体系的凸包</h3>
+<p>延续上一题算好的 <code>ea[&quot;E_f&quot;]</code>：</p>
+<ol>
+<li>取出所有只含 Cu 和/或 O 的条目，算出每条的氧原子分数 <span class="math-inline" data-tex="x_{\text{O}}">\(x_{\text{O}}\)</span>；</li>
+<li>对每个组成只保留能量最低的多晶型，用 <code>scipy.spatial.ConvexHull</code> 求下凸包（技巧见 <code>06b</code> 第 4 节：补一个远在上方的辅助点）；</li>
+<li>打印落在凸包上的稳定相及其 <span class="math-inline" data-tex="E_f">\(E_f\)</span>；</li>
+<li>画出凸包图（灰点 = 全部条目，红线 = 凸包）。</li>
+</ol>
+<ul>
+<li><strong>自查</strong>：实验上 <span class="math-inline" data-tex="\text{Cu}_2\text{O}">\(\text{Cu}_2\text{O}\)</span>（赤铜矿）和 CuO（黑铜矿）都是稳定存在的物相。你的凸包把它们都放上去了吗？如果没有，差了多少 meV/atom？</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [9] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><h3 id="习题-8-cbfv-特征与一次诚实的外推测试">🏋️ 习题 8：CBFV 特征与一次诚实的外推测试</h3>
+<ol>
+<li>读入 <code>magpie_element_properties.csv</code> 和 <code>bandgap_aflow.csv</code>；</li>
+<li>实现 <code>composition_features(comp)</code>：对 22 个 Magpie 属性各算 5 个统计量（加权平均、加权绝对偏差、最小值、最大值、极差），得到 110 维向量；</li>
+<li>为了课堂速度，<strong>随机抽取 6,000 个化合物</strong>（<code>sample(6000, random_state=0)</code>）建特征矩阵；</li>
+<li>训练 <code>RandomForestRegressor(n_estimators=100, random_state=0, n_jobs=-1)</code>，分别用两种划分报告测试集 <span class="math-inline" data-tex="R^2">\(R^2\)</span>：
+<ul>
+<li><strong>随机划分</strong>：<code>train_test_split(test_size=0.2, random_state=42)</code>；</li>
+<li><strong>留出整类化学</strong>：把所有**含氯（Cl）**的化合物整体作为测试集；</li>
+</ul>
+</li>
+<li><strong>讨论</strong>：两个 <span class="math-inline" data-tex="R^2">\(R^2\)</span> 差了多少？如果你要用这个模型预测一类训练集里完全没有的新化合物，应该相信哪个数字？</li>
+</ol>
+<ul>
+<li><strong>预期输出</strong>：随机划分的 <span class="math-inline" data-tex="R^2">\(R^2\)</span> 在 0.8 上下；留出氯化物后显著下降。</li>
+</ul>
+</div></div>
+<div class="nb-cell nb-cell-code"><div class="nb-code-header"><span>In [10] · Python</span><button type="button" class="nb-copy-btn">复制代码</button></div><div class="highlight"><pre><span></span><span class="c1"># 在下方填写你的代码：</span>
+</pre></div>
+</div>
+<div class="nb-cell nb-cell-markdown"><div class="markdown-body"><hr />
+<h2 id="完成后">完成后</h2>
+<ul>
+<li>对照 <code>solutions/06_exercises_solutions.ipynb</code> 检查本套 8 道基础习题的答案；</li>
+<li><code>06a</code> 与 <code>06b</code> 正文中内嵌的 6 道课堂练习（<code>06a-1</code> ~ <code>06a-3</code>、<code>06b-1</code> ~ <code>06b-3</code>）的参考解答在 <code>solutions/06_materials_solutions.ipynb</code>。</li>
+</ul>
+</div></div>
+<div class="page-end-actions">
+  <button type="button" class="btn btn-progress" data-progress-toggle
+          data-progress-key="notebooks/06-materials-informatics/06c_exercises.html"
+          aria-pressed="false">☐ 标记为已学完</button>
+  <a class="btn btn-secondary" href="../../modules/06-materials-informatics.html">返回模块 06</a>  <a class="btn btn-secondary" href="../../exercises.html">全部习题汇总</a></div>
+<nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../../notebooks/06-materials-informatics/06b_xrd_phase_diagram_screening.html" rel="prev">
+    <span class="pager-label">← 上一讲</span>
+    <span class="pager-title">06b — 模拟 XRD、热力学凸包与高通量虚拟筛选</span>
+  </a>  <a class="pager-link pager-next" href="../../modules/07-neural-networks-and-cnns.html" rel="next">
+    <span class="pager-label">下一讲 →</span>
+    <span class="pager-title">模块 07 · 神经网络与材料显微视觉 CNN</span>
+  </a></nav>  </main><nav class="toc" aria-label="本页目录">
+  <details class="toc-disclosure" open>
+    <summary class="toc-title">本页目录</summary>
+    <ul class="toc-list">      <li class="toc-l2"><a href="#0-公共环境准备">0. 公共环境准备</a></li>      <li class="toc-l2"><a href="#第一部分-晶体结构与对称性-对应-06a">第一部分：晶体结构与对称性（对应 06a）</a></li>      <li class="toc-l3"><a href="#习题-1-搭建闪锌矿结构的-gaas-并读出基本信息">🏋️ 习题 1：搭建闪锌矿结构的 GaAs 并读出基本信息</a></li>      <li class="toc-l3"><a href="#习题-2-对称性分析与原始胞">🏋️ 习题 2：对称性分析与原始胞</a></li>      <li class="toc-l3"><a href="#习题-3-用-goldschmidt-容差因子判断钙钛矿能不能成">🏋️ 习题 3：用 Goldschmidt 容差因子判断钙钛矿能不能成</a></li>      <li class="toc-l2"><a href="#第二部分-xrd-与热力学-对应-06b">第二部分：XRD 与热力学（对应 06b）</a></li>      <li class="toc-l3"><a href="#习题-4-模拟-xrd-并用布拉格定律反算-d-值">🏋️ 习题 4：模拟 XRD 并用布拉格定律反算 d 值</a></li>      <li class="toc-l3"><a href="#习题-5-体心立方的系统消光">🏋️ 习题 5：体心立方的系统消光</a></li>      <li class="toc-l3"><a href="#习题-6-计算形成能-含元素参考态的坑">🏋️ 习题 6：计算形成能（含元素参考态的坑）</a></li>      <li class="toc-l3"><a href="#习题-7-cu-o-体系的凸包">🏋️ 习题 7：Cu–O 体系的凸包</a></li>      <li class="toc-l3"><a href="#习题-8-cbfv-特征与一次诚实的外推测试">🏋️ 习题 8：CBFV 特征与一次诚实的外推测试</a></li>      <li class="toc-l2"><a href="#完成后">完成后</a></li>    </ul>
+  </details>
+</nav></div>
+<footer class="footer">
+  <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>
+  <div class="footer-sub">融合 LiU AI for Materials Science 脉络与 EPFL CH-457 互动实战设计 · 公开课程资源</div>
+</footer>
+</body>
+</html>

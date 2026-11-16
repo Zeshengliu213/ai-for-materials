@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="回归建模、交叉验证与 Scaffold Split 防数据泄漏、分类模型与特征重要性。" />
+  <meta name="description" content="材料机器学习导论、线性模型与正则化、kNN 与 SVM、决策树与集成（RF/XGBoost）、感知机与逻辑回归分类、交叉验证与适用域。" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="模块 02：监督学习与模型评估防坑 | AI for Materials Science" />
-  <meta property="og:description" content="回归建模、交叉验证与 Scaffold Split 防数据泄漏、分类模型与特征重要性。" />
+  <meta property="og:description" content="材料机器学习导论、线性模型与正则化、kNN 与 SVM、决策树与集成（RF/XGBoost）、感知机与逻辑回归分类、交叉验证与适用域。" />
   <meta property="og:site_name" content="AI for Materials Science" />  <link rel="canonical" href="https://zeshengliu213.github.io/ai-for-materials/modules/02-supervised-learning.html" />
   <meta property="og:url" content="https://zeshengliu213.github.io/ai-for-materials/modules/02-supervised-learning.html" />  <meta property="og:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />
   <meta name="twitter:image" content="https://zeshengliu213.github.io/ai-for-materials/assets/social-card.svg" />  <meta name="twitter:card" content="summary_large_image" />
@@ -84,21 +84,33 @@ class="active">
           <strong>02</strong> · 监督学习与模型评估防坑
         </a>
       </li>      <li class="sidebar-sub">
-        <a href="../notebooks/02-supervised-learning/02a_regression.html"
-           data-progress-mark="notebooks/02-supervised-learning/02a_regression.html"
->📓 02a_regression.ipynb</a>
+        <a href="../notebooks/02-supervised-learning/020_ml_for_materials_overview.html"
+           data-progress-mark="notebooks/02-supervised-learning/020_ml_for_materials_overview.html"
+>📓 020_ml_for_materials_overview.ipynb</a>
       </li>      <li class="sidebar-sub">
-        <a href="../notebooks/02-supervised-learning/02b_validation_and_tuning.html"
-           data-progress-mark="notebooks/02-supervised-learning/02b_validation_and_tuning.html"
->📓 02b_validation_and_tuning.ipynb</a>
+        <a href="../notebooks/02-supervised-learning/02a_linear_models.html"
+           data-progress-mark="notebooks/02-supervised-learning/02a_linear_models.html"
+>📓 02a_linear_models.ipynb</a>
       </li>      <li class="sidebar-sub">
-        <a href="../notebooks/02-supervised-learning/02c_classification.html"
-           data-progress-mark="notebooks/02-supervised-learning/02c_classification.html"
->📓 02c_classification.ipynb</a>
+        <a href="../notebooks/02-supervised-learning/02b_knn_and_svm.html"
+           data-progress-mark="notebooks/02-supervised-learning/02b_knn_and_svm.html"
+>📓 02b_knn_and_svm.ipynb</a>
       </li>      <li class="sidebar-sub">
-        <a href="../notebooks/02-supervised-learning/02d_exercises.html"
-           data-progress-mark="notebooks/02-supervised-learning/02d_exercises.html"
->🏋️ 02d_exercises.ipynb</a>
+        <a href="../notebooks/02-supervised-learning/02c_trees_and_ensembles.html"
+           data-progress-mark="notebooks/02-supervised-learning/02c_trees_and_ensembles.html"
+>📓 02c_trees_and_ensembles.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/02-supervised-learning/02d_classification.html"
+           data-progress-mark="notebooks/02-supervised-learning/02d_classification.html"
+>📓 02d_classification.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/02-supervised-learning/02e_validation_and_tuning.html"
+           data-progress-mark="notebooks/02-supervised-learning/02e_validation_and_tuning.html"
+>📓 02e_validation_and_tuning.ipynb</a>
+      </li>      <li class="sidebar-sub">
+        <a href="../notebooks/02-supervised-learning/02f_exercises.html"
+           data-progress-mark="notebooks/02-supervised-learning/02f_exercises.html"
+>🏋️ 02f_exercises.ipynb</a>
       </li>      <li>
         <a href="../modules/03-unsupervised-learning.html"
 >
@@ -152,10 +164,10 @@ class="active">
   <span class="status-badge status-done">已完成</span>
   <span class="module-head-en">Supervised Learning &amp; Validation</span>
 </div>
-<h1>监督学习与模型评估防坑</h1><div class="progress-panel" data-progress-keys="notebooks/02-supervised-learning/02a_regression.html,notebooks/02-supervised-learning/02b_validation_and_tuning.html,notebooks/02-supervised-learning/02c_classification.html,notebooks/02-supervised-learning/02d_exercises.html">
+<h1>监督学习与模型评估防坑</h1><div class="progress-panel" data-progress-keys="notebooks/02-supervised-learning/020_ml_for_materials_overview.html,notebooks/02-supervised-learning/02a_linear_models.html,notebooks/02-supervised-learning/02b_knn_and_svm.html,notebooks/02-supervised-learning/02c_trees_and_ensembles.html,notebooks/02-supervised-learning/02d_classification.html,notebooks/02-supervised-learning/02e_validation_and_tuning.html,notebooks/02-supervised-learning/02f_exercises.html">
   <div class="progress-head">
     <strong>本模块学习进度</strong>
-    <span class="progress-count" data-progress-count>0 / 4</span>
+    <span class="progress-count" data-progress-count>0 / 7</span>
   </div>
   <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
   <p class="hint-inline">进度只保存在你当前浏览器（localStorage），不会上传到任何服务器。</p>
@@ -165,37 +177,70 @@ class="active">
     <thead><tr><th>完成</th><th>课件名称</th><th>大小</th><th>操作</th></tr></thead>
     <tbody>      <tr>
         <td class="nb-check-cell">
-          <input type="checkbox" class="progress-check" data-progress-key="notebooks/02-supervised-learning/02a_regression.html"
-                 aria-label="把 02a_regression.ipynb 标记为已学完" />
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/02-supervised-learning/020_ml_for_materials_overview.html"
+                 aria-label="把 020_ml_for_materials_overview.ipynb 标记为已学完" />
         </td>
-        <td><a href="../notebooks/02-supervised-learning/02a_regression.html"><strong>02a · 监督学习入门：从分子特征预测水溶解度（回归）</strong></a><br/>
-          <code>02a_regression.ipynb</code></td>
-        <td>40.9 KB</td>
+        <td><a href="../notebooks/02-supervised-learning/020_ml_for_materials_overview.html"><strong>020 · 机器学习与材料科学总概论：从数据表征到智能发现</strong></a><br/>
+          <code>020_ml_for_materials_overview.ipynb</code></td>
+        <td>483.5 KB</td>
         <td>
-          <a class="btn btn-secondary" href="../notebooks/02-supervised-learning/02a_regression.html">在线阅读</a>
-          <a class="btn btn-secondary" href="../files/_shared/c1adc3aeadca-02a_regression.ipynb" download="02a_regression.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02a_regression.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+          <a class="btn btn-secondary" href="../notebooks/02-supervised-learning/020_ml_for_materials_overview.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/92cc7bec1b62-020_ml_for_materials_overview.ipynb" download="020_ml_for_materials_overview.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/020_ml_for_materials_overview.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
       </tr>      <tr>
         <td class="nb-check-cell">
-          <input type="checkbox" class="progress-check" data-progress-key="notebooks/02-supervised-learning/02b_validation_and_tuning.html"
-                 aria-label="把 02b_validation_and_tuning.ipynb 标记为已学完" />
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/02-supervised-learning/02a_linear_models.html"
+                 aria-label="把 02a_linear_models.ipynb 标记为已学完" />
         </td>
-        <td><a href="../notebooks/02-supervised-learning/02b_validation_and_tuning.html"><strong>02b · 模型评估防坑：交叉验证、超参数调优与适用域</strong></a><br/>
-          <code>02b_validation_and_tuning.ipynb</code></td>
-        <td>36.9 KB</td>
+        <td><a href="../notebooks/02-supervised-learning/02a_linear_models.html"><strong>02a · 线性模型：线性回归、梯度下降、多项式与正则化</strong></a><br/>
+          <code>02a_linear_models.ipynb</code></td>
+        <td>590.0 KB</td>
         <td>
-          <a class="btn btn-secondary" href="../notebooks/02-supervised-learning/02b_validation_and_tuning.html">在线阅读</a>
-          <a class="btn btn-secondary" href="../files/_shared/75ec82ae97c2-02b_validation_and_tuning.ipynb" download="02b_validation_and_tuning.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02b_validation_and_tuning.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+          <a class="btn btn-secondary" href="../notebooks/02-supervised-learning/02a_linear_models.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/fa7915ca607d-02a_linear_models.ipynb" download="02a_linear_models.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02a_linear_models.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
       </tr>      <tr>
         <td class="nb-check-cell">
-          <input type="checkbox" class="progress-check" data-progress-key="notebooks/02-supervised-learning/02c_classification.html"
-                 aria-label="把 02c_classification.ipynb 标记为已学完" />
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/02-supervised-learning/02b_knn_and_svm.html"
+                 aria-label="把 02b_knn_and_svm.ipynb 标记为已学完" />
         </td>
-        <td><a href="../notebooks/02-supervised-learning/02c_classification.html"><strong>02c — 分类与基础特征重要性（Classification &amp; Feature Importance）</strong></a><br/>
-          <code>02c_classification.ipynb</code></td>
-        <td>34.1 KB</td>
+        <td><a href="../notebooks/02-supervised-learning/02b_knn_and_svm.html"><strong>02b · 基于距离与边界的模型：k 近邻（kNN）与支持向量机（SVM）</strong></a><br/>
+          <code>02b_knn_and_svm.ipynb</code></td>
+        <td>537.9 KB</td>
         <td>
-          <a class="btn btn-secondary" href="../notebooks/02-supervised-learning/02c_classification.html">在线阅读</a>
-          <a class="btn btn-secondary" href="../files/_shared/503be164c66a-02c_classification.ipynb" download="02c_classification.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02c_classification.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+          <a class="btn btn-secondary" href="../notebooks/02-supervised-learning/02b_knn_and_svm.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/b11cf9e7dae2-02b_knn_and_svm.ipynb" download="02b_knn_and_svm.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02b_knn_and_svm.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/02-supervised-learning/02c_trees_and_ensembles.html"
+                 aria-label="把 02c_trees_and_ensembles.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/02-supervised-learning/02c_trees_and_ensembles.html"><strong>02c · 树模型与集成学习：决策树、随机森林与 XGBoost</strong></a><br/>
+          <code>02c_trees_and_ensembles.ipynb</code></td>
+        <td>374.4 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/02-supervised-learning/02c_trees_and_ensembles.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/34aa0bd21583-02c_trees_and_ensembles.ipynb" download="02c_trees_and_ensembles.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02c_trees_and_ensembles.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/02-supervised-learning/02d_classification.html"
+                 aria-label="把 02d_classification.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/02-supervised-learning/02d_classification.html"><strong>02d · 分类模型与概率：感知机、逻辑回归、评估指标与物理归因</strong></a><br/>
+          <code>02d_classification.ipynb</code></td>
+        <td>464.5 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/02-supervised-learning/02d_classification.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/a722c5ad0f1c-02d_classification.ipynb" download="02d_classification.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02d_classification.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
+      </tr>      <tr>
+        <td class="nb-check-cell">
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/02-supervised-learning/02e_validation_and_tuning.html"
+                 aria-label="把 02e_validation_and_tuning.ipynb 标记为已学完" />
+        </td>
+        <td><a href="../notebooks/02-supervised-learning/02e_validation_and_tuning.html"><strong>02e · 模型验证、调参与适用域：从论文高分到真实泛化</strong></a><br/>
+          <code>02e_validation_and_tuning.ipynb</code></td>
+        <td>272.6 KB</td>
+        <td>
+          <a class="btn btn-secondary" href="../notebooks/02-supervised-learning/02e_validation_and_tuning.html">在线阅读</a>
+          <a class="btn btn-secondary" href="../files/_shared/26c348ca431d-02e_validation_and_tuning.ipynb" download="02e_validation_and_tuning.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02e_validation_and_tuning.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>        </td>
       </tr>    </tbody>
   </table>
 </div><h2 id="exercises">课后习题（Exercises）<span class="kind-badge kind-exercise">习题</span></h2>
@@ -206,31 +251,31 @@ class="active">
     <thead><tr><th>完成</th><th>习题</th><th>大小</th><th>操作</th></tr></thead>
     <tbody>      <tr>
         <td class="nb-check-cell">
-          <input type="checkbox" class="progress-check" data-progress-key="notebooks/02-supervised-learning/02d_exercises.html"
-                 aria-label="把 02d_exercises.ipynb 标记为已完成" />
+          <input type="checkbox" class="progress-check" data-progress-key="notebooks/02-supervised-learning/02f_exercises.html"
+                 aria-label="把 02f_exercises.ipynb 标记为已完成" />
         </td>
-        <td><a href="../notebooks/02-supervised-learning/02d_exercises.html"><strong>02d — 第二讲基础习题：回归、交叉验证与分类巩固练习</strong></a><br/>
-          <code>02d_exercises.ipynb</code></td>
-        <td>11.6 KB</td>
+        <td><a href="../notebooks/02-supervised-learning/02f_exercises.html"><strong>02f · 第二模块综合习题：经典监督学习算法与防坑实战</strong></a><br/>
+          <code>02f_exercises.ipynb</code></td>
+        <td>13.5 KB</td>
         <td>
-          <a class="btn btn-secondary" href="../notebooks/02-supervised-learning/02d_exercises.html">开始做题</a>
-          <a class="btn btn-secondary" href="../files/_shared/7c357435cf21-02d_exercises.ipynb" download="02d_exercises.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02d_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>          <a class="btn btn-secondary" href="../solutions/02-supervised-learning/02_exercises_solutions.html">参考答案</a>        </td>
+          <a class="btn btn-secondary" href="../notebooks/02-supervised-learning/02f_exercises.html">开始做题</a>
+          <a class="btn btn-secondary" href="../files/_shared/3000b9d8f6bf-02f_exercises.ipynb" download="02f_exercises.ipynb">下载</a>          <a class="btn btn-colab" href="https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02f_exercises.ipynb" target="_blank" rel="noopener">▶ 在 Colab 中打开</a>          <a class="btn btn-secondary" href="../solutions/02-supervised-learning/02_exercises_solutions.html">参考答案</a>        </td>
       </tr>    </tbody>
   </table>
 </div><h2 id="solutions">参考答案（Solutions）</h2>
 <p class="hint-inline">答案页默认折叠，请先独立完成练习再展开。</p>
 <ul class="solution-list">  <li><span class="kind-badge kind-exercise">习题答案</span>
-    <a href="../solutions/02-supervised-learning/02_exercises_solutions.html">✅ 02d — 第二讲基础习题参考答案（Solutions）</a>
-    (<code>02_exercises_solutions.ipynb</code> · 10.5 KB) —
-    <a href="../files/_shared/8734c4516a78-02_exercises_solutions.ipynb" download="02_exercises_solutions.ipynb">下载 .ipynb</a></li>  <li><span class="kind-badge kind-lecture">课件答案</span>
-    <a href="../solutions/02-supervised-learning/02_supervised_solutions.html">✅ 02 — 监督学习：课堂练习参考答案（Solutions）</a>
-    (<code>02_supervised_solutions.ipynb</code> · 29.4 KB) —
-    <a href="../files/_shared/21f10b6a612a-02_supervised_solutions.ipynb" download="02_supervised_solutions.ipynb">下载 .ipynb</a></li></ul><h2>配套数据集（Datasets）</h2>
+    <a href="../solutions/02-supervised-learning/02_exercises_solutions.html">✅ 02f · 第二模块综合习题参考答案（Solutions）</a>
+    (<code>02_exercises_solutions.ipynb</code> · 18.7 KB) —
+    <a href="../files/_shared/3cf2f68192dd-02_exercises_solutions.ipynb" download="02_exercises_solutions.ipynb">下载 .ipynb</a></li>  <li><span class="kind-badge kind-lecture">课件答案</span>
+    <a href="../solutions/02-supervised-learning/02_supervised_solutions.html">✅ 02 · 监督学习：随堂练习参考答案（`02a`–`02e` Solutions）</a>
+    (<code>02_supervised_solutions.ipynb</code> · 81.0 KB) —
+    <a href="../files/_shared/1777a606c697-02_supervised_solutions.ipynb" download="02_supervised_solutions.ipynb">下载 .ipynb</a></li></ul><h2>配套数据集（Datasets）</h2>
 <ul>  <li><code>solubility.csv</code> (2.1 MB) —
     <a href="../files/_shared/f274636a3ed2-solubility.csv" download="solubility.csv">下载数据集</a></li></ul>
-<h2>模块导读与教学设计</h2><div class="markdown-body"><h1>02 — 监督学习（Supervised Learning）</h1>
-<p>在第一讲完成分子数据清洗、探索性可视化与 RDKit 描述符/分子指纹提取之后，本模块正式进入机器学习建模的核心：<strong>如何从带实验标签的分子数据集中训练、验证、调优并解释监督学习模型</strong>。</p>
-<p>我们继续以贯穿前两讲的 <strong>ESOL 水溶解度数据集</strong>（1128 个分子的实测 <span class="math-inline" data-tex="\log S">\(\log S\)</span>）为主线，并在最后将训练好的模型放到有机半导体稠环与改性分子（如并五苯 <code>pentacene</code>、<code>C8-BTBT</code>）上进行压力测试，直观暴露外推失效与表征盲区。</p>
+<h2>模块导读与教学设计</h2><div class="markdown-body"><h1>02 — 监督学习：经典机器学习算法原理与防坑实战（Supervised Learning）</h1>
+<p>在第一讲完成分子数据清洗、探索性可视化与 RDKit 描述符/分子指纹提取之后，本模块先通过全景导论（<code>020</code>）厘清**“到底什么是机器学习、它在材料科学中能解决哪五类问题、以及材料数据区别于互联网 AI 的专属陷阱”**；随后按“底层数学/几何直觉（拒绝黑箱）+ AqSolDB 与有机半导体真实实例”双线并重，把全部经典监督学习算法拆分为循序渐进的 <code>02a</code>–<code>02f</code> 六节实战。</p>
+<p>全模块统一采用 <strong>AqSolDB 水溶解度数据集</strong>（<code>data/solubility.csv</code>，清洗后 <strong>9,480 个有效分子、17 个 RDKit 物理化学描述符</strong>），并在有机半导体稠环与侧链改性分子（如并苯系列、<code>BTBT</code>、<code>C8-BTBT</code>、<code>TIPS-Pentacene</code>）上进行外推压力测试与适用域诊断。</p>
 <hr />
 <h2>课程模块结构</h2>
 <table>
@@ -238,81 +283,100 @@ class="active">
 <tr>
 <th>序号</th>
 <th>Notebook</th>
-<th>核心内容</th>
+<th>核心算法原理（不靠黑箱）</th>
+<th>材料实例与伏笔兑现</th>
 <th>建议课时</th>
 </tr>
 </thead>
 <tbody>
 <tr>
+<td><strong>020</strong></td>
+<td><code>020_ml_for_materials_overview.ipynb</code></td>
+<td>AI <span class="math-inline" data-tex="\supset">\(\supset\)</span> ML <span class="math-inline" data-tex="\supset">\(\supset\)</span> DL、从“写公式”到“学规律”反转、内插 vs 外推矛盾</td>
+<td>D–<span class="math-inline" data-tex="\pi">\(\pi\)</span>–A 有机光电空间估算、五大材料 AI 场景映射、课题选型自测</td>
+<td>30–40 min</td>
+</tr>
+<tr>
 <td><strong>02a</strong></td>
-<td><code>02a_regression.ipynb</code></td>
-<td><strong>回归入门</strong>：问题形式化（<span class="math-inline" data-tex="X \to y">\(X \to y\)</span>）、训练/测试集划分与过拟合、评估指标（MAE / RMSE / <span class="math-inline" data-tex="R^2">\(R^2\)</span>）与均值猜测基线、单特征到多特征线性回归、kNN 与特征标准化（<code>StandardScaler</code>）、树模型集成（随机森林 / 梯度提升）、描述符 vs 分子指纹（Bit / Count FP）</td>
-<td>60–75 min</td>
+<td><code>02a_linear_models.ipynb</code></td>
+<td>最小二乘几何直观、<strong>8 行 NumPy 手写梯度下降</strong>、多项式偏差–方差权衡、<strong>Ridge (<span class="math-inline" data-tex="L_2">\(L_2\)</span>) vs Lasso (<span class="math-inline" data-tex="L_1">\(L_1\)</span>)</strong> 正则化路径</td>
+<td><code>MolLogP</code> 单变量 <span class="math-inline" data-tex="\to">\(\to\)</span> 17 描述符 OLS 共线性权重正负反转破案与正则化驯服</td>
+<td>50–60 min</td>
 </tr>
 <tr>
 <td><strong>02b</strong></td>
-<td><code>02b_validation_and_tuning.ipynb</code></td>
-<td><strong>验证、调优与适用域</strong>：单次划分的随机波动与 <span class="math-inline" data-tex="K">\(K\)</span> 折交叉验证（5-Fold CV）、数据泄漏（Data Leakage）与 <code>Pipeline</code> 防护、网格搜索（<code>GridSearchCV</code>）超参数调优、面向共轭大分子的外推压力测试与基于 Tanimoto 相似度的适用域（Applicability Domain）诊断</td>
+<td><code>02b_knn_and_svm.ipynb</code></td>
+<td>二维平面 <strong>kNN 找邻居连线</strong>、特征缩放几何机制、<strong>SVM 最大间隔超平面、软间隔 <span class="math-inline" data-tex="C">\(C\)</span>、<span class="math-inline" data-tex="\epsilon">\(\epsilon\)</span>-管道与 RBF 核技巧</strong></td>
+<td><code>(MolLogP, MolWt)</code> 平面上萘的真假邻居对比、RBF-SVR 溶解度非线性等高线</td>
 <td>50–60 min</td>
 </tr>
 <tr>
 <td><strong>02c</strong></td>
-<td><code>02c_classification.ipynb</code></td>
-<td><strong>分类与基础特征重要性</strong>：难溶分子筛查二分类任务定义、分层抽样（<code>stratify</code>）、准确率陷阱与混淆矩阵（TP/FP/TN/FN）、Precision / Recall / F1 / ROC-AUC、结合实验成本调节决策阈值、树分裂重要性（MDI）vs 置换重要性（Permutation Importance）、对照 Yalkowsky 方程分析模型漏报原因</td>
-<td>50–60 min</td>
+<td><code>02c_trees_and_ensembles.ipynb</code></td>
+<td><strong>12 行 NumPy 手算决策树最优切分（MSE）</strong>、阶梯函数切分图、<strong>Bagging（随机森林降方差）vs Boosting（XGBoost 拟合残差降偏差）</strong></td>
+<td>描述符 vs Bit/Count Morgan 指纹大比拼；并苯系列（苯 <span class="math-inline" data-tex="\to">\(\to\)</span> 并五苯）揭示树模型外推截断本质</td>
+<td>60–70 min</td>
 </tr>
 <tr>
 <td><strong>02d</strong></td>
-<td><code>02d_exercises.ipynb</code></td>
-<td><strong>第二讲基础巩固习题</strong>：涵盖训练/测试集划分与均值基线、多元线性回归、特征标准化与 kNN、防泄漏 Pipeline 与 5 折交叉验证、<code>GridSearchCV</code> 调参、分层二分类与随机森林特征重要性的 8 道基础练习</td>
-<td>30–45 min</td>
+<td><code>02d_classification.ipynb</code></td>
+<td><strong>10 行 NumPy 手写感知机</strong>（判错挪直线）<span class="math-inline" data-tex="\to">\(\to\)</span> <strong>Sigmoid 与逻辑回归概率</strong>、混淆矩阵、Precision/Recall/F1/ROC-AUC 与阈值移动</td>
+<td>难溶分子（<span class="math-inline" data-tex="\log S &lt; -4">\(\log S &lt; -4\)</span>）筛查、<code>C8-BTBT</code> 溶剂先验边界、MDI vs 置换重要性、Yalkowsky 方程与离子盐/刚性晶体错分破案</td>
+<td>55–65 min</td>
+</tr>
+<tr>
+<td><strong>02e</strong></td>
+<td><code>02e_validation_and_tuning.ipynb</code></td>
+<td>5 折交叉验证、<strong><code>Pipeline</code> 防预处理泄漏对照实测</strong>、<code>GridSearchCV</code> 与学习曲线（<code>learning_curve</code>）</td>
+<td>随机划分 vs <strong>Murcko 骨架划分（Scaffold Split）</strong> vs 跨环数尺寸外推；Tanimoto <strong>适用域</strong>体检</td>
+<td>50–60 min</td>
+</tr>
+<tr>
+<td><strong>02f</strong></td>
+<td><code>02f_exercises.ipynb</code></td>
+<td>覆盖 <code>02a</code>–<code>02e</code> 全部经典回归/分类模型、阈值调节、防泄漏流水线与骨架划分的 8 道综合实战习题</td>
+<td>统一基于 AqSolDB 实测核对</td>
+<td>35–45 min</td>
 </tr>
 <tr>
 <td><strong>参考答案</strong></td>
 <td><code>solutions/02_supervised_solutions.ipynb</code><br><code>solutions/02_exercises_solutions.ipynb</code></td>
-<td>分别汇总 <code>02a</code>–<code>02c</code> 随堂练习（9 道）与 <code>02d</code> 基础巩固习题（8 道）的完整可运行代码与物理化学解析</td>
+<td>分别汇总 <code>02a</code>–<code>02e</code> 全部 <strong>10 道随堂练习</strong>与 <code>02f</code> 全部 <strong>8 道综合习题</strong>的完整可运行代码、图表与物理化学解析</td>
 <td>课后自查</td>
+<td>—</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2>与第一讲（01 - Basics）的前后呼应</h2>
-<p>本讲直接兑现了第一讲埋下的四处核心伏笔：</p>
-<ol>
-<li><strong>单变量到多变量建模</strong>（呼应 <code>01c</code>）：从 <code>MolLogP vs logS</code> 的单变量散点趋势线出发，扩展为 10 个物理化学描述符 + 2048 维 Morgan 指纹的多元非线性回归；</li>
-<li><strong>不同特征量纲的标准化</strong>（呼应 <code>01b</code> / <code>01c</code>）：解释为什么分子量（几百）和氢键给体数（个位数）直接放进 kNN 或 SVR 会导致距离计算失真，并通过 <code>make_pipeline(StandardScaler(), ...)</code> 实现无泄漏标准化；</li>
-<li><strong>Bit 指纹 vs Count 指纹的实战差异</strong>（呼应 <code>01d</code>）：在 <code>02a</code> 和 <code>02b</code> 中实测发现，0/1 Bit 指纹因为无法区分重复子结构数量，不仅在回归误差上劣于 Count 指纹，还会把并五苯与并四苯的 Tanimoto 相似度误判为 <code>1.000</code>；</li>
-<li><strong>共线性特征对模型解释的干扰</strong>（呼应 <code>01c</code>）：在 <code>02c</code> 中展示高度共线的 <code>MolWt</code> 与 <code>HeavyAtomCount</code>（<span class="math-inline" data-tex="r = 0.97">\(r = 0.97\)</span>）如何平摊随机森林的树分裂重要性（MDI），以及如何用置换重要性（Permutation Importance）还原 <code>MolLogP</code> 的真实主导地位。</li>
-</ol>
-<hr />
-<h2>核心实验基准速查（ESOL，<code>random_state=42</code>）</h2>
-<h3>1. 回归任务（<code>02a</code> &amp; <code>02b</code>）</h3>
+<h2>核心实验基准速查（AqSolDB 9,480 分子，<code>random_state=42</code>）</h2>
+<h3>1. 回归任务（<code>02a</code>、<code>02b</code>、<code>02c</code>、<code>02e</code>）</h3>
 <ul>
-<li><strong>Dummy 均值猜测基线</strong>：Test RMSE = <code>2.421</code>，<span class="math-inline" data-tex="R^2 = -0.002">\(R^2 = -0.002\)</span></li>
-<li><strong>单变量线性回归（仅 <code>MolLogP</code>）</strong>：Test RMSE = <code>1.132</code>，<span class="math-inline" data-tex="R^2 = 0.781">\(R^2 = 0.781\)</span></li>
-<li><strong>多元线性回归（10 个描述符）</strong>：Test RMSE = <code>0.968</code>，<span class="math-inline" data-tex="R^2 = 0.840">\(R^2 = 0.840\)</span></li>
-<li><strong>kNN（<span class="math-inline" data-tex="k=10">\(k=10\)</span>，未标准化 vs 标准化）</strong>：Test RMSE 从 <code>0.955</code> 降至 <code>0.733</code>（经 <code>GridSearchCV</code> 调优至 <span class="math-inline" data-tex="k=5">\(k=5\)</span>, <code>weights=&quot;distance&quot;</code> 后进一步降至 <code>0.658</code>）</li>
-<li><strong>随机森林（10 个描述符）</strong>：Test RMSE = <code>0.688</code>，<span class="math-inline" data-tex="R^2 = 0.899">\(R^2 = 0.899\)</span></li>
-<li><strong>随机森林（仅 2048 维 Bit 指纹 vs Count 指纹）</strong>：Test RMSE 分别为 <code>1.093</code> vs <code>0.946</code></li>
-<li><strong>随机森林（10 个描述符 + 2048 维指纹）</strong>：Test RMSE 降至 <code>0.669 ~ 0.674</code>，<span class="math-inline" data-tex="R^2 = 0.905">\(R^2 = 0.905\)</span></li>
+<li><strong>Dummy 均值猜测基线</strong>：Test RMSE = <code>2.420</code>，<span class="math-inline" data-tex="R^2 = 0.000">\(R^2 = 0.000\)</span></li>
+<li><strong>单特征线性回归（仅 <code>MolLogP</code>）</strong>：Test RMSE = <code>1.885</code>，<span class="math-inline" data-tex="R^2 = 0.393">\(R^2 = 0.393\)</span></li>
+<li><strong>17 描述符多元线性回归（OLS / Ridge）</strong>：Test RMSE = <code>1.636 ~ 1.649</code>，<span class="math-inline" data-tex="R^2 \approx 0.54">\(R^2 \approx 0.54\)</span></li>
+<li><strong>kNN（<span class="math-inline" data-tex="k=5">\(k=5\)</span>，未标准化 vs 标准化）</strong>：Test RMSE 从 <code>1.561</code> 骤降至 <strong><code>1.241</code></strong>（经 <code>Pipeline + GridSearchCV</code> 距离加权调优后进一步降至 <strong><code>1.186</code></strong>）</li>
+<li><strong>RBF 核支持向量回归（<code>SVR</code>，标准化）</strong>：Test RMSE = <strong><code>1.231</code></strong>，<span class="math-inline" data-tex="R^2 = 0.741">\(R^2 = 0.741\)</span></li>
+<li><strong>单棵不限深度决策树 vs 随机森林 vs XGBoost（17 描述符）</strong>：Test RMSE 从单棵深树的 <code>1.531</code>（严重过拟合）降至随机森林 <strong><code>1.168</code></strong> 与 XGBoost <strong><code>1.153</code></strong>（<span class="math-inline" data-tex="R^2 = 0.773">\(R^2 = 0.773\)</span>）</li>
+<li><strong>XGBoost 分子表示对比</strong>：2048 Bit 指纹（<code>1.431</code>）<span class="math-inline" data-tex="\to">\(\to\)</span> 2048 Count 指纹（<code>1.273</code>）<span class="math-inline" data-tex="\to">\(\to\)</span> 17 描述符（<code>1.173</code>）<span class="math-inline" data-tex="\to">\(\to\)</span> <strong>17 描述符 + 2048 Count 指纹组合（<code>1.106</code>，<span class="math-inline" data-tex="R^2 = 0.791">\(R^2 = 0.791\)</span>）</strong></li>
 </ul>
-<h3>2. 分类任务（<code>02c</code>，难溶阈值 <span class="math-inline" data-tex="\log S &lt; -4">\(\log S &lt; -4\)</span>，正类占比 28.6%）</h3>
+<h3>2. 二分类筛查任务（<code>02d</code>，难溶阈值 <span class="math-inline" data-tex="\log S &lt; -4.0">\(\log S &lt; -4.0\)</span>，正类占比 28.6%）</h3>
 <ul>
 <li><strong>Dummy 多数类基线（全猜可溶）</strong>：Accuracy = <code>0.715</code>，但 Recall = <code>0.000</code>，F1 = <code>0.000</code>，ROC-AUC = <code>0.500</code></li>
-<li><strong>随机森林分类器</strong>：Accuracy = <code>0.903</code>，Precision = <code>0.852</code>，Recall = <code>0.800</code>，F1 = <code>0.825</code>，ROC-AUC = <code>0.955</code></li>
+<li><strong>感知机（Perceptron）<span class="math-inline" data-tex="\to">\(\to\)</span> 逻辑回归（Logistic Regression）</strong>：F1 从 <code>0.672</code> 升至 <code>0.710</code>（ROC-AUC = <code>0.892</code>）</li>
+<li><strong>随机森林 / XGBoost 分类器</strong>：Accuracy = <code>0.890 ~ 0.896</code>，F1 = <code>0.797 ~ 0.808</code>，ROC-AUC = <strong><code>0.952 ~ 0.956</code></strong></li>
 </ul>
 <hr />
 <h2>运行环境说明</h2>
 <ul>
-<li>数据集路径已自动兼容相对路径 <code>../01 - Basics/data/esol.csv</code> 与当前目录下的 <code>data/esol.csv</code>，无需重复拷贝数据文件。</li>
-<li>所有图表坐标轴与图例均采用英文标注，确保在 Windows、macOS、Linux 及 Google Colab 下均不会出现中文字体方块乱码。</li>
+<li>数据集自动读取 <code>data/solubility.csv</code>（兼容 <code>../01 - Basics/data/solubility.csv</code>），本地 <code>zesheng</code> 环境与 Google Colab 均可直接运行。</li>
+<li>所有图表均启用课程统一出版级绘图样式 <code>ai4m.mplstyle</code>，坐标轴与图例统一采用英文标注，杜绝跨平台中文字体乱码。</li>
 </ul>
 </div><nav class="pager" aria-label="课程顺序导航">  <a class="pager-link pager-prev" href="../notebooks/01-basics/01e_exercises.html" rel="prev">
     <span class="pager-label">← 上一讲</span>
     <span class="pager-title">01e — 第一讲基础习题：Python、Pandas、绘图与 RDKit 巩固练习</span>
-  </a>  <a class="pager-link pager-next" href="../notebooks/02-supervised-learning/02a_regression.html" rel="next">
+  </a>  <a class="pager-link pager-next" href="../notebooks/02-supervised-learning/020_ml_for_materials_overview.html" rel="next">
     <span class="pager-label">下一讲 →</span>
-    <span class="pager-title">02a · 监督学习入门：从分子特征预测水溶解度（回归）</span>
+    <span class="pager-title">020 · 机器学习与材料科学总概论：从数据表征到智能发现</span>
   </a></nav>  </main></div>
 <footer class="footer">
   <div>AI for Materials Science · 零基础材料研究生一学期实战课程</div>

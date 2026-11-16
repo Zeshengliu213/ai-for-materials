@@ -1,0 +1,80 @@
+name,cid,aqsoldb_name,SMILES,Tm_C,logS,MolLogP
+1-naphthol,7005,naphthalen-1-ol,Oc1cccc2ccccc12,96.0,-2.0619739225,2.5454000000000008
+2-naphthol,8663,2-naphthol,Oc1ccc2ccccc2c1,122.0,-2.2809,2.5454
+acenaphthene,6734,acenaphthene,c1cc2c3c(cccc3c1)CC2,95.0,-4.63,2.938400000000001
+acenaphthylene,9161,acenaphthylene,C1=Cc2cccc3cccc1c23,92.0,-3.9756,3.3236000000000017
+acetanilide,904,acetanilide,CC(=O)Nc1ccccc1,114.3,-1.33,1.645
+acetophenone,7410,1-phenylethan-1-one,CC(=O)c1ccccc1,19.7,-1.2803868403,1.8892
+acridine,9215,acridine,c1ccc2nc3ccccc3cc2c1,108.6,-3.6691,3.3880000000000017
+adipic acid,196,"adipic  acid; 1,6-hexanedioic acid",O=C(O)CCCCC(=O)O,151.5,-0.82,0.7160000000000002
+aniline,6115,aniline,Nc1ccccc1,-6.0,-0.4250168953,1.2688
+anisole,7519,anisole,COc1ccccc1,-37.3,-1.85,1.6952
+anthracene,8418,anthracene,c1ccc2cc3ccccc3cc2c1,216.9,-6.4448105798,3.993000000000002
+anthraquinone,6780,"9,10-anthraquinone",O=C1c2ccccc2C(=O)c2ccccc21,286.0,-6.0397604981,2.4620000000000006
+atrazine,2256,"6-chloro-N'-ethyl-N-propan-2-yl-1,3,5-triazine-2,4-diamine",CCNc1nc(Cl)nc(NC(C)C)n1,175.0,-3.76,1.7770999999999997
+benzaldehyde,240,benzaldehyde,O=Cc1ccccc1,-26.1,-1.2095723109,1.4991
+benzene,241,benzene,c1ccccc1,5.5,-1.6423088751,1.6866
+benzoic acid,243,benzoic acid,O=C(O)c1ccccc1,122.3,-1.619929844,1.3848
+benzonitrile,7505,benzonitrile,N#Cc1ccccc1,-12.8,-1.7123,1.55828
+benzophenone,3102,diphenylmethanone,O=C(c1ccccc1)c1ccccc1,48.3,-3.882202908,2.917600000000001
+benzyl alcohol,244,benzyl alcohol,OCc1ccccc1,-15.2,-0.4319,1.1789
+biphenyl,7095,biphenyl;  diphenyl,c1ccc(-c2ccccc2)cc1,69.0,-4.32,3.353600000000002
+bromobenzene,7961,bromobenzene,Brc1ccccc1,-30.7,-2.568561457,2.4491000000000005
+caffeine,2519,caffeine,Cn1c(=O)c2c(ncn2C)n(C)c1=O,237.8,-0.91,-1.0293
+carbaryl,6129,Carbaryl,CNC(=O)Oc1cccc2ccccc12,145.0,-3.224,2.5580000000000007
+carbazole,6854,9H-carbazole,c1ccc2c(c1)[nH]c1ccccc12,245.0,-5.2104276195,3.3211000000000013
+catechol,289,"benzene-1,2-diol",Oc1ccccc1O,105.0,0.6123418909,1.0978
+chlorobenzene,7964,chlorobenzene,Clc1ccccc1,-45.2,-2.4493202347,2.34
+chlorpyrifos,2730,chlorpyrifos,CCOP(=S)(OCC)Oc1nc(Cl)c(Cl)cc1Cl,42.2,-5.4956,4.718100000000002
+chrysene,9171,chrysene,c1ccc2c(c1)ccc1c3ccccc3ccc21,255.0,-8.0575,5.146200000000003
+coumarin,323,2H-chromen-2-one,O=c1ccc2ccccc2o1,71.0,-1.8860303607,1.793
+dibenzofuran,568,dibenzofuran,c1ccc2c(c1)oc1ccccc12,86.5,-4.6,3.586000000000002
+dibenzothiophene,3023,dibenzothiophene,c1ccc2c(c1)sc1ccccc12,99.5,-5.0981,4.054500000000002
+diphenyl ether,7583,diphenyl_ether,c1ccc(Oc2ccccc2)cc1,27.8,-3.96,3.478900000000002
+diphenylamine,11487,diphenylamine,c1ccc(Nc2ccccc2)cc1,53.0,-3.5042,3.430200000000002
+diuron,3120,diuron,CN(C)C(=O)Nc1ccc(Cl)c(Cl)c1,158.5,-3.7443,3.0869000000000018
+durene,7269,"1,2,4,5-tetramethylbenzene;  durene",Cc1cc(C)c(C)cc1C,79.2,-3.84,2.9202800000000018
+estrone,5870,Estrone,C[C@]12CC[C@@H]3c4ccc(O)cc4CC[C@H]3[C@@H]1CCC2=O,259.0,-5.5511481213,3.817400000000003
+ethylbenzene,7500,ethylbenzene,CCc1ccccc1,-95.0,-2.77,2.249000000000001
+fluoranthene,9154,fluoranthene,c1ccc2c(c1)-c1cccc3cccc-2c13,110.2,-5.93,4.487200000000003
+fluorene,6853,fluorene,c1ccc2c(c1)Cc1ccccc1-2,116.5,-4.91,3.2578000000000014
+furan,8029,furan,c1ccoc1,-85.6,-0.82,1.2796
+glycine,750,glycine,NCC(=O)O,262.2,0.92,-0.9703
+hexachlorobenzene,8370,Hexachlorobenzene  ,Clc1c(Cl)c(Cl)c(Cl)c(Cl)c1Cl,228.1,-7.56,5.606999999999999
+hydroquinone,785,"benzene-1,4-diol",Oc1ccc(O)cc1,172.0,-0.1967366109,1.0978
+ibuprofen,3672,2-[4-(2-methylpropyl)phenyl]propanoic acid,CC(C)Cc1ccc(C(C)C(=O)O)cc1,76.0,-3.992248354700001,3.073200000000001
+lindane,727,Lindane,ClC1C(Cl)C(Cl)C(Cl)C(Cl)C1Cl,113.0,-4.64,3.644400000000001
+m-xylene,7929,"1,3-xylene",Cc1cccc(C)c1,-47.9,-2.8328690378,2.30344
+malathion,4004,malathion,CCOC(=O)CC(SP(=S)(OC)OC)C(=O)OCC,2.8,-3.3637,2.1218000000000004
+mesitylene,7947,"1,3,5-trimethylbenzene",Cc1cc(C)cc(C)c1,-44.8,-3.382657059,2.611860000000001
+naphthalene,931,naphthalene,c1ccc2ccccc2c1,80.2,-4.3112256046,2.839800000000001
+nicotine,89594,nicotine,CN1CCC[C@H]1c1cccnc1,-79.0,0.7898,1.8483
+nitrobenzene,7416,nitrobenzene,O=[N+]([O-])c1ccccc1,5.6,-1.8,1.5948
+nitrotoluene,6944,2-nitrotoluene,Cc1ccccc1[N+](=O)[O-],-9.5,-2.3243,1.90322
+o-cresol,335,2-methylphenol,Cc1ccccc1O,31.0,-0.6190130172999999,1.70062
+o-xylene,7237,"1,2-xylene",Cc1ccccc1C,-25.0,-2.8191677601,2.30344
+oxalic acid,971,oxalic acid,O=C(O)C(=O)O,189.5,0.0790172102,-0.8443999999999998
+p-cresol,2879,4-methylphenol,Cc1ccc(O)cc1,35.0,-0.7015479053,1.7006199999999998
+p-xylene,7809,"1,4-xylene",Cc1ccc(C)cc1,13.3,-2.8191677601,2.30344
+parathion,991,Parathion,CCOP(=S)(OCC)Oc1ccc([N+](=O)[O-])cc1,6.1,-4.29,3.2711000000000023
+perylene,9142,perylene,c1cc2cccc3c4cccc5cccc(c(c1)c23)c54,273.5,-8.7,5.737200000000003
+phenanthrene,995,phenanthrene,c1ccc2c(c1)ccc1ccccc12,100.0,-5.1903,3.993000000000002
+phenol,996,phenol,Oc1ccccc1,42.8,-0.04,1.3922
+phthalic acid,1017,"benzene-1,2-dicarboxylic acid",O=C(O)c1ccccc1C(=O)O,217.5,-1.4245732761,1.083
+progesterone,5994,progesterone,CC(=O)[C@H]1CC[C@H]2[C@@H]3CCC4=CC(=O)CC[C@]4(C)[C@H]3CC[C@]12C,121.7,-4.5526,4.723500000000005
+pyrene,31423,pyrene,c1cc2ccc3cccc4ccc(c1)c2c34,151.2,-6.1787966156,4.584000000000002
+pyridine,1049,pyridine,c1ccncc1,-42.0,0.76,1.0816
+pyrrole,8027,pyrrole,c1cc[nH]c1,-23.4,-0.1734,1.0147
+quinoline,7047,quinoline,c1ccc2ncccc2c1,-15.0,-1.325093551,2.2348
+resorcinol,5054,"benzene-1,3-diol",Oc1cccc(O)c1,110.0,1.0034883278,1.0978
+salicylic acid,338,salicylic_acid,O=C(O)c1ccccc1O,158.0,-1.82,1.0903999999999998
+styrene,7501,ethenylbenzene,C=Cc1ccccc1,-30.6,-2.5552696161000004,2.3296
+succinic acid,1110,succinic  acid;  butanedioic acid,O=C(O)CCC(=O)O,185.0,-0.17,-0.0641999999999998
+testosterone,6013,testosterone,C[C@]12CC[C@H]3[C@@H](CCC4=CC(=O)CC[C@@]43C)[C@@H]1CC[C@@H]2O,155.0,-4.0908,3.879200000000003
+tetracene,7080,naphthacene,c1ccc2cc3cc4ccccc4cc3cc2c1,357.0,-8.6,5.146200000000003
+theophylline,2153,"1,3-dimethyl-3,7-dihydro-1H-purine-2,6-dione",Cn1c(=O)c2[nH]cnc2n(C)c1=O,273.1,-1.3525852601,-1.039700000000001
+thiophene,8030,thiophene,c1ccsc1,-38.2,-1.4450110492,1.7481
+thiourea,2723790,thiourea,NC(N)=S,178.0,0.188516266,-0.8113000000000001
+toluene,1140,toluene,Cc1ccccc1,-95.0,-2.2062982993,1.99502
+urea,1176,urea,NC(N)=O,132.7,0.9578400994,-0.9762000000000002
+warfarin,54678486,warfarin,CC(=O)CC(c1ccccc1)c1c(O)c2ccccc2oc1=O,161.0,-4.78,3.609600000000003
