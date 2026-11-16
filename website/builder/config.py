@@ -66,7 +66,7 @@ MODULE_META: Dict[str, Dict[str, object]] = {
         "semester": "part1",
         "status": "done",
         "status_label": "已完成",
-        "summary": "回归建模、交叉验证与 Scaffold Split 防数据泄漏、分类模型与特征重要性。",
+        "summary": "材料机器学习导论、线性模型与正则化、kNN 与 SVM、决策树与集成（RF/XGBoost）、感知机与逻辑回归分类、交叉验证与适用域。",
         "outline": [],
     },
     "03": {
@@ -75,7 +75,7 @@ MODULE_META: Dict[str, Dict[str, object]] = {
         "semester": "part1",
         "status": "done",
         "status_label": "已完成",
-        "summary": "PCA/t-SNE 降维、K-means/DBSCAN/Butina 聚类与 Science 钯二聚体催化剂发现复现。",
+        "summary": "手算 PCA/载荷与 t-SNE 降维、手写 K-means/DBSCAN/凝聚层次聚类/Butina 聚类与 Science 钯二聚体催化剂发现。",
         "outline": [],
     },
     "04": {
@@ -91,28 +91,19 @@ MODULE_META: Dict[str, Dict[str, object]] = {
         "zh_title": "特征工程、SHAP 与 3D 分子",
         "en_title": "Feature Engineering & Molecular Informatics",
         "semester": "part1",
-        "status": "todo",
-        "status_label": "待编写",
-        "summary": "特征选择与 SHAP 归因分析、3D 分子构象生成与 PubChem API 实战。",
-        "outline": [
-            "<code>05a</code> 特征选择（方差过滤、相关性剪枝、递归特征消除）与 SHAP 归因分析：从“模型说得准”走向“模型说得清”。",
-            "<code>05b</code> 3D 分子构象生成（RDKit ETKDG + MMFF 优化）、构象系综与 3D 描述符。",
-            "<code>05b</code> PubChem PUG-REST API 实战：按名称/SMILES 批量抓取实验性质，补全第 01 讲留下的 Yalkowsky 熔点伏笔。",
-        ],
+        "status": "done",
+        "status_label": "已完成",
+        "summary": "特征选择与 SHAP 归因分析、3D 分子构象生成与 PubChem API 实战（补全 Yalkowsky 熔点伏笔）。",
+        "outline": [],
     },
     "06": {
         "zh_title": "无机与晶体材料信息学",
         "en_title": "Materials Informatics",
         "semester": "part1",
-        "status": "todo",
-        "status_label": "待编写",
-        "summary": "Pymatgen 晶体结构分析、MP/COD 数据库、模拟 XRD、凸包相图与高通量筛选。",
-        "outline": [
-            "<code>06a</code> Pymatgen 晶体结构操作：晶胞、对称性与空间群、超胞与缺陷构建。",
-            "<code>06a</code> Materials Project API 与 COD 数据库：批量检索形成能、带隙与弹性常数。",
-            "<code>06b</code> 模拟 XRD 谱图、热力学凸包相图（convex hull）与稳定性判据。",
-            "<code>06b</code> SOAP / 元素组成描述符与高通量虚拟筛选流程。",
-        ],
+        "status": "done",
+        "status_label": "已完成",
+        "summary": "Pymatgen 晶体结构与对称性、COD/MP 数据库、模拟 XRD、Ti–O 凸包与容差因子、组成描述符带隙模型与高通量筛选。",
+        "outline": [],
     },
     "07": {
         "zh_title": "神经网络与材料显微视觉 CNN",
@@ -173,7 +164,7 @@ ROADMAP_STAGES: List[Dict[str, object]] = [
     {
         "icon": "stage-2",
         "title": "经典机器学习与防坑",
-        "desc": "回归分类、交叉验证、Scaffold Split 与化学空间探索",
+        "desc": "材料 AI 全景总论、回归分类、交叉验证、Scaffold Split 与化学空间探索",
         "modules": ["02", "03"],
     },
     {

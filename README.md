@@ -11,11 +11,11 @@
 | 模块 | 主题 | 核心内容与实战 Notebook | 状态 |
 | :--- | :--- | :--- | :--- |
 | **01** | **Python 与化学/材料数据基础** | `01a` Python 速成 · `01b` Pandas · `01c` 可视化 · `01d` RDKit 分子表示（AqSolDB 有机半导体主线） | ✅ 已完成 |
-| **02** | **监督学习与模型评估防坑** | `02a` 回归 · `02b` 交叉验证/Scaffold Split/适用域 · `02c` 分类与特征重要性 | ✅ 已完成 |
-| **03** | **无监督学习：化学空间与发现** | `03a` PCA/t-SNE 降维 · `03b` K-means/DBSCAN/Butina 聚类 · `03c` *Science* 钯二聚体催化剂发现 | ✅ 已完成 |
+| **02** | **监督学习与模型评估防坑** | `020` 材料 ML 总论 · `02a` 线性/梯度下降/Ridge&Lasso · `02b` kNN/SVM · `02c` 决策树/RF/XGBoost · `02d` 感知机/逻辑回归/分类归因 · `02e` 交叉验证/Scaffold Split/适用域 | ✅ 已完成 |
+| **03** | **无监督学习：化学空间与发现** | `03a` 手算 PCA/载荷与 t-SNE 降维 · `03b` 手写 K-means/DBSCAN/层次聚类/Butina · `03c` *Science* 钯二聚体催化剂发现 | ✅ 已完成 |
 | **04** | **贝叶斯优化与主动实验设计** | `04a` 从零理解高斯过程回归（GPR）与不确定性 · `04b` EI/UCB 采集函数与实验条件寻优 | 🚧 待编写 |
-| **05** | **特征工程、SHAP 与 3D 分子** | `05a` 特征选择与 SHAP 归因分析 · `05b` 3D 分子构象与 PubChem API（补全 Yalkowsky 熔点伏笔） | 🚧 待编写 |
-| **06** | **无机与晶体材料信息学** | `06a` Pymatgen 晶体/MP 与 COD 数据库 · `06b` 模拟 XRD、热力学凸包相图、SOAP 与高通量筛选 | 🚧 待编写 |
+| **05** | **特征工程、SHAP 与 3D 分子** | `05a` 特征选择与 SHAP 归因分析 · `05b` 3D 分子构象与 PubChem API（补全 Yalkowsky 熔点伏笔） · `05c` 基础习题 | ✅ 已完成 |
+| **06** | **无机与晶体材料信息学** | `06a` Pymatgen 晶体结构、对称性与 COD/MP 数据库 · `06b` 模拟 XRD、热力学凸包、容差因子、组成描述符与高通量筛选 · `06c` 基础习题 | ✅ 已完成 |
 
 ### 下半学期：材料深度学习、生成模型与图神经网络（全 PyTorch）
 
@@ -90,9 +90,13 @@ python apply_style.py --write    # 真正写入（幂等，可重复运行）
 | `01 - Basics` | `01b_pandas.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/01%20-%20Basics/01b_pandas.ipynb) |
 | `01 - Basics` | `01c_plotting.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/01%20-%20Basics/01c_plotting.ipynb) |
 | `01 - Basics` | `01d_rdkit_basics.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/01%20-%20Basics/01d_rdkit_basics.ipynb) |
-| `02 - Supervised Learning` | `02a_regression.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02a_regression.ipynb) |
-| `02 - Supervised Learning` | `02b_validation_and_tuning.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02b_validation_and_tuning.ipynb) |
-| `02 - Supervised Learning` | `02c_classification.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02c_classification.ipynb) |
+| `02 - Supervised Learning` | `020_ml_for_materials_overview.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/020_ml_for_materials_overview.ipynb) |
+| `02 - Supervised Learning` | `02a_linear_models.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02a_linear_models.ipynb) |
+| `02 - Supervised Learning` | `02b_knn_and_svm.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02b_knn_and_svm.ipynb) |
+| `02 - Supervised Learning` | `02c_trees_and_ensembles.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02c_trees_and_ensembles.ipynb) |
+| `02 - Supervised Learning` | `02d_classification.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02d_classification.ipynb) |
+| `02 - Supervised Learning` | `02e_validation_and_tuning.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02e_validation_and_tuning.ipynb) |
+| `02 - Supervised Learning` | `02f_exercises.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/02%20-%20Supervised%20Learning/02f_exercises.ipynb) |
 | `03 - Unsupervised Learning` | `03a_dimensionality_reduction.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03a_dimensionality_reduction.ipynb) |
 | `03 - Unsupervised Learning` | `03b_clustering.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03b_clustering.ipynb) |
 | `03 - Unsupervised Learning` | `03c_pd_dimer_discovery.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Zeshengliu213/ai-for-materials/blob/main/03%20-%20Unsupervised%20Learning/03c_pd_dimer_discovery.ipynb) |

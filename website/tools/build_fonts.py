@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Set
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-COURSE_DIR = ROOT_DIR.parent / "course"
+COURSE_DIR = ROOT_DIR.parent
 FONT_DIR = ROOT_DIR / "assets" / "fonts"
 
 SOURCE_URL = (
@@ -105,8 +105,11 @@ def write_css() -> Path:
 
 def main() -> int:
     try:
-        import brotli  # noqa: F401
         from fontTools import subset  # noqa: F401
+        try:
+            import brotli  # noqa: F401
+        except ImportError:
+            import brotlicffi  # noqa: F401
     except ImportError:
         print("Missing tooling. Install it with:  pip install fonttools brotli")
         return 1

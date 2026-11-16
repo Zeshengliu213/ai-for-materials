@@ -9,7 +9,7 @@
 | 序号 | Notebook | 核心内容 | 建议课时 |
 |---|---|---|---|
 | **03a** | `03a_dimensionality_reduction.ipynb` | **降维与化学空间可视化**：无监督学习概览、AqSolDB 万级分子库、PCA 几何直觉与标准化前提、17 个描述符的解释方差与载荷（Loadings）化学解读、新分子（有机半导体）投影与 17 维全空间最近邻适用域诊断、为什么稀疏分子指纹做线性 PCA 会失效、非线性流形降维 t-SNE 及其四大解读准则 | 60–75 min |
-| **03b** | `03b_clustering.ipynb` | **聚类与严格数据划分**：手写 K-means 拆解“分配—更新质心”迭代与局部最优陷阱、肘部法则（Inertia）与轮廓系数（Silhouette Score）、非凸流形与基于密度的聚类（DBSCAN）、高维指纹空间的 Tanimoto 距离分布与化学信息学标准 **Taylor-Butina 聚类**、基于聚类的分组交叉验证（Cluster Split / `GroupKFold`） | 60–75 min |
+| **03b** | `03b_clustering.ipynb` | **聚类与严格数据划分**：手写 K-means 拆解“分配—更新质心”迭代与局部最优陷阱、肘部法则（Inertia）与轮廓系数（Silhouette Score）、非凸流形与基于密度的聚类（DBSCAN）、凝聚层次聚类（Hierarchical Clustering）与树状图（Dendrogram）、高维指纹空间的 Tanimoto 距离分布与化学信息学标准 **Taylor-Butina 聚类**、基于聚类的分组交叉验证（Cluster Split / `GroupKFold`） | 60–75 min |
 | **03c** | `03c_pd_dimer_discovery.ipynb` | **科研实战案例：发现新型双核 Pd(I) 催化剂**：复现 Hueffel et al. (*Science* 2021)——在仅有 4 个已知正例且常规 DFT 自由能判据失效的困境下，结合 LKB-P 配体知识库、1,000 次共识 K-means 打分（Consensus Clustering）与二聚体专用 DFT 描述符，从 348 个膦配体中靶向筛出 21 个候选并实验证实 8 个新型催化剂 | 50–60 min |
 | **03d** | `03d_exercises.ipynb` | **第三讲基础巩固习题**：涵盖标准化与 PCA 解释方差、主成分载荷排序、新分子 PCA 投影、K-means 聚类与轮廓系数、RDKit Taylor-Butina 指纹聚类、`GroupKFold` 按簇交叉验证及 LKB-P 配体近邻检索的 8 道基础练习 | 30–45 min |
 | **参考答案** | `solutions/03_unsupervised_solutions.ipynb`<br>`solutions/03_exercises_solutions.ipynb` | 分别汇总 `03a`–`03c` 随堂练习（9 道）与 `03d` 基础巩固习题（8 道）的完整可运行代码与物理化学解析 | 课后自查 |
@@ -20,10 +20,10 @@
 
 | 前序模块埋下的问题 | 本讲在何处深入解答 |
 |---|---|
-| `01c` / `02c`：描述符之间的高度共线性与特征重要性分摊 | **`03a` 第 3 节**：对 17 个描述符做 PCA，发现前 5 个主成分即可解释 >90% 的方差，其中 `PC1`（占 54% 方差）集中概括了所有与“分子尺寸”相关的共线特征 |
-| `02c`：Yalkowsky 溶解度方程中疏水性（$\log P$）的主导地位 | **`03a` 第 3 节**：PCA 在从未见过溶解度标签的情况下，提取出的第二主成分 `PC2`（亲油 vs 极性）与实测 $\log S$ 呈现显著相关性（$r = -0.49$） |
-| `01d` / `02b`：2D 描述符与二值指纹的表征盲区与适用域（AD） | **`03a` 第 4 & 6 节**：17 维距离定量揭示 `C8-BTBT`（`1.85`）和 `rubrene`（`2.19`）远超数据集 95% 分位数（`1.34`），而 `pentacene` 因数据集中存在同分异构体二苯并蒽距离仅为 `0.18`；t-SNE 揭示二值指纹被长烷基链主导而引发“性质悬崖（Activity Cliff）” |
-| `02b`：随机交叉验证因混入同系物近亲而高估外推能力 | **`03b` 第 5 节**：用指纹聚类配合 `GroupKFold` 构建 **Cluster Split**，整簇留作测试时随机森林 RMSE 从随机 5 折的 `1.14 ± 0.03` 恶化至 `1.27 ± 0.15`，真实反映跨结构家族外推难度 |
+| `01c` / `02a` / `02d`：描述符之间的高度共线性与特征重要性分摊 | **`03a` 第 3 节**：对 17 个描述符做 PCA，发现前 5 个主成分即可解释 >90% 的方差，其中 `PC1`（占 54% 方差）集中概括了所有与“分子尺寸”相关的共线特征 |
+| `02d`：Yalkowsky 溶解度方程中疏水性（$\log P$）的主导地位 | **`03a` 第 3 节**：PCA 在从未见过溶解度标签的情况下，提取出的第二主成分 `PC2`（亲油 vs 极性）与实测 $\log S$ 呈现显著相关性（$r = -0.49$） |
+| `01d` / `02c` / `02e`：2D 描述符与二值指纹的表征盲区与适用域（AD） | **`03a` 第 4 & 6 节**：17 维距离定量揭示 `C8-BTBT`（`1.85`）和 `rubrene`（`2.19`）远超数据集 95% 分位数（`1.34`），而 `pentacene` 因数据集中存在同分异构体二苯并蒽距离仅为 `0.18`；t-SNE 揭示二值指纹被长烷基链主导而引发“性质悬崖（Activity Cliff）” |
+| `02e`：随机交叉验证因混入同系物近亲而高估外推能力 | **`03b` 第 5 节**：用指纹聚类配合 `GroupKFold` 构建 **Cluster Split**，整簇留作测试时随机森林 RMSE 从随机 5 折的 `1.14 ± 0.03` 恶化至 `1.27 ± 0.15`，真实反映跨结构家族外推难度 |
 
 ---
 
@@ -31,7 +31,7 @@
 
 - **`data/` 目录文件**：
   - `solubility.csv`：AqSolDB 水溶解度数据集（9,982 条记录，含预计算的 17 个 RDKit 描述符），用于 `03a` 与 `03b`；
-  - `unknown_clusters.csv` 与 `unknown_clusters_labels.csv`：900 个未知类别的生物/高分子化合物 SMILES 及真实类别标签，用于练习 `03b-2`；
+  - `unknown_clusters.csv` 与 `unknown_clusters_labels.csv`：900 个未知类别的有机寡聚片段/生物分子 SMILES 及真实类别标签，用于练习 `03b-2`；
   - `LKB_P.csv`（348 个膦配体的 28 个通用 DFT 描述符）与 `Dimer_LKB_P.csv`（66 个膦配体的 36 个二聚体专用 DFT 描述符），源自 Hueffel et al., *Science* 2021，用于 `03c`。
 - **运行耗时参考**：`03a` 全文运行约 1 分钟（其中 9,480 个分子的 t-SNE 约 30–45 秒）；`03b` 约 30–40 秒；`03c` 约 1 分钟（包含两轮各 1,000 次 K-means 共识聚类）。
 - **Windows 多线程线性代数库提示**：若在部分同时安装了 MKL 与 OpenBLAS 的 Conda 环境（如 Windows 下的旧版环境）中对 $9480 \times 2048$ 矩阵运行 `PCA` 时出现底层线程死锁，可在启动 Jupyter 前设置环境变量 `MKL_NUM_THREADS=1`。

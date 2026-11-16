@@ -77,6 +77,15 @@ class NotebookDoc:
     def kind(self) -> str:
         return "exercise" if self.is_exercise else "lecture"
 
+    @property
+    def has_inline_practice(self) -> bool:
+        for cell in self.data.get("cells", []):
+            if cell.get("cell_type") == "markdown":
+                text = "".join(cell.get("source", []))
+                if "练习" in text or "🏋" in text:
+                    return True
+        return False
+
 
 @dataclass
 class Module:
@@ -114,8 +123,11 @@ class Module:
 
     def solution_for(self, nb: NotebookDoc) -> Optional[NotebookDoc]:
         """The solutions notebook that answers a given notebook, if any."""
-        pool = self.exercise_solutions if nb.is_exercise else self.lecture_solutions
-        return pool[0] if pool else None
+        if nb.is_exercise:
+            return self.exercise_solutions[0] if self.exercise_solutions else None
+        if not nb.has_inline_practice:
+            return None
+        return self.lecture_solutions[0] if self.lecture_solutions else None
 
 
 class SharedFileStore:

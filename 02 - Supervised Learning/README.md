@@ -1,51 +1,45 @@
-# 02 — 监督学习（Supervised Learning）
+# 02 — 监督学习：经典机器学习算法原理与防坑实战（Supervised Learning）
 
-在第一讲完成分子数据清洗、探索性可视化与 RDKit 描述符/分子指纹提取之后，本模块正式进入机器学习建模的核心：**如何从带实验标签的分子数据集中训练、验证、调优并解释监督学习模型**。
+在第一讲完成分子数据清洗、探索性可视化与 RDKit 描述符/分子指纹提取之后，本模块先通过全景导论（`020`）厘清**“到底什么是机器学习、它在材料科学中能解决哪五类问题、以及材料数据区别于互联网 AI 的专属陷阱”**；随后按“底层数学/几何直觉（拒绝黑箱）+ AqSolDB 与有机半导体真实实例”双线并重，把全部经典监督学习算法拆分为循序渐进的 `02a`–`02f` 六节实战。
 
-我们继续以贯穿前两讲的 **ESOL 水溶解度数据集**（1128 个分子的实测 $\log S$）为主线，并在最后将训练好的模型放到有机半导体稠环与改性分子（如并五苯 `pentacene`、`C8-BTBT`）上进行压力测试，直观暴露外推失效与表征盲区。
+全模块统一采用 **AqSolDB 水溶解度数据集**（`data/solubility.csv`，清洗后 **9,480 个有效分子、17 个 RDKit 物理化学描述符**），并在有机半导体稠环与侧链改性分子（如并苯系列、`BTBT`、`C8-BTBT`、`TIPS-Pentacene`）上进行外推压力测试与适用域诊断。
 
 ---
 
 ## 课程模块结构
 
-| 序号 | Notebook | 核心内容 | 建议课时 |
-|---|---|---|---|
-| **02a** | `02a_regression.ipynb` | **回归入门**：问题形式化（$X \to y$）、训练/测试集划分与过拟合、评估指标（MAE / RMSE / $R^2$）与均值猜测基线、单特征到多特征线性回归、kNN 与特征标准化（`StandardScaler`）、树模型集成（随机森林 / 梯度提升）、描述符 vs 分子指纹（Bit / Count FP） | 60–75 min |
-| **02b** | `02b_validation_and_tuning.ipynb` | **验证、调优与适用域**：单次划分的随机波动与 $K$ 折交叉验证（5-Fold CV）、数据泄漏（Data Leakage）与 `Pipeline` 防护、网格搜索（`GridSearchCV`）超参数调优、面向共轭大分子的外推压力测试与基于 Tanimoto 相似度的适用域（Applicability Domain）诊断 | 50–60 min |
-| **02c** | `02c_classification.ipynb` | **分类与基础特征重要性**：难溶分子筛查二分类任务定义、分层抽样（`stratify`）、准确率陷阱与混淆矩阵（TP/FP/TN/FN）、Precision / Recall / F1 / ROC-AUC、结合实验成本调节决策阈值、树分裂重要性（MDI）vs 置换重要性（Permutation Importance）、对照 Yalkowsky 方程分析模型漏报原因 | 50–60 min |
-| **02d** | `02d_exercises.ipynb` | **第二讲基础巩固习题**：涵盖训练/测试集划分与均值基线、多元线性回归、特征标准化与 kNN、防泄漏 Pipeline 与 5 折交叉验证、`GridSearchCV` 调参、分层二分类与随机森林特征重要性的 8 道基础练习 | 30–45 min |
-| **参考答案** | `solutions/02_supervised_solutions.ipynb`<br>`solutions/02_exercises_solutions.ipynb` | 分别汇总 `02a`–`02c` 随堂练习（9 道）与 `02d` 基础巩固习题（8 道）的完整可运行代码与物理化学解析 | 课后自查 |
+| 序号 | Notebook | 核心算法原理（不靠黑箱） | 材料实例与伏笔兑现 | 建议课时 |
+|---|---|---|---|---|
+| **020** | `020_ml_for_materials_overview.ipynb` | AI $\supset$ ML $\supset$ DL、从“写公式”到“学规律”反转、内插 vs 外推矛盾 | D–$\pi$–A 有机光电空间估算、五大材料 AI 场景映射、课题选型自测 | 30–40 min |
+| **02a** | `02a_linear_models.ipynb` | 最小二乘几何直观、**8 行 NumPy 手写梯度下降**、多项式偏差–方差权衡、**Ridge ($L_2$) vs Lasso ($L_1$)** 正则化路径 | `MolLogP` 单变量 $\to$ 17 描述符 OLS 共线性权重正负反转破案与正则化驯服 | 50–60 min |
+| **02b** | `02b_knn_and_svm.ipynb` | 二维平面 **kNN 找邻居连线**、特征缩放几何机制、**SVM 最大间隔超平面、软间隔 $C$、$\epsilon$-管道与 RBF 核技巧** | `(MolLogP, MolWt)` 平面上萘的真假邻居对比、RBF-SVR 溶解度非线性等高线 | 50–60 min |
+| **02c** | `02c_trees_and_ensembles.ipynb` | **12 行 NumPy 手算决策树最优切分（MSE）**、阶梯函数切分图、**Bagging（随机森林降方差）vs Boosting（XGBoost 拟合残差降偏差）** | 描述符 vs Bit/Count Morgan 指纹大比拼；并苯系列（苯 $\to$ 并五苯）揭示树模型外推截断本质 | 60–70 min |
+| **02d** | `02d_classification.ipynb` | **10 行 NumPy 手写感知机**（判错挪直线）$\to$ **Sigmoid 与逻辑回归概率**、混淆矩阵、Precision/Recall/F1/ROC-AUC 与阈值移动 | 难溶分子（$\log S < -4$）筛查、`C8-BTBT` 溶剂先验边界、MDI vs 置换重要性、Yalkowsky 方程与离子盐/刚性晶体错分破案 | 55–65 min |
+| **02e** | `02e_validation_and_tuning.ipynb` | 5 折交叉验证、**`Pipeline` 防预处理泄漏对照实测**、`GridSearchCV` 与学习曲线（`learning_curve`） | 随机划分 vs **Murcko 骨架划分（Scaffold Split）** vs 跨环数尺寸外推；Tanimoto **适用域**体检 | 50–60 min |
+| **02f** | `02f_exercises.ipynb` | 覆盖 `02a`–`02e` 全部经典回归/分类模型、阈值调节、防泄漏流水线与骨架划分的 8 道综合实战习题 | 统一基于 AqSolDB 实测核对 | 35–45 min |
+| **参考答案** | `solutions/02_supervised_solutions.ipynb`<br>`solutions/02_exercises_solutions.ipynb` | 分别汇总 `02a`–`02e` 全部 **10 道随堂练习**与 `02f` 全部 **8 道综合习题**的完整可运行代码、图表与物理化学解析 | 课后自查 | — |
 
 ---
 
-## 与第一讲（01 - Basics）的前后呼应
+## 核心实验基准速查（AqSolDB 9,480 分子，`random_state=42`）
 
-本讲直接兑现了第一讲埋下的四处核心伏笔：
-1. **单变量到多变量建模**（呼应 `01c`）：从 `MolLogP vs logS` 的单变量散点趋势线出发，扩展为 10 个物理化学描述符 + 2048 维 Morgan 指纹的多元非线性回归；
-2. **不同特征量纲的标准化**（呼应 `01b` / `01c`）：解释为什么分子量（几百）和氢键给体数（个位数）直接放进 kNN 或 SVR 会导致距离计算失真，并通过 `make_pipeline(StandardScaler(), ...)` 实现无泄漏标准化；
-3. **Bit 指纹 vs Count 指纹的实战差异**（呼应 `01d`）：在 `02a` 和 `02b` 中实测发现，0/1 Bit 指纹因为无法区分重复子结构数量，不仅在回归误差上劣于 Count 指纹，还会把并五苯与并四苯的 Tanimoto 相似度误判为 `1.000`；
-4. **共线性特征对模型解释的干扰**（呼应 `01c`）：在 `02c` 中展示高度共线的 `MolWt` 与 `HeavyAtomCount`（$r = 0.97$）如何平摊随机森林的树分裂重要性（MDI），以及如何用置换重要性（Permutation Importance）还原 `MolLogP` 的真实主导地位。
+### 1. 回归任务（`02a`、`02b`、`02c`、`02e`）
+- **Dummy 均值猜测基线**：Test RMSE = `2.420`，$R^2 = 0.000$
+- **单特征线性回归（仅 `MolLogP`）**：Test RMSE = `1.885`，$R^2 = 0.393$
+- **17 描述符多元线性回归（OLS / Ridge）**：Test RMSE = `1.636 ~ 1.649`，$R^2 \approx 0.54$
+- **kNN（$k=5$，未标准化 vs 标准化）**：Test RMSE 从 `1.561` 骤降至 **`1.241`**（经 `Pipeline + GridSearchCV` 距离加权调优后进一步降至 **`1.186`**）
+- **RBF 核支持向量回归（`SVR`，标准化）**：Test RMSE = **`1.231`**，$R^2 = 0.741$
+- **单棵不限深度决策树 vs 随机森林 vs XGBoost（17 描述符）**：Test RMSE 从单棵深树的 `1.531`（严重过拟合）降至随机森林 **`1.168`** 与 XGBoost **`1.153`**（$R^2 = 0.773$）
+- **XGBoost 分子表示对比**：2048 Bit 指纹（`1.431`）$\to$ 2048 Count 指纹（`1.273`）$\to$ 17 描述符（`1.173`）$\to$ **17 描述符 + 2048 Count 指纹组合（`1.106`，$R^2 = 0.791$）**
 
----
-
-## 核心实验基准速查（ESOL，`random_state=42`）
-
-### 1. 回归任务（`02a` & `02b`）
-- **Dummy 均值猜测基线**：Test RMSE = `2.421`，$R^2 = -0.002$
-- **单变量线性回归（仅 `MolLogP`）**：Test RMSE = `1.132`，$R^2 = 0.781$
-- **多元线性回归（10 个描述符）**：Test RMSE = `0.968`，$R^2 = 0.840$
-- **kNN（$k=10$，未标准化 vs 标准化）**：Test RMSE 从 `0.955` 降至 `0.733`（经 `GridSearchCV` 调优至 $k=5$, `weights="distance"` 后进一步降至 `0.658`）
-- **随机森林（10 个描述符）**：Test RMSE = `0.688`，$R^2 = 0.899$
-- **随机森林（仅 2048 维 Bit 指纹 vs Count 指纹）**：Test RMSE 分别为 `1.093` vs `0.946`
-- **随机森林（10 个描述符 + 2048 维指纹）**：Test RMSE 降至 `0.669 ~ 0.674`，$R^2 = 0.905$
-
-### 2. 分类任务（`02c`，难溶阈值 $\log S < -4$，正类占比 28.6%）
+### 2. 二分类筛查任务（`02d`，难溶阈值 $\log S < -4.0$，正类占比 28.6%）
 - **Dummy 多数类基线（全猜可溶）**：Accuracy = `0.715`，但 Recall = `0.000`，F1 = `0.000`，ROC-AUC = `0.500`
-- **随机森林分类器**：Accuracy = `0.903`，Precision = `0.852`，Recall = `0.800`，F1 = `0.825`，ROC-AUC = `0.955`
+- **感知机（Perceptron）$\to$ 逻辑回归（Logistic Regression）**：F1 从 `0.672` 升至 `0.710`（ROC-AUC = `0.892`）
+- **随机森林 / XGBoost 分类器**：Accuracy = `0.890 ~ 0.896`，F1 = `0.797 ~ 0.808`，ROC-AUC = **`0.952 ~ 0.956`**
 
 ---
 
 ## 运行环境说明
 
-- 数据集路径已自动兼容相对路径 `../01 - Basics/data/esol.csv` 与当前目录下的 `data/esol.csv`，无需重复拷贝数据文件。
-- 所有图表坐标轴与图例均采用英文标注，确保在 Windows、macOS、Linux 及 Google Colab 下均不会出现中文字体方块乱码。
+- 数据集自动读取 `data/solubility.csv`（兼容 `../01 - Basics/data/solubility.csv`），本地 `zesheng` 环境与 Google Colab 均可直接运行。
+- 所有图表均启用课程统一出版级绘图样式 `ai4m.mplstyle`，坐标轴与图例统一采用英文标注，杜绝跨平台中文字体乱码。

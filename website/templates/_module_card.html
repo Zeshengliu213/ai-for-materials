@@ -11,7 +11,7 @@
     <p class="module-desc">{{ module.summary }}</p>
     <ul class="module-notebooks">
       {%- if module.notebooks %}
-      {%- for nb in module.notebooks[:6] %}
+      {%- for nb in module.notebooks[:8] %}
       <li><a href="notebooks/{{ module.slug }}/{{ nb.stem }}.html"
              data-progress-mark="notebooks/{{ module.slug }}/{{ nb.stem }}.html">{{ "🏋️" if nb.is_exercise else "📓" }} {{ nb.filename }}</a>
         <span class="module-nb-size">{{ nb.size_label }}</span></li>
